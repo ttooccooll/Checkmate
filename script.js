@@ -1053,7 +1053,3 @@ document.getElementById("off-road-treads-btn").addEventListener("click", () => m
 const introScreen = document.getElementById("intro-screen");
 const gameContainer = document.getElementById("game-container");
 const actionButtons = document.getElementById("action-buttons");
-
-introScreen.style.display = "none";
-gameContainer.style.display = "block";
-actionButtons.style.display = "flex";
