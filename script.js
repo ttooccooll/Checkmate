@@ -56,14 +56,6 @@ treeCanvas.height = WORLD_HEIGHT;
 const treeCtx = treeCanvas.getContext("2d");
 treeCtx.imageSmoothingEnabled = false;
 
-let texturesReady = false;
-
-grassTexture.onload = roadTexture.onload = () => {
-  renderGrassOffscreen();
-  renderRoadsOffscreen();
-  texturesReady = true;
-};
-
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
@@ -299,7 +291,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function startNewGame() {
-  if (!texturesReady) {
+  if (!grassRendered || !roadTexture.complete) {
     showMessage("Loading textures…", 1000);
     return;
   }
