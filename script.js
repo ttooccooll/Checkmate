@@ -1014,37 +1014,51 @@ bindPointerButton("new-game-btn", () => {
   startNewGame();
 });
 
-bindPointerButton("up-left-btn",
-  () => { keys.ArrowUp = true; keys.ArrowLeft = true; },
-  () => { keys.ArrowUp = false; keys.ArrowLeft = false; }
-);
+const activeTouchButtons = new Set();
 
-bindPointerButton("up-right-btn",
-  () => { keys.ArrowUp = true; keys.ArrowRight = true; },
-  () => { keys.ArrowUp = false; keys.ArrowRight = false; }
-);
+function bindPointerButton(id, keyNames) {
+  const el = document.getElementById(id);
+  if (!el) return;
 
-bindPointerButton("down-left-btn",
-  () => { keys.ArrowDown = true; keys.ArrowLeft = true; },
-  () => { keys.ArrowDown = false; keys.ArrowLeft = false; }
-);
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    keyNames.forEach(k => {
+      keys[k] = true;
+      activeTouchButtons.add(k);
+    });
+  });
 
-bindPointerButton("down-right-btn",
-  () => { keys.ArrowDown = true; keys.ArrowRight = true; },
-  () => { keys.ArrowDown = false; keys.ArrowRight = false; }
-);
+  el.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    keyNames.forEach(k => {
+      activeTouchButtons.delete(k);
+      keys[k] = activeTouchButtons.has(k); // only keep true if still pressed by another button
+    });
+    el.releasePointerCapture(e.pointerId);
+  });
 
-bindPointerButton("helmet-btn", 
-  () => buyUpgrade("helmet", 50),
-  () => {}
-);
+  el.addEventListener("pointercancel", () => {
+    keyNames.forEach(k => {
+      activeTouchButtons.delete(k);
+      keys[k] = activeTouchButtons.has(k);
+    });
+  });
 
-bindPointerButton("speed-boost-btn", 
-  () => buyUpgrade("speedBoost", 50),
-  () => {}
-);
+  el.addEventListener("pointerleave", () => {
+    keyNames.forEach(k => {
+      activeTouchButtons.delete(k);
+      keys[k] = activeTouchButtons.has(k);
+    });
+  });
+}
 
-bindPointerButton("off-road-treads-btn", 
-  () => buyUpgrade("offRoadTreads", 75),
-  () => {}
-);
+bindPointerButton("up-btn", ["ArrowUp"]);
+bindPointerButton("down-btn", ["ArrowDown"]);
+bindPointerButton("left-btn", ["ArrowLeft"]);
+bindPointerButton("right-btn", ["ArrowRight"]);
+
+bindPointerButton("up-left-btn", ["ArrowUp", "ArrowLeft"]);
+bindPointerButton("up-right-btn", ["ArrowUp", "ArrowRight"]);
+bindPointerButton("down-left-btn", ["ArrowDown", "ArrowLeft"]);
+bindPointerButton("down-right-btn", ["ArrowDown", "ArrowRight"]);
