@@ -95,8 +95,6 @@ function loadWorldTextures() {
 roadTexture.onload = loadWorldTextures;
 
 function isCollidingWithObstacles(x, y, width, height) {
-  // Roads
-  if (isOnRoad(x, y, width, height)) return true;
 
   // Buildings
   for (let b of buildings) {
@@ -896,27 +894,18 @@ function draw() {
   ctx.fillText(upgradeText, 10, 45);
 }
 
-function getFreeSpawnPoints(cellSize = 50) {
-  const freePoints = [];
+function findSafeSpawn(maxAttempts = 500) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const x = Math.random() * (WORLD_WIDTH - player.width);
+    const y = Math.random() * (WORLD_HEIGHT - player.height);
 
-  for (let x = 0; x < WORLD_WIDTH; x += cellSize) {
-    for (let y = 0; y < WORLD_HEIGHT; y += cellSize) {
-      if (!isCollidingWithObstacles(x, y, player.width, player.height)) {
-        freePoints.push({ x, y });
-      }
+    if (!isCollidingWithObstaclesOnly(x, y, player.width, player.height)) {
+      return { x, y };
     }
   }
 
-  return freePoints;
-}
-
-function findSafeSpawn() {
-  const freePoints = getFreeSpawnPoints();
-  if (freePoints.length === 0) {
-    console.warn("No free spawn points! Falling back to default.");
-    return { x: 50, y: 300 };
-  }
-  return freePoints[Math.floor(Math.random() * freePoints.length)];
+  console.warn("No free spawn points after random attempts! Using default.");
+  return { x: 50, y: 300 };
 }
 
 function gameLoop(timestamp) {
