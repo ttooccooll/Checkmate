@@ -825,7 +825,7 @@ function draw() {
 
     // --- Draw soft shadow around all sides ---
     ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 3)"; // subtle shadow color
+    ctx.fillStyle = "rgba(0, 0, 0, 1)"; // subtle shadow color
     ctx.shadowColor = "rgba(0, 0, 0, 3)";
     ctx.shadowBlur = 25; // soft blur
     ctx.shadowOffsetX = 0;
