@@ -982,12 +982,10 @@ async function buyUpgrade(upgradeName, costSats) {
   }
 }
 
-// --- Helper: Bind pointer or click events ---
-function bindButton(id, onDown, onUp = onDown) {
+function bindPointerButton(id, onDown, onUp = onDown) {
   const el = document.getElementById(id);
   if (!el) return;
 
-  // Pointer/touch events
   el.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
@@ -1002,34 +1000,55 @@ function bindButton(id, onDown, onUp = onDown) {
 
   el.addEventListener("pointercancel", onUp);
   el.addEventListener("pointerleave", onUp);
-
-  // Fallback for mouse click (desktop)
-  el.addEventListener("click", (e) => {
-    e.preventDefault();
-    onDown();
-  });
 }
 
-// --- New Game ---
-bindButton("new-game-btn", () => {
-  introScreen.style.display = "none";
-  gameContainer.style.display = "block";
-  touchControls.style.display = "grid";
-  actionButtons.style.display = "flex";
+bindPointerButton("new-game-btn", () => {
+  document.getElementById("intro-screen").style.display = "none";
+  document.getElementById("game-container").style.display = "block";
+  document.getElementById("touch-controls").style.display = "grid";
+  document.getElementById("action-buttons").style.display = "flex";
   startNewGame();
 });
 
-// --- Movement buttons ---
-bindButton("up-btn", () => (keys.ArrowUp = true), () => (keys.ArrowUp = false));
-bindButton("down-btn", () => (keys.ArrowDown = true), () => (keys.ArrowDown = false));
-bindButton("left-btn", () => (keys.ArrowLeft = true), () => (keys.ArrowLeft = false));
-bindButton("right-btn", () => (keys.ArrowRight = true), () => (keys.ArrowRight = false));
+bindPointerButton("up-btn",
+  () => keys.ArrowUp = true,
+  () => keys.ArrowUp = false
+);
 
-// --- Upgrade buttons ---
-bindButton("helmet-btn", () => buyUpgrade("helmet", 50));
-bindButton("speed-boost-btn", () => buyUpgrade("speedBoost", 50));
-bindButton("off-road-treads-btn", () => buyUpgrade("offRoadTreads", 75));
+bindPointerButton("down-btn",
+  () => keys.ArrowDown = true,
+  () => keys.ArrowDown = false
+);
 
+bindPointerButton("left-btn",
+  () => keys.ArrowLeft = true,
+  () => keys.ArrowLeft = false
+);
+
+bindPointerButton("right-btn",
+  () => keys.ArrowRight = true,
+  () => keys.ArrowRight = false
+);
+
+bindPointerButton("helmet-btn", 
+  () => buyUpgrade("helmet", 50),
+  () => {}
+);
+
+bindPointerButton("speed-boost-btn", 
+  () => buyUpgrade("speedBoost", 50),
+  () => {}
+);
+
+bindPointerButton("off-road-treads-btn", 
+  () => buyUpgrade("offRoadTreads", 75),
+  () => {}
+);
+
+document.getElementById("new-game-btn").addEventListener("click", startNewGame);
+document.getElementById("helmet-btn").addEventListener("click", () => makePayment(50));
+document.getElementById("speed-boost-btn").addEventListener("click", () => makePayment(50));
+document.getElementById("off-road-treads-btn").addEventListener("click", () => makePayment(75));
 
 const introScreen = document.getElementById("intro-screen");
 const gameContainer = document.getElementById("game-container");
