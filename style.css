@@ -95,10 +95,14 @@ button {
     background: linear-gradient(145deg, #ddd, #bbb);
 }
 
+#up-left-btn { grid-column: 1; grid-row: 1; }
 #up-btn { grid-column: 2; grid-row: 1; }
+#up-right-btn { grid-column: 3; grid-row: 1; }
 #left-btn { grid-column: 1; grid-row: 2; }
 #right-btn { grid-column: 3; grid-row: 2; }
+#down-left-btn { grid-column: 1; grid-row: 3; }
 #down-btn { grid-column: 2; grid-row: 3; }
+#down-right-btn { grid-column: 3; grid-row: 3; }
 
 #action-buttons {
     position: fixed;

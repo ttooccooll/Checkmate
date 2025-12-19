@@ -1014,24 +1014,24 @@ bindPointerButton("new-game-btn", () => {
   startNewGame();
 });
 
-bindPointerButton("up-btn",
-  () => keys.ArrowUp = true,
-  () => keys.ArrowUp = false
+bindPointerButton("up-left-btn",
+  () => { keys.ArrowUp = true; keys.ArrowLeft = true; },
+  () => { keys.ArrowUp = false; keys.ArrowLeft = false; }
 );
 
-bindPointerButton("down-btn",
-  () => keys.ArrowDown = true,
-  () => keys.ArrowDown = false
+bindPointerButton("up-right-btn",
+  () => { keys.ArrowUp = true; keys.ArrowRight = true; },
+  () => { keys.ArrowUp = false; keys.ArrowRight = false; }
 );
 
-bindPointerButton("left-btn",
-  () => keys.ArrowLeft = true,
-  () => keys.ArrowLeft = false
+bindPointerButton("down-left-btn",
+  () => { keys.ArrowDown = true; keys.ArrowLeft = true; },
+  () => { keys.ArrowDown = false; keys.ArrowLeft = false; }
 );
 
-bindPointerButton("right-btn",
-  () => keys.ArrowRight = true,
-  () => keys.ArrowRight = false
+bindPointerButton("down-right-btn",
+  () => { keys.ArrowDown = true; keys.ArrowRight = true; },
+  () => { keys.ArrowDown = false; keys.ArrowRight = false; }
 );
 
 bindPointerButton("helmet-btn", 
