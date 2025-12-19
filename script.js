@@ -291,7 +291,12 @@ function startNewGame() {
     return;
   }
 
+    startingGame = true;
+
   score = 0;
+  invulnerableTimer = 0;
+  flashTimer = 0;
+
   generateRoads();
   trees = generateTrees(50);
   renderTreesOffscreen();
@@ -302,7 +307,7 @@ function startNewGame() {
   player.x = spawn.x;
   player.y = spawn.y;
 
-  flashTimer = 0;
+
   gameRunning = true;
   lastTime = performance.now();
 
