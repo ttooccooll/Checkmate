@@ -63,11 +63,31 @@ treeCanvas.height = WORLD_HEIGHT;
 const treeCtx = treeCanvas.getContext("2d");
 treeCtx.imageSmoothingEnabled = false;
 
+const touchMove = {
+  active: false,
+  startX: 0,
+  startY: 0,
+  dx: 0,
+  dy: 0,
+};
+
+
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
 let playerWidth = 60;
 let playerHeight = 55;
+
+let player = { x: 50, y: 300, width: 40, height: 20, speed: 5 };
+let buildings = [];
+let trees = [];
+let coins = [];
+let score = 0;
+let gameRunning = false;
+let invulnerableTimer = 0;
+const INVULNERABLE_DURATION = 80;
+const savedUpgrades =
+  JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
 // Variable to store the current facing direction
 let currentDirection = 0;
@@ -133,16 +153,51 @@ resizeCanvas();
 
 canvas.tabIndex = 0;
 
-let player = { x: 50, y: 300, width: 40, height: 20, speed: 5 };
-let buildings = [];
-let trees = [];
-let coins = [];
-let score = 0;
-let gameRunning = false;
-let invulnerableTimer = 0;
-const INVULNERABLE_DURATION = 80;
-const savedUpgrades =
-  JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
+canvas.addEventListener("pointerdown", (e) => {
+  if (!gameRunning) return;
+
+  touchMove.active = true;
+  touchMove.startX = e.clientX;
+  touchMove.startY = e.clientY;
+  touchMove.dx = 0;
+  touchMove.dy = 0;
+
+  canvas.setPointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (!touchMove.active) return;
+
+  touchMove.dx = e.clientX - touchMove.startX;
+  touchMove.dy = e.clientY - touchMove.startY;
+});
+
+canvas.addEventListener("pointerup", (e) => {
+  touchMove.active = false;
+  resetTouchKeys();
+  canvas.releasePointerCapture(e.pointerId);
+});
+
+canvas.addEventListener("pointercancel", () => {
+  touchMove.active = false;
+  resetTouchKeys();
+});
+
+function resetTouchKeys() {
+  keys.ArrowUp = false;
+  keys.ArrowDown = false;
+  keys.ArrowLeft = false;
+  keys.ArrowRight = false;
+}
+
+if (touchMove.active) {
+  const DEADZONE = 15;
+
+  keys.ArrowUp = touchMove.dy < -DEADZONE;
+  keys.ArrowDown = touchMove.dy > DEADZONE;
+  keys.ArrowLeft = touchMove.dx < -DEADZONE;
+  keys.ArrowRight = touchMove.dx > DEADZONE;
+}
 
 function renderGrassOffscreen() {
   const pattern = grassCtx.createPattern(grassTexture, "repeat");
