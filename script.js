@@ -1,4 +1,4 @@
-// import * as payments from './payments.js';
+import * as payments from './payments.js';
 
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
