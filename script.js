@@ -986,6 +986,26 @@ async function buyUpgrade(upgradeName, costSats) {
   }
 }
 
+function bindPointerButton(id, onDown, onUp = onDown) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    onDown();
+  });
+
+  el.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    onUp();
+    el.releasePointerCapture(e.pointerId);
+  });
+
+  el.addEventListener("pointercancel", onUp);
+  el.addEventListener("pointerleave", onUp);
+}
+
 bindPointerButton("new-game-btn", () => {
   document.getElementById("intro-screen").style.display = "none";
   document.getElementById("game-container").style.display = "block";
@@ -994,51 +1014,37 @@ bindPointerButton("new-game-btn", () => {
   startNewGame();
 });
 
-const activeTouchButtons = new Set();
+bindPointerButton("up-btn",
+  () => keys.ArrowUp = true,
+  () => keys.ArrowUp = false
+);
 
-function bindPointerButton(id, keyNames) {
-  const el = document.getElementById(id);
-  if (!el) return;
+bindPointerButton("down-btn",
+  () => keys.ArrowDown = true,
+  () => keys.ArrowDown = false
+);
 
-  el.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    el.setPointerCapture(e.pointerId);
-    keyNames.forEach(k => {
-      keys[k] = true;
-      activeTouchButtons.add(k);
-    });
-  });
+bindPointerButton("left-btn",
+  () => keys.ArrowLeft = true,
+  () => keys.ArrowLeft = false
+);
 
-  el.addEventListener("pointerup", (e) => {
-    e.preventDefault();
-    keyNames.forEach(k => {
-      activeTouchButtons.delete(k);
-      keys[k] = activeTouchButtons.has(k); // only keep true if still pressed by another button
-    });
-    el.releasePointerCapture(e.pointerId);
-  });
+bindPointerButton("right-btn",
+  () => keys.ArrowRight = true,
+  () => keys.ArrowRight = false
+);
 
-  el.addEventListener("pointercancel", () => {
-    keyNames.forEach(k => {
-      activeTouchButtons.delete(k);
-      keys[k] = activeTouchButtons.has(k);
-    });
-  });
+bindPointerButton("helmet-btn", 
+  () => buyUpgrade("helmet", 50),
+  () => {}
+);
 
-  el.addEventListener("pointerleave", () => {
-    keyNames.forEach(k => {
-      activeTouchButtons.delete(k);
-      keys[k] = activeTouchButtons.has(k);
-    });
-  });
-}
+bindPointerButton("speed-boost-btn", 
+  () => buyUpgrade("speedBoost", 50),
+  () => {}
+);
 
-bindPointerButton("up-btn", ["ArrowUp"]);
-bindPointerButton("down-btn", ["ArrowDown"]);
-bindPointerButton("left-btn", ["ArrowLeft"]);
-bindPointerButton("right-btn", ["ArrowRight"]);
-
-bindPointerButton("up-left-btn", ["ArrowUp", "ArrowLeft"]);
-bindPointerButton("up-right-btn", ["ArrowUp", "ArrowRight"]);
-bindPointerButton("down-left-btn", ["ArrowDown", "ArrowLeft"]);
-bindPointerButton("down-right-btn", ["ArrowDown", "ArrowRight"]);
+bindPointerButton("off-road-treads-btn", 
+  () => buyUpgrade("offRoadTreads", 75),
+  () => {}
+);

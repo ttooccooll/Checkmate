@@ -6,7 +6,7 @@ export async function generateInvoice(amountSats, memo = "Motorcycle Game Paymen
       cache: "no-store",
       body: JSON.stringify({ amount: amountSats, memo }),
     });
-
+    
     const text = await resp.text();
     let data;
     try {
