@@ -297,9 +297,9 @@ function startNewGame() {
   flashTimer = 0;
 
   generateRoads();
-  trees = generateTrees(50);
+  trees = generateTrees(70);
   renderTreesOffscreen();
-  buildings = generateBuildings(35);
+  buildings = generateBuildings(45);
   coins = generateCoins(15);
 
   const spawn = findSafeSpawn();
