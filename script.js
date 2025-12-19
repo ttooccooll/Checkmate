@@ -291,7 +291,7 @@ function startNewGame() {
     return;
   }
 
-    startingGame = true;
+  startingGame = true;
 
   score = 0;
   invulnerableTimer = 0;
@@ -310,8 +310,6 @@ function startNewGame() {
 
   gameRunning = true;
   lastTime = performance.now();
-
-  startingGame = false;
 
   const actionButtons = document.querySelectorAll("#action-buttons");
   actionButtons.forEach((button) => {
@@ -982,7 +980,7 @@ function bindPointerButton(id, onDown, onUp = onDown) {
   const el = document.getElementById(id);
   if (!el) return;
 
-  el.addEventListener("pointerdown", (e) => {
+  el.addEventListener("pointerup", (e) => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
     onDown();
