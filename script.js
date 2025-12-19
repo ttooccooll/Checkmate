@@ -958,97 +958,6 @@ function handleCrash() {
   endGame();
 }
 
-function setupUIControls() {
-  const touchControls = [
-    { id: "up-btn", key: "ArrowUp" },
-    { id: "down-btn", key: "ArrowDown" },
-    { id: "left-btn", key: "ArrowLeft" },
-    { id: "right-btn", key: "ArrowRight" },
-    { id: "new-game-btn", action: startNewGame },
-    { id: "helmet-btn", action: () => buyUpgrade("helmet", 50) },
-    { id: "speed-boost-btn", action: () => buyUpgrade("speedBoost", 50) },
-    { id: "off-road-treads-btn", action: () => buyUpgrade("offRoadTreads", 75) },
-  ];
-
-  const diagonalControls = [
-    { id: "up-left-btn", keys: ["ArrowUp", "ArrowLeft"] },
-    { id: "up-right-btn", keys: ["ArrowUp", "ArrowRight"] },
-    { id: "down-left-btn", keys: ["ArrowDown", "ArrowLeft"] },
-    { id: "down-right-btn", keys: ["ArrowDown", "ArrowRight"] },
-  ];
-
-  diagonalControls.forEach((control) => {
-    const btn = document.getElementById(control.id);
-    if (!btn) return;
-
-    btn.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        control.keys.forEach((k) => (keys[k] = true));
-      },
-      { passive: false }
-    );
-
-    btn.addEventListener(
-      "touchend",
-      (e) => {
-        e.preventDefault();
-        control.keys.forEach((k) => (keys[k] = false));
-      },
-      { passive: false }
-    );
-
-    btn.addEventListener("pointerdown", () =>
-      control.keys.forEach((k) => (keys[k] = true))
-    );
-    btn.addEventListener("pointerup", () =>
-      control.keys.forEach((k) => (keys[k] = false))
-    );
-    btn.addEventListener("pointerleave", () =>
-      control.keys.forEach((k) => (keys[k] = false))
-    );
-  });
-
-  touchControls.forEach((control) => {
-    const btn = document.getElementById(control.id);
-    if (!btn) return;
-    if (control.key) {
-      btn.addEventListener(
-        "touchstart",
-        (e) => {
-          e.preventDefault();
-          keys[control.key] = true;
-        },
-        { passive: false }
-      );
-      btn.addEventListener(
-        "touchend",
-        (e) => {
-          e.preventDefault();
-          keys[control.key] = false;
-        },
-        { passive: false }
-      );
-      btn.addEventListener("pointerdown", () => (keys[control.key] = true));
-      btn.addEventListener("pointerup", () => (keys[control.key] = false));
-      btn.addEventListener("pointerleave", () => (keys[control.key] = false));
-    }
-    if (control.action) {
-      btn.addEventListener(
-        "touchstart",
-        (e) => {
-          e.preventDefault();
-          control.action();
-        },
-        { passive: false }
-      );
-      btn.addEventListener("click", control.action);
-    }
-  });
-}
-
-setupUIControls();
 
 const touchControls = document.getElementById("touch-controls");
 
@@ -1077,15 +986,54 @@ async function buyUpgrade(upgradeName, costSats) {
   }
 }
 
-document.getElementById("new-game-btn").addEventListener("click", function() {
-    // Hide the intro screen
-    document.getElementById("intro-screen").style.display = "none";
+function bindPointerButton(id, onDown, onUp = onDown) {
+  const el = document.getElementById(id);
+  if (!el) return;
 
-    // Show the game container and controls
-    document.getElementById("game-container").style.display = "block";
-    document.getElementById("touch-controls").style.display = "grid";  // or block, depending on your layout
-    document.getElementById("action-buttons").style.display = "flex";
+  el.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    onDown();
+  });
 
-    // Optionally, initialize the game here
-    console.log("Game started!");
+  el.addEventListener("pointerup", (e) => {
+    e.preventDefault();
+    onUp();
+    el.releasePointerCapture(e.pointerId);
+  });
+
+  el.addEventListener("pointercancel", onUp);
+  el.addEventListener("pointerleave", onUp);
+}
+
+bindPointerButton("new-game-btn", () => {
+  document.getElementById("intro-screen").style.display = "none";
+  document.getElementById("game-container").style.display = "block";
+  document.getElementById("touch-controls").style.display = "grid";
+  document.getElementById("action-buttons").style.display = "flex";
+  startNewGame();
 });
+
+bindPointerButton("up-btn",
+  () => keys.ArrowUp = true,
+  () => keys.ArrowUp = false
+);
+
+bindPointerButton("down-btn",
+  () => keys.ArrowDown = true,
+  () => keys.ArrowDown = false
+);
+
+bindPointerButton("left-btn",
+  () => keys.ArrowLeft = true,
+  () => keys.ArrowLeft = false
+);
+
+bindPointerButton("right-btn",
+  () => keys.ArrowRight = true,
+  () => keys.ArrowRight = false
+);
+
+bindPointerButton("helmet-btn", () => buyUpgrade("helmet", 50));
+bindPointerButton("speed-boost-btn", () => buyUpgrade("speedBoost", 50));
+bindPointerButton("off-road-treads-btn", () => buyUpgrade("offRoadTreads", 75));
