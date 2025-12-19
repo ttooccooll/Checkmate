@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkmate Delivery</title>
+    <link rel="icon" href="./assets/player2.png">
+    <script 
+        src="https://unpkg.com/webln@0.3.2/dist/webln.min.js" 
+        integrity="sha384-MpjpvOQqXz9nCoLUS/sR0bhLwGYuNPMOBN50jsqhnqAzDq0GiOI0u6oC5fHitzI2"
+        crossorigin="anonymous">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" id="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+
+    <div id="intro-screen">
+        <h1>Checkmate Delivery</h1>
+        <img src="./assets/player2.png" id="intro-image" alt="Player" />
+    </div>
+
+    <div id="game-container">
+        <canvas id="game-board"></canvas>
+    </div>
+
+    <div id="touch-controls">
+        <button id="up-left-btn">↖</button>
+        <button id="up-btn">↑</button>
+        <button id="up-right-btn">↗</button>
+        <button id="left-btn">←</button>
+        <button id="right-btn">→</button>
+        <button id="down-left-btn">↙</button>
+        <button id="down-btn">↓</button>
+        <button id="down-right-btn">↘</button>
+    </div>
+
+
+    <div id="action-buttons">
+        <button id="new-game-btn">New Game</button>
+        <button id="helmet-btn">Buy Helmet ⚡ (50 sats)</button>
+        <button id="speed-boost-btn">Speed Boost ⚡ (50 sats)</button>
+        <button id="off-road-treads-btn">Off-Road Treads ⚡ (75 sats)</button>  
+    </div>
+
+    <div id="message-modal"></div>
+
+</body>
+</html>

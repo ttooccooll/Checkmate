@@ -1,0 +1,193 @@
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(160deg, #5fb3ff, #cfefff);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+h1 {
+    margin: 15px 0;
+    font-weight: 800;
+    font-size: 2.5em;
+    color: #05445e;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Style for the intro screen */
+#intro-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(160deg, #5fb3ff, #cfefff);
+    text-align: center;
+}
+
+#intro-image {
+    width: 300px; /* Adjust this as needed */
+    height: auto;
+    margin-top: 20px;
+}
+
+#new-game-btn {
+    cursor: pointer;
+    background: linear-gradient(145deg, #48a385, #4fad99);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 4px 0 #317264, 0 6px 10px rgba(0,0,0,0.2);
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+
+/* Hide the game container and controls until the game starts */
+#game-container, #touch-controls, #action-buttons {
+    display: none;
+}
+
+#game-container {
+    margin: 0;
+}
+
+#game-board {
+    background: linear-gradient(180deg, #48a385, #4fad99);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    display: block;
+    margin: 0;
+    border: 2px solid #317264;
+    outline: none;
+}
+
+#touch-controls {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 8px;
+    z-index: 10;
+}
+
+#touch-controls button {
+    cursor: pointer;
+    background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
+    border: 2px solid #aaa;
+    box-shadow: 0 5px 0 #999, 0 8px 10px rgba(0,0,0,0.15);
+    font-size: 22px;
+    border-radius: 14px;
+    transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
+}
+
+#touch-controls button:active {
+    transform: translateY(5px);
+    box-shadow: 0 1px 0 #999, 0 4px 6px rgba(0,0,0,0.15);
+    background: linear-gradient(145deg, #ddd, #bbb);
+}
+
+#up-left-btn { grid-column: 1; grid-row: 1; }
+#up-btn { grid-column: 2; grid-row: 1; }
+#up-right-btn { grid-column: 3; grid-row: 1; }
+#left-btn { grid-column: 1; grid-row: 2; }
+#right-btn { grid-column: 3; grid-row: 2; }
+#down-left-btn { grid-column: 1; grid-row: 3; }
+#down-btn { grid-column: 2; grid-row: 3; }
+#down-right-btn { grid-column: 3; grid-row: 3; }
+
+#action-buttons {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 10;
+    transition: transform 0.6s ease-in-out;
+    transform-origin: top right;
+}
+
+#action-buttons button {
+    cursor: pointer;
+    background: linear-gradient(145deg, #ffde59, #ffb347);
+    border: 2px solid #cc7a00;
+    font-weight: bold;
+    box-shadow: 0 5px 0 #cc7a00, 0 8px 12px rgba(0,0,0,0.2);
+    padding: 10px 15px;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
+}
+
+#action-buttons button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #cc7a00, 0 4px 6px rgba(0,0,0,0.2);
+    background: linear-gradient(145deg, #ffbf47, #ff9933);
+}
+
+.smaller-buttons {
+  transform: scale(0.7);
+  transition: transform 0.6s ease-in-out;
+  transform-origin: top right;
+}
+
+#score-box {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #05445e;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+#message-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.97);
+    padding: 25px 35px;
+    border-radius: 16px;
+    display: none;
+    z-index: 20;
+    font-size: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    color: #05445e;
+    font-weight: 600;
+}
+
+#message-modal button {
+    margin-top: 15px;
+    background: linear-gradient(145deg, #48a385, #4fad99);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #317264, 0 6px 10px rgba(0,0,0,0.2);
+    transition: transform 0.08s, box-shadow 0.08s;
+}
+
+#message-modal button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #317264, 0 4px 6px rgba(0,0,0,0.2);
+}
+
+@media (pointer: fine) {
+  #touch-controls {
+    display: none !important;
+  }
+}

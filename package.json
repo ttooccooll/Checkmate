@@ -1,0 +1,11 @@
+{
+  "name": "turtle",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.1"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
