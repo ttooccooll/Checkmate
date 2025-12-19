@@ -967,7 +967,7 @@ function setupUIControls() {
     { id: "new-game-btn", action: startNewGame },
     { id: "helmet-btn", action: () => buyUpgrade("helmet", 50) },
     { id: "speed-boost-btn", action: () => buyUpgrade("speedBoost", 50) },
-    { id: "off-road-treads-btn", action: () => buyUpgrade("offRoadTreads", 50) },
+    { id: "off-road-treads-btn", action: () => buyUpgrade("offRoadTreads", 75) },
   ];
 
   const diagonalControls = [
