@@ -1,4 +1,4 @@
-import * as payments from './payments.js';
+import * as payments from "./payments.js";
 
 let startingGame = false;
 const canvas = document.getElementById("game-board");
@@ -96,7 +96,6 @@ function loadWorldTextures() {
 roadTexture.onload = loadWorldTextures;
 
 function isCollidingWithObstacles(x, y, width, height) {
-
   // Buildings
   for (let b of buildings) {
     if (rectCollision({ x, y, width, height }, b)) return true;
@@ -186,7 +185,7 @@ let roads = [];
 
 function isTouchDevice() {
   return (
-    'ontouchstart' in window ||
+    "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
     navigator.msMaxTouchPoints > 0
   );
@@ -237,7 +236,6 @@ document.addEventListener("keydown", (e) => {
     default:
       break;
   }
-
 });
 
 document.addEventListener("keyup", (e) => {
@@ -287,11 +285,12 @@ document.addEventListener("keyup", (e) => {
 });
 
 function startNewGame() {
+  if (startingGame || gameRunning) return;
   if (!grassRendered || !roadTexture.complete) {
     showMessage("Loading textures…", 1000);
     return;
   }
-    startingGame = true;
+  startingGame = true;
 
   score = 0;
   generateRoads();
@@ -308,12 +307,12 @@ function startNewGame() {
   gameRunning = true;
   lastTime = performance.now();
 
-    startingGame = false;
+  startingGame = false;
 
-  const actionButtons = document.querySelectorAll('#action-buttons');
-    actionButtons.forEach(button => {
-      button.classList.add('smaller-buttons');  // Apply smaller button class
-    });
+  const actionButtons = document.querySelectorAll("#action-buttons");
+  actionButtons.forEach((button) => {
+    button.classList.add("smaller-buttons"); // Apply smaller button class
+  });
 
   requestAnimationFrame(gameLoop);
 }
@@ -540,7 +539,6 @@ function renderTreesOffscreen() {
   });
 }
 
-
 function generateTrees(count) {
   const arr = [];
   let attempts = 0;
@@ -606,7 +604,10 @@ function update(deltaTime = 1) {
   let baseSpeed = player.speed + (upgrades.speedBoost ? 3 : 0);
 
   // Reduce speed if off-road
-  if (!isOnRoad(player.x, player.y, player.width, player.height) && !upgrades.offRoadTreads) {
+  if (
+    !isOnRoad(player.x, player.y, player.width, player.height) &&
+    !upgrades.offRoadTreads
+  ) {
     baseSpeed *= 0.5; // 50% of normal speed off-road
   }
 
@@ -705,12 +706,11 @@ function endGame() {
 }
 
 function resetButtonSize() {
-  const actionButtons = document.querySelectorAll('#action-buttons');
-  actionButtons.forEach(button => {
-    button.classList.remove('smaller-buttons');
+  const actionButtons = document.querySelectorAll("#action-buttons");
+  actionButtons.forEach((button) => {
+    button.classList.remove("smaller-buttons");
   });
 }
-
 
 function generateRoads() {
   roads = [];
@@ -781,7 +781,7 @@ function draw() {
     canvas.height
   );
 
-    // --- Player (Delivery Motorcycle) ---
+  // --- Player (Delivery Motorcycle) ---
   if (playerSpriteLoaded) {
     ctx.save();
     ctx.shadowColor = "rgba(0, 0, 0, 2)";
@@ -944,13 +944,11 @@ function handleCrash() {
   endGame();
 }
 
-
 const touchControls = document.getElementById("touch-controls");
 
 if (!isTouchDevice()) {
   touchControls.style.display = "none";
 }
-
 
 async function buyUpgrade(upgradeName, costSats) {
   if (upgrades[upgradeName]) {
@@ -1000,37 +998,44 @@ bindPointerButton("new-game-btn", () => {
   startNewGame();
 });
 
-bindPointerButton("up-btn",
-  () => keys.ArrowUp = true,
-  () => keys.ArrowUp = false
+bindPointerButton(
+  "up-btn",
+  () => (keys.ArrowUp = true),
+  () => (keys.ArrowUp = false)
 );
 
-bindPointerButton("down-btn",
-  () => keys.ArrowDown = true,
-  () => keys.ArrowDown = false
+bindPointerButton(
+  "down-btn",
+  () => (keys.ArrowDown = true),
+  () => (keys.ArrowDown = false)
 );
 
-bindPointerButton("left-btn",
-  () => keys.ArrowLeft = true,
-  () => keys.ArrowLeft = false
+bindPointerButton(
+  "left-btn",
+  () => (keys.ArrowLeft = true),
+  () => (keys.ArrowLeft = false)
 );
 
-bindPointerButton("right-btn",
-  () => keys.ArrowRight = true,
-  () => keys.ArrowRight = false
+bindPointerButton(
+  "right-btn",
+  () => (keys.ArrowRight = true),
+  () => (keys.ArrowRight = false)
 );
 
-bindPointerButton("helmet-btn", 
+bindPointerButton(
+  "helmet-btn",
   () => buyUpgrade("helmet", 50),
   () => {}
 );
 
-bindPointerButton("speed-boost-btn", 
+bindPointerButton(
+  "speed-boost-btn",
   () => buyUpgrade("speedBoost", 50),
   () => {}
 );
 
-bindPointerButton("off-road-treads-btn", 
+bindPointerButton(
+  "off-road-treads-btn",
   () => buyUpgrade("offRoadTreads", 75),
   () => {}
 );
