@@ -986,26 +986,6 @@ async function buyUpgrade(upgradeName, costSats) {
   }
 }
 
-function bindPointerButton(id, onDown, onUp = onDown) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  el.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    el.setPointerCapture(e.pointerId);
-    onDown();
-  });
-
-  el.addEventListener("pointerup", (e) => {
-    e.preventDefault();
-    onUp();
-    el.releasePointerCapture(e.pointerId);
-  });
-
-  el.addEventListener("pointercancel", onUp);
-  el.addEventListener("pointerleave", onUp);
-}
-
 bindPointerButton("new-game-btn", () => {
   document.getElementById("intro-screen").style.display = "none";
   document.getElementById("game-container").style.display = "block";
