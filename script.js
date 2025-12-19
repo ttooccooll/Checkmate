@@ -1,5 +1,6 @@
 import * as payments from './payments.js';
 
+let startingGame = false;
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
@@ -293,6 +294,7 @@ function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
+    startingGame = true;
 
   score = 0;
   generateRoads();
@@ -308,6 +310,8 @@ function startNewGame() {
   flashTimer = 0;
   gameRunning = true;
   lastTime = performance.now();
+
+    startingGame = false;
 
   const actionButtons = document.querySelectorAll('#action-buttons');
     actionButtons.forEach(button => {
