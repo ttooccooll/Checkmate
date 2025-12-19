@@ -980,7 +980,7 @@ function bindPointerButton(id, onDown, onUp = onDown) {
   const el = document.getElementById(id);
   if (!el) return;
 
-  el.addEventListener("pointerup", (e) => {
+  el.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
     onDown();
