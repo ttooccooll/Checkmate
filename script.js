@@ -1034,6 +1034,17 @@ bindPointerButton("right-btn",
   () => keys.ArrowRight = false
 );
 
-bindPointerButton("helmet-btn", () => buyUpgrade("helmet", 50));
-bindPointerButton("speed-boost-btn", () => buyUpgrade("speedBoost", 50));
-bindPointerButton("off-road-treads-btn", () => buyUpgrade("offRoadTreads", 75));
+bindPointerButton("helmet-btn", 
+  () => buyUpgrade("helmet", 50),
+  () => {}
+);
+
+bindPointerButton("speed-boost-btn", 
+  () => buyUpgrade("speedBoost", 50),
+  () => {}
+);
+
+bindPointerButton("off-road-treads-btn", 
+  () => buyUpgrade("offRoadTreads", 75),
+  () => {}
+);
