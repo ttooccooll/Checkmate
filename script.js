@@ -1045,11 +1045,6 @@ bindPointerButton("off-road-treads-btn",
   () => {}
 );
 
-document.getElementById("new-game-btn").addEventListener("click", startNewGame);
-document.getElementById("helmet-btn").addEventListener("click", () => makePayment(50));
-document.getElementById("speed-boost-btn").addEventListener("click", () => makePayment(50));
-document.getElementById("off-road-treads-btn").addEventListener("click", () => makePayment(75));
-
 const introScreen = document.getElementById("intro-screen");
 const gameContainer = document.getElementById("game-container");
 const actionButtons = document.getElementById("action-buttons");
