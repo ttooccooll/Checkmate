@@ -137,7 +137,7 @@ let coins = [];
 let score = 0;
 let gameRunning = false;
 let invulnerableTimer = 0;
-const INVULNERABLE_DURATION = 60;
+const INVULNERABLE_DURATION = 80;
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
