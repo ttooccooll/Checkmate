@@ -132,7 +132,6 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 canvas.tabIndex = 0;
-canvas.focus();
 
 let player = { x: 50, y: 300, width: 40, height: 20, speed: 5 };
 let buildings = [];
@@ -309,11 +308,12 @@ function startNewGame() {
 
 
   gameRunning = true;
+  canvas.focus();
   lastTime = performance.now();
 
   const actionButtons = document.querySelectorAll("#action-buttons");
   actionButtons.forEach((button) => {
-    button.classList.add("smaller-buttons"); // Apply smaller button class
+    button.classList.add("smaller-buttons");
   });
 
   requestAnimationFrame((t) => {
@@ -996,7 +996,7 @@ function bindPointerButton(id, onDown, onUp = onDown) {
   el.addEventListener("pointerleave", onUp);
 }
 
-bindPointerButton("new-game-btn", () => {
+document.getElementById("new-game-btn").addEventListener("click", () => {
   document.getElementById("intro-screen").style.display = "none";
   document.getElementById("game-container").style.display = "block";
   document.getElementById("touch-controls").style.display = "grid";
