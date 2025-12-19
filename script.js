@@ -290,7 +290,6 @@ function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
-  startingGame = true;
 
   score = 0;
   generateRoads();
@@ -314,7 +313,11 @@ function startNewGame() {
     button.classList.add("smaller-buttons"); // Apply smaller button class
   });
 
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame((t) => {
+    lastTime = t;
+    startingGame = false;
+    gameLoop(t);
+  });
 }
 
 function renderRoadsOffscreen() {
