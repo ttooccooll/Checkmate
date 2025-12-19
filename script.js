@@ -238,9 +238,6 @@ document.addEventListener("keydown", (e) => {
       break;
   }
 
-  if (!gameRunning && e.key === "Enter") {
-    startNewGame();
-  }
 });
 
 document.addEventListener("keyup", (e) => {
