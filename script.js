@@ -25,8 +25,14 @@ class RoadSegment {
 }
 const roadTexture = new Image();
 roadTexture.src = "./assets/road.jpg";
+
 const grassTexture = new Image();
 grassTexture.src = "./assets/fyn2.jpg";
+const grassCanvas = document.createElement("canvas");
+grassCanvas.width = WORLD_WIDTH;
+grassCanvas.height = WORLD_HEIGHT;
+const grassCtx = grassCanvas.getContext("2d");
+
 const buildingImages = [
   "./assets/house.png",
   "./assets/house2.png",
@@ -140,12 +146,6 @@ let invulnerableTimer = 0;
 const INVULNERABLE_DURATION = 80;
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
-
-// Offscreen rendering for grass
-const grassCanvas = document.createElement("canvas");
-grassCanvas.width = WORLD_WIDTH;
-grassCanvas.height = WORLD_HEIGHT;
-const grassCtx = grassCanvas.getContext("2d");
 
 function renderGrassOffscreen() {
   const pattern = grassCtx.createPattern(grassTexture, "repeat");
@@ -919,10 +919,6 @@ function findSafeSpawn() {
   return freePoints[Math.floor(Math.random() * freePoints.length)];
 }
 
-const spawn = findSafeSpawn();
-player.x = spawn.x;
-player.y = spawn.y;
-
 function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
   deltaTime = Math.min(deltaTime, 5);
@@ -1053,6 +1049,10 @@ document.getElementById("new-game-btn").addEventListener("click", startNewGame);
 document.getElementById("helmet-btn").addEventListener("click", () => makePayment(50));
 document.getElementById("speed-boost-btn").addEventListener("click", () => makePayment(50));
 document.getElementById("off-road-treads-btn").addEventListener("click", () => makePayment(75));
+
+const introScreen = document.getElementById("intro-screen");
+const gameContainer = document.getElementById("game-container");
+const actionButtons = document.getElementById("action-buttons");
 
 introScreen.style.display = "none";
 gameContainer.style.display = "block";
