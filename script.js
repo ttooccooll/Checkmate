@@ -56,6 +56,14 @@ treeCanvas.height = WORLD_HEIGHT;
 const treeCtx = treeCanvas.getContext("2d");
 treeCtx.imageSmoothingEnabled = false;
 
+let texturesReady = false;
+
+grassTexture.onload = roadTexture.onload = () => {
+  renderGrassOffscreen();
+  renderRoadsOffscreen();
+  texturesReady = true;
+};
+
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
@@ -291,7 +299,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 function startNewGame() {
-  if (!grassRendered || !roadTexture.complete) {
+  if (!texturesReady) {
     showMessage("Loading textures…", 1000);
     return;
   }
@@ -1048,3 +1056,11 @@ bindPointerButton("off-road-treads-btn",
   () => buyUpgrade("offRoadTreads", 75),
   () => {}
 );
+
+document.getElementById("helmet-btn").addEventListener("click", () => makePayment(50));
+document.getElementById("speed-boost-btn").addEventListener("click", () => makePayment(50));
+document.getElementById("off-road-treads-btn").addEventListener("click", () => makePayment(75));
+
+introScreen.style.display = "none";
+gameContainer.style.display = "block";
+actionButtons.style.display = "flex";
