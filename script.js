@@ -1,6 +1,8 @@
 import * as payments from "./payments.js";
 
 let startingGame = false;
+let usingDragControls = false;
+
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
@@ -157,11 +159,13 @@ canvas.addEventListener("pointerdown", (e) => {
   if (!gameRunning) return;
 
   touchMove.active = true;
+  touchMove.active = true;
   touchMove.startX = e.clientX;
   touchMove.startY = e.clientY;
   touchMove.dx = 0;
   touchMove.dy = 0;
 
+  resetTouchKeys();
   canvas.setPointerCapture(e.pointerId);
 });
 
@@ -174,6 +178,7 @@ canvas.addEventListener("pointermove", (e) => {
 
 canvas.addEventListener("pointerup", (e) => {
   touchMove.active = false;
+  usingDragControls = false;
   resetTouchKeys();
   canvas.releasePointerCapture(e.pointerId);
 });
@@ -188,15 +193,6 @@ function resetTouchKeys() {
   keys.ArrowDown = false;
   keys.ArrowLeft = false;
   keys.ArrowRight = false;
-}
-
-if (touchMove.active) {
-  const DEADZONE = 15;
-
-  keys.ArrowUp = touchMove.dy < -DEADZONE;
-  keys.ArrowDown = touchMove.dy > DEADZONE;
-  keys.ArrowLeft = touchMove.dx < -DEADZONE;
-  keys.ArrowRight = touchMove.dx > DEADZONE;
 }
 
 function renderGrassOffscreen() {
@@ -629,14 +625,19 @@ function generateTrees(count) {
 }
 
 function generateCoins(count) {
-  let arr = [];
-  for (let i = 0; i < count; i++) {
-    arr.push({
-      x: Math.random() * (WORLD_WIDTH - 20),
-      y: Math.random() * (WORLD_HEIGHT - 20),
-      size: 20,
-    });
+  const arr = [];
+  let attempts = 0;
+
+  while (arr.length < count && attempts < count * 20) {
+    const x = Math.random() * (WORLD_WIDTH - 20);
+    const y = Math.random() * (WORLD_HEIGHT - 20);
+
+    if (!isCollidingWithObstacles(x, y, 20, 20)) {
+      arr.push({ x, y, size: 20 });
+    }
+    attempts++;
   }
+
   return arr;
 }
 
@@ -661,6 +662,15 @@ function showMessage(text, duration = 2000) {
 
 function update(deltaTime = 1) {
   if (!gameRunning) return;
+
+  if (touchMove.active) {
+    const DEADZONE = 15;
+
+    keys.ArrowUp = touchMove.dy < -DEADZONE;
+    keys.ArrowDown = touchMove.dy > DEADZONE;
+    keys.ArrowLeft = touchMove.dx < -DEADZONE;
+    keys.ArrowRight = touchMove.dx > DEADZONE;
+  }
 
   let baseSpeed = player.speed + (upgrades.speedBoost ? 3 : 0);
 
@@ -961,7 +971,17 @@ function findSafeSpawn(maxAttempts = 500) {
     const x = Math.random() * (WORLD_WIDTH - player.width);
     const y = Math.random() * (WORLD_HEIGHT - player.height);
 
-    if (!isCollidingWithObstacles(x, y, player.width, player.height)) {
+    // Slight padding around player
+    const pad = 5;
+
+    if (
+      !isCollidingWithObstacles(
+        x - pad,
+        y - pad,
+        player.width + pad * 2,
+        player.height + pad * 2
+      )
+    ) {
       return { x, y };
     }
   }
@@ -969,6 +989,7 @@ function findSafeSpawn(maxAttempts = 500) {
   console.warn("No free spawn points after random attempts! Using default.");
   return { x: 50, y: 300 };
 }
+
 
 function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
@@ -1061,25 +1082,25 @@ document.getElementById("new-game-btn").addEventListener("click", () => {
 
 bindPointerButton(
   "up-btn",
-  () => (keys.ArrowUp = true),
+  () => { if (!usingDragControls) keys.ArrowUp = true; },
   () => (keys.ArrowUp = false)
 );
 
 bindPointerButton(
   "down-btn",
-  () => (keys.ArrowDown = true),
+  () => { if (!usingDragControls) keys.ArrowDown = true; },
   () => (keys.ArrowDown = false)
 );
 
 bindPointerButton(
   "left-btn",
-  () => (keys.ArrowLeft = true),
+  () => { if (!usingDragControls) keys.ArrowLeft = true; },
   () => (keys.ArrowLeft = false)
 );
 
 bindPointerButton(
   "right-btn",
-  () => (keys.ArrowRight = true),
+  () => { if (!usingDragControls) keys.ArrowRight = true; },
   () => (keys.ArrowRight = false)
 );
 

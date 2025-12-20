@@ -65,6 +65,7 @@ button {
     margin: 0;
     border: 2px solid #317264;
     outline: none;
+    touch-action: none;
 }
 
 #touch-controls {
