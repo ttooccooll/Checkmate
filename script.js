@@ -17,7 +17,6 @@ const roadCanvas = document.createElement("canvas");
 roadCanvas.width = WORLD_WIDTH;
 roadCanvas.height = WORLD_HEIGHT;
 const roadCtx = roadCanvas.getContext("2d");
-let scale = 1;
 class RoadSegment {
   constructor(x, y, width, height) {
     this.x = x;
@@ -140,9 +139,6 @@ function isCollidingWithObstacles(x, y, width, height) {
 function resizeCanvas() {
   const availableWidth = window.innerWidth;
   const availableHeight = window.innerHeight;
-  const scaleX = availableWidth / GAME_WIDTH;
-  const scaleY = availableHeight / GAME_HEIGHT;
-  scale = Math.min(scaleX, scaleY);
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -193,14 +189,6 @@ function resetTouchKeys() {
   keys.ArrowDown = false;
   keys.ArrowLeft = false;
   keys.ArrowRight = false;
-}
-
-function renderGrassOffscreen() {
-  const pattern = grassCtx.createPattern(grassTexture, "repeat");
-  if (pattern) {
-    grassCtx.fillStyle = pattern;
-    grassCtx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-  }
 }
 
 // Only render the grass once when the texture is loaded
@@ -524,8 +512,6 @@ function generateBuildings(count) {
   let arr = [];
   let attempts = 0;
 
-  const roofTypes = ["flat", "chimney", "vent"];
-
   while (arr.length < count && attempts < count * 30) {
     let img = buildingImages[Math.floor(Math.random() * buildingImages.length)];
 
@@ -569,8 +555,6 @@ function generateBuildings(count) {
         y,
         width,
         height,
-        roofType: roofTypes[Math.floor(Math.random() * roofTypes.length)],
-        roofColor: "#3e3e3eff",
         img,
         rotated: rotate90,
       });
@@ -922,9 +906,6 @@ function draw() {
         ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
       }
       ctx.restore();
-    } else {
-      ctx.fillStyle = b.roofColor;
-      ctx.fillRect(b.x, b.y, b.width, b.height);
     }
   });
 
