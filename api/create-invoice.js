@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       input: {
         amount: parseInt(amount),
         walletId: process.env.BLINK_WALLET_ID,
-        memo: memo || "Checkers Game Payment",
+        memo: memo || "Checkmate Game Payment",
         externalId: invoiceId
       }
     };
