@@ -88,6 +88,7 @@ button {
     font-size: 22px;
     border-radius: 14px;
     transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
+    opacity: 0.75;
 }
 
 #touch-controls button:active {
