@@ -181,6 +181,7 @@ canvas.addEventListener("pointerup", (e) => {
 
 canvas.addEventListener("pointercancel", () => {
   touchMove.active = false;
+  usingDragControls = false;
   resetTouchKeys();
 });
 
@@ -751,6 +752,9 @@ function update(deltaTime = 1) {
   if (invulnerableTimer > 0) {
     invulnerableTimer--;
   }
+    if (flashTimer > 0) {
+    flashTimer--;
+  }
 }
 
 function endGame() {
@@ -920,11 +924,9 @@ function draw() {
 
   ctx.restore(); // undo camera translation
 
-  // --- Flash effect ---
   if (flashTimer > 0) {
     ctx.fillStyle = `rgba(255,0,0,${0.4 * (flashTimer / FLASH_DURATION)})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    flashTimer--;
   }
 
   // --- HUD ---
