@@ -78,6 +78,13 @@ button {
     grid-template-rows: repeat(3, 60px);
     gap: 8px;
     z-index: 10;
+    user-select: none;   /* Prevents text selection */
+    -webkit-user-select: none; /* For Safari */
+    -ms-user-select: none; /* For Internet Explorer/Edge */
+}
+
+#touch-controls button:focus {
+    outline: none;
 }
 
 #touch-controls button {
