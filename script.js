@@ -158,7 +158,7 @@ canvas.tabIndex = 0;
 canvas.addEventListener("pointerdown", (e) => {
   if (!gameRunning) return;
 
-  touchMove.active = true;
+  usingDragControls = true;
   touchMove.active = true;
   touchMove.startX = e.clientX;
   touchMove.startY = e.clientY;
