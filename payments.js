@@ -1,3 +1,5 @@
+let cancelQRPayment = false;
+
 export async function generateInvoice(amountSats, memo = "Motorcycle Game Payment") {
   try {
     const resp = await fetch("/api/create-invoice", {
@@ -66,20 +68,22 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
     const invoice = data.paymentRequest;
     const paymentHash = data.paymentHash;
 
+    const container = document.getElementById("qr-container");
     const canvas = document.getElementById("qr-code");
-    if (!canvas) throw new Error("QR canvas element not found");
-    const ctx = canvas.getContext("2d");
+    const invoiceText = document.getElementById("invoice-text");
+
+    cancelQRPayment = false;
+
     canvas.width = 200;
     canvas.height = 200;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     await QRCode.toCanvas(canvas, invoice, { width: 200 });
-    
-    canvas.classList.add("visible");
+
+    invoiceText.textContent = invoice;
+    container.classList.add("visible");
 
     const paid = await waitForPayment(paymentHash);
 
-    canvas.classList.remove("visible");
+    container.classList.remove("visible");
     return paid;
 
   } catch (err) {
@@ -93,6 +97,11 @@ export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
     const start = Date.now();
 
     const interval = setInterval(async () => {
+      if (cancelQRPayment) {
+        clearInterval(interval);
+        resolve(false);
+        return;
+      }
       if (Date.now() - start > timeout) {
         clearInterval(interval);
         resolve(false);
@@ -136,3 +145,14 @@ export async function makePayment(amountSats, memo = "Motorcycle Game Payment") 
     return false;
   }
 }
+
+document.getElementById("cancel-payment-btn").addEventListener("click", () => {
+  cancelQRPayment = true;
+  document.getElementById("qr-container").classList.remove("visible");
+});
+
+document.getElementById("copy-invoice-btn").addEventListener("click", async () => {
+  const text = document.getElementById("invoice-text").textContent;
+  await navigator.clipboard.writeText(text);
+  alert("Invoice copied!");
+});
