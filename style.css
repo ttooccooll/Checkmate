@@ -21,9 +21,15 @@ button {
 }
 
 #intro-screen {
+    display: flex;                  /* enable flex */
+    flex-direction: column;         /* stack h1 + image */
+    justify-content: center;        /* vertical center */
+    align-items: center;            /* horizontal center */
     padding: 20px;
     box-sizing: border-box;
     height: 100vh;
+    text-align: center;
+    margin-top: 50%;
 }
 
 #intro-screen h1 {
