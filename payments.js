@@ -74,9 +74,14 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     await QRCode.toCanvas(canvas, invoice, { width: 200 });
+    
     canvas.classList.add("visible");
 
-    return waitForPayment(paymentHash);
+    const paid = await waitForPayment(paymentHash);
+
+    canvas.classList.remove("visible");
+    return paid;
+
   } catch (err) {
     console.error("QR payment failed:", err);
     return false;
