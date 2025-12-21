@@ -117,6 +117,7 @@ export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
         const data = await resp.json();
         if (data.paid) {
           clearInterval(interval);
+          cancelQRPayment = true;
           resolve(true);
         }
       } catch (err) {
@@ -146,13 +147,18 @@ export async function makePayment(amountSats, memo = "Motorcycle Game Payment") 
   }
 }
 
-document.getElementById("cancel-payment-btn").addEventListener("click", () => {
-  cancelQRPayment = true;
-  document.getElementById("qr-container").classList.remove("visible");
-});
+const cancelBtn = document.getElementById("cancel-payment-btn");
+if (cancelBtn) {
+  cancelBtn.addEventListener("click", () => {
+    cancelQRPayment = true;
+    document.getElementById("qr-container")?.classList.remove("visible");
+  });
+}
 
-document.getElementById("copy-invoice-btn").addEventListener("click", async () => {
-  const text = document.getElementById("invoice-text").textContent;
-  await navigator.clipboard.writeText(text);
-  alert("Invoice copied!");
-});
+const copyBtn = document.getElementById("copy-invoice-btn");
+if (copyBtn) {
+  copyBtn.addEventListener("click", async () => {
+    const text = document.getElementById("invoice-text")?.textContent;
+    if (text) await navigator.clipboard.writeText(text);
+  });
+}
