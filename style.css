@@ -203,7 +203,6 @@ button {
     box-shadow: 0 1px 0 #317264, 0 4px 6px rgba(0,0,0,0.2);
 }
 
-/* QR Container */
 #qr-container {
     position: fixed;
     top: 50%;
@@ -217,7 +216,8 @@ button {
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 
     display: none;
-    width: 260px;
+    width: 90vw; /* max width for mobile */
+    max-width: 300px; /* limit on larger screens */
     text-align: center;
     user-select: none;
 }
@@ -227,16 +227,12 @@ button {
     display: block;
 }
 
-/* QR Code canvas */
 #qr-code {
-    width: 200px;
-    height: 200px;
-    background: white;
-    padding: 10px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    width: 80%;
+    max-width: 220px;
+    height: auto; /* keeps aspect ratio */
+    margin: 0 auto 10px auto;
     display: block;
-    margin: 0 auto 10px auto; /* center & add space below */
 }
 
 /* Invoice text below QR code */

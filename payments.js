@@ -74,9 +74,11 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
 
     cancelQRPayment = false;
 
-    canvas.width = 200;
-    canvas.height = 200;
-    await QRCode.toCanvas(canvas, invoice, { width: 200 });
+    const canvasSize = Math.min(container.clientWidth * 0.8, 220);
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+
+    await QRCode.toCanvas(canvas, invoice, { width: canvasSize });
 
     invoiceText.textContent = invoice;
     container.classList.add("visible");
