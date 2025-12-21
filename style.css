@@ -20,19 +20,20 @@ button {
   touch-action: none;
 }
 
-/* Style for the intro screen */
 #intro-screen {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
     height: 100vh;
-    background: linear-gradient(160deg, #5fb3ff, #cfefff);
-    text-align: center;
+}
+
+#intro-screen h1 {
+    font-size: 2em; /* slightly smaller */
+    margin: 10px 0;
 }
 
 #intro-image {
-    width: 300px; /* Adjust this as needed */
+    width: 80%;       /* responsive width */
+    max-width: 250px; /* don't go too big on large screens */
     height: auto;
     margin-top: 20px;
 }
@@ -278,6 +279,15 @@ button {
         max-height: 90vh;
         overflow-y: auto;
         padding: 12px 10px;
+    }
+}
+
+@media (max-width: 400px) {
+    #intro-screen h1 {
+        font-size: 1.6em;
+    }
+    #intro-image {
+        max-width: 180px;
     }
 }
 
