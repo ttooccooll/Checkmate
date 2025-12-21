@@ -645,6 +645,19 @@ function showMessage(text, duration = 2000) {
   }, duration);
 }
 
+function updateTouchControlsVisibility() {
+  if (usingDragControls || Object.values(keys).some(k => k)) {
+    // Player is using drag or keyboard → hide buttons
+    touchControls.style.opacity = 0;
+    touchControls.style.pointerEvents = "none"; // prevent accidental taps
+  } else {
+    // No keyboard/drag input → show buttons
+    touchControls.style.opacity = 1;
+    touchControls.style.pointerEvents = "auto";
+  }
+}
+
+
 function update(deltaTime = 1) {
   if (!gameRunning) return;
 
@@ -755,6 +768,7 @@ function update(deltaTime = 1) {
     if (flashTimer > 0) {
     flashTimer--;
   }
+  updateTouchControlsVisibility();
 }
 
 function endGame() {

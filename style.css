@@ -81,6 +81,7 @@ button {
     user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+    transition: opacity 0.3s ease;
 }
 
 #touch-controls button:focus {
