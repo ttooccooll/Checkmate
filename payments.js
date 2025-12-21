@@ -74,6 +74,7 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     await QRCode.toCanvas(canvas, invoice, { width: 200 });
+    canvas.classList.add("visible");
 
     return waitForPayment(paymentHash);
   } catch (err) {
