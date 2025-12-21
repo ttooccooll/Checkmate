@@ -271,7 +271,6 @@ button {
     background: linear-gradient(145deg, #317264, #48a385);
 }
 
-/* Optional: make QR container slightly scrollable on very small screens */
 @media (max-height: 500px) {
     #qr-container {
         top: 40%;

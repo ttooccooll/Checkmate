@@ -56,50 +56,66 @@ async function renderQR(invoice) {
 }
 
 export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
+  try {
+    const resp = await fetch("/api/create-invoice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({ amount: amountSats, memo }),
+    });
+
+    const text = await resp.text();
+    let data;
     try {
-        const resp = await fetch("/api/create-invoice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-            body: JSON.stringify({ amount: amountSats, memo }),
-        });
-
-        const data = await resp.json();
-        if (!resp.ok || !data.paymentRequest || !data.paymentHash) {
-            console.error("Invalid QR invoice data:", data);
-            return false;
-        }
-
-        const invoice = data.paymentRequest;
-        const paymentHash = data.paymentHash;
-
-        const container = document.getElementById("qr-container");
-        const invoiceText = document.getElementById("invoice-text");
-
-        cancelQRPayment = false;
-
-        invoiceText.textContent = invoice;
-        container.classList.add("visible");
-
-        // Initial QR render
-        await renderQR(invoice);
-
-        // Re-render on window resize (responsive)
-        const resizeObserver = new ResizeObserver(() => renderQR(invoice));
-        resizeObserver.observe(container);
-
-        const paid = await waitForPayment(paymentHash);
-
-        // Clean up
-        container.classList.remove("visible");
-        resizeObserver.disconnect();
-
-        return paid;
-
+      data = JSON.parse(text);
     } catch (err) {
-        console.error("QR payment failed:", err);
-        return false;
+      console.error("Failed to parse QR invoice JSON:", text, err);
+      return false;
     }
+
+    if (!resp.ok || !data.paymentRequest || !data.paymentHash) {
+      console.error("Invalid QR invoice data:", data);
+      return false;
+    }
+
+    const invoice = data.paymentRequest;
+    const paymentHash = data.paymentHash;
+
+    const container = document.getElementById("qr-container");
+    const canvas = document.getElementById("qr-code");
+    const invoiceText = document.getElementById("invoice-text");
+
+    cancelQRPayment = false;
+
+    // Calculate available height for the QR code
+    const containerStyle = getComputedStyle(container);
+    const containerHeight = container.clientHeight 
+                            - parseFloat(containerStyle.paddingTop)
+                            - parseFloat(containerStyle.paddingBottom);
+
+    const textHeight = invoiceText.offsetHeight;
+    const buttonsHeight = document.querySelector(".qr-buttons").offsetHeight;
+    const availableHeight = containerHeight - textHeight - buttonsHeight - 24; // 24px extra margin
+
+    // Set canvas size (square)
+    const canvasSize = Math.min(container.clientWidth * 0.8, availableHeight);
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
+
+    await QRCode.toCanvas(canvas, invoice, { width: canvasSize });
+
+    invoiceText.textContent = invoice;
+    container.classList.add("visible");
+
+    const paid = await waitForPayment(paymentHash);
+
+    container.classList.remove("visible");
+    return paid;
+
+  } catch (err) {
+    console.error("QR payment failed:", err);
+    return false;
+  }
 }
 
 export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
