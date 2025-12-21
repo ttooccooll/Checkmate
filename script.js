@@ -646,17 +646,16 @@ function showMessage(text, duration = 2000) {
 }
 
 function updateTouchControlsVisibility() {
-  if (usingDragControls || Object.values(keys).some(k => k)) {
-    // Player is using drag or keyboard → hide buttons
+  if (usingDragControls) {
+    // Player is using drag → hide touch buttons
     touchControls.style.opacity = 0;
-    touchControls.style.pointerEvents = "none"; // prevent accidental taps
+    touchControls.style.pointerEvents = "none";
   } else {
-    // No keyboard/drag input → show buttons
+    // Player is using touch buttons → show them
     touchControls.style.opacity = 1;
     touchControls.style.pointerEvents = "auto";
   }
 }
-
 
 function update(deltaTime = 1) {
   if (!gameRunning) return;
