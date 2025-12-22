@@ -1038,7 +1038,7 @@ function handleCrash() {
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     invulnerableTimer = INVULNERABLE_DURATION;
     flashTimer = FLASH_DURATION;
-    showMessage("⚡ Speed Boost burned out!");
+    endGame();
     return;
   }
 
