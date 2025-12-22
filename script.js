@@ -683,7 +683,7 @@ function update(deltaTime = 1) {
         offRoadTimer = 0;
       }
     } else {
-      baseSpeed *= 0.6; // 🔥 slow down off-road without treads
+      baseSpeed *= 0.5; // slow down off-road without treads
     }
   } else {
     offRoadTimer = Math.max(0, offRoadTimer - 2);
