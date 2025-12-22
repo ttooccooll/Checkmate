@@ -20,6 +20,10 @@ button {
   touch-action: none;
 }
 
+canvas {
+  touch-action: none;
+}
+
 #intro-screen {
     display: flex;
     flex-direction: column;
