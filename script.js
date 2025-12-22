@@ -6,7 +6,7 @@ let speedStress = 0;
 let offRoadTimer = 0;
 const OFFROAD_MAX = 900; // ~15 seconds
 let dustParticles = [];
-const COLLISION_PADDING = 6;
+
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
@@ -1056,15 +1056,14 @@ function gameLoop(timestamp) {
   if (gameRunning || flashTimer > 0) requestAnimationFrame(gameLoop);
 }
 
-rectCollision(
-  {
-    x: player.x + COLLISION_PADDING,
-    y: player.y + COLLISION_PADDING,
-    width: player.width - COLLISION_PADDING * 2,
-    height: player.height - COLLISION_PADDING * 2,
-  },
-  b
-)
+function rectCollision(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
 
 function handleCrash() {
   if (upgrades.helmet) {
