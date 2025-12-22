@@ -21,10 +21,10 @@ button {
 }
 
 #intro-screen {
-    display: flex;                  /* enable flex */
-    flex-direction: column;         /* stack h1 + image */
-    justify-content: center;        /* vertical center */
-    align-items: center;            /* horizontal center */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
     box-sizing: border-box;
     height: 100vh;
@@ -33,13 +33,13 @@ button {
 }
 
 #intro-screen h1 {
-    font-size: 2em; /* slightly smaller */
+    font-size: 2em;
     margin: 10px 0;
 }
 
 #intro-image {
-    width: 80%;       /* responsive width */
-    max-width: 250px; /* don't go too big on large screens */
+    width: 80%;
+    max-width: 250px;
     height: auto;
     margin-top: 20px;
 }
