@@ -787,21 +787,11 @@ function update(deltaTime = 1) {
   if (flashTimer > 0) {
     flashTimer--;
   }
-  // --- Dust ---
-  dustParticles.forEach((p) => {
-    const alpha = Math.max(0, p.life / 60);
-
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.35; // more transparent
-    ctx.fillStyle = "#9b8a63"; // softer dusty color
-    ctx.shadowColor = "#9b8a63";
-    ctx.shadowBlur = 8; // blur amount
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+  
+    dustParticles.forEach((p) => {
+    p.x += p.vx * deltaTime;
+    p.y += p.vy * deltaTime;
+    p.life -= deltaTime;
   });
 
   dustParticles = dustParticles.filter((p) => p.life > 0);
@@ -892,13 +882,21 @@ function draw() {
     canvas.height
   );
 
-  // --- Dust ---
+  // --- Dust (soft + transparent) ---
   dustParticles.forEach((p) => {
-    const alpha = Math.max(0, p.life / 40);
-    ctx.fillStyle = `rgba(150, 130, 90, ${alpha})`;
+    const alpha = Math.max(0, p.life / 60);
+
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.25; // more transparent
+    ctx.fillStyle = "#9b8a63";
+    ctx.shadowColor = "#9b8a63";
+    ctx.shadowBlur = 10; // softer blur
+
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.restore();
   });
 
   // --- Player (Delivery Motorcycle) ---
