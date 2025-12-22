@@ -75,7 +75,6 @@ const touchMove = {
   dy: 0,
 };
 
-
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
@@ -348,7 +347,6 @@ function startNewGame() {
   const spawn = findSafeSpawn();
   player.x = spawn.x;
   player.y = spawn.y;
-
 
   gameRunning = true;
   canvas.focus();
@@ -675,9 +673,7 @@ function update(deltaTime = 1) {
   let baseSpeed = player.speed + (upgrades.speedBoost ? 3 : 0);
 
   // Reduce speed if off-road
-  if (
-    !isOnRoad(player.x, player.y, player.width, player.height)
-  ) {
+  if (!isOnRoad(player.x, player.y, player.width, player.height)) {
     if (upgrades.offRoadTreads) {
       offRoadTimer++;
       if (offRoadTimer > OFFROAD_MAX) {
@@ -686,6 +682,8 @@ function update(deltaTime = 1) {
         showMessage("🛞 Off-Road Treads worn out!");
         offRoadTimer = 0;
       }
+    } else {
+      baseSpeed *= 0.6; // 🔥 slow down off-road without treads
     }
   } else {
     offRoadTimer = Math.max(0, offRoadTimer - 2);
@@ -782,7 +780,7 @@ function update(deltaTime = 1) {
   if (invulnerableTimer > 0) {
     invulnerableTimer--;
   }
-    if (flashTimer > 0) {
+  if (flashTimer > 0) {
     flashTimer--;
   }
   updateTouchControlsVisibility();
@@ -1004,7 +1002,6 @@ function findSafeSpawn(maxAttempts = 500) {
   return { x: 50, y: 300 };
 }
 
-
 function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
   deltaTime = Math.min(deltaTime, 5);
@@ -1110,25 +1107,33 @@ document.getElementById("new-game-btn").addEventListener("click", () => {
 
 bindPointerButton(
   "up-btn",
-  () => { if (!usingDragControls) keys.ArrowUp = true; },
+  () => {
+    if (!usingDragControls) keys.ArrowUp = true;
+  },
   () => (keys.ArrowUp = false)
 );
 
 bindPointerButton(
   "down-btn",
-  () => { if (!usingDragControls) keys.ArrowDown = true; },
+  () => {
+    if (!usingDragControls) keys.ArrowDown = true;
+  },
   () => (keys.ArrowDown = false)
 );
 
 bindPointerButton(
   "left-btn",
-  () => { if (!usingDragControls) keys.ArrowLeft = true; },
+  () => {
+    if (!usingDragControls) keys.ArrowLeft = true;
+  },
   () => (keys.ArrowLeft = false)
 );
 
 bindPointerButton(
   "right-btn",
-  () => { if (!usingDragControls) keys.ArrowRight = true; },
+  () => {
+    if (!usingDragControls) keys.ArrowRight = true;
+  },
   () => (keys.ArrowRight = false)
 );
 
