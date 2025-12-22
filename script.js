@@ -1023,7 +1023,6 @@ function rectCollision(a, b) {
 }
 
 function handleCrash() {
-  speedStress = 0;
   if (upgrades.helmet) {
     upgrades.helmet = false;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
@@ -1035,6 +1034,7 @@ function handleCrash() {
 
   if (upgrades.speedBoost && speedStress > 60) {
     upgrades.speedBoost = false;
+    speedStress = 0; 
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     invulnerableTimer = INVULNERABLE_DURATION;
     flashTimer = FLASH_DURATION;
