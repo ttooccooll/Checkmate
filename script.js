@@ -751,19 +751,20 @@ function update(deltaTime = 1) {
   player.y = Math.max(0, Math.min(WORLD_HEIGHT - player.height, player.y));
 
   if (invulnerableTimer === 0) {
+    const hitbox = getPlayerHitbox();
     for (let b of buildings) {
-      const hitbox = getPlayerHitbox();
-      if (circleRectCollision(t, hitbox)) {
+      if (rectCollision(hitbox, b)) {
         handleCrash();
         return;
       }
     }
   }
 
+
   if (invulnerableTimer === 0) {
     for (let t of trees) {
       if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
-      if (circleRectCollision(t, player)) {
+      if (circleRectCollision(t, getPlayerHitbox())) {
         handleCrash();
         return;
       }
