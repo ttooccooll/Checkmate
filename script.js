@@ -598,7 +598,7 @@ function generateTrees(count) {
         img,
         cx: x + size,
         cy: y + size,
-        radius: size * COLLISION_FACTOR,
+        radius: size * 0.30,
       });
     }
     attempts++;
