@@ -4,7 +4,7 @@ let startingGame = false;
 let usingDragControls = false;
 let speedStress = 0;
 let offRoadTimer = 0;
-const OFFROAD_MAX = 900; // ~15 seconds
+const OFFROAD_MAX = 600; // ~10 seconds
 let dustParticles = [];
 
 const canvas = document.getElementById("game-board");
