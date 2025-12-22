@@ -787,7 +787,7 @@ function update(deltaTime = 1) {
   if (flashTimer > 0) {
     flashTimer--;
   }
-  
+
     dustParticles.forEach((p) => {
     p.x += p.vx * deltaTime;
     p.y += p.vy * deltaTime;
@@ -887,7 +887,7 @@ function draw() {
     const alpha = Math.max(0, p.life / 60);
 
     ctx.save();
-    ctx.globalAlpha = alpha * 0.25; // more transparent
+    ctx.globalAlpha = alpha * 0.15; // more transparent
     ctx.fillStyle = "#9b8a63";
     ctx.shadowColor = "#9b8a63";
     ctx.shadowBlur = 10; // softer blur
