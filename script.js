@@ -896,7 +896,7 @@ function draw() {
   // --- Player ---
   if (playerSpriteLoaded) {
     ctx.save();
-    ctx.shadowColor = "rgba(0, 0, 0, 2)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.shadowBlur = 25;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
