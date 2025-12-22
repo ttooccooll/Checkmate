@@ -1021,7 +1021,7 @@ function findSafeSpawn(maxAttempts = 500) {
     const x = Math.random() * (WORLD_WIDTH - player.width);
     const y = Math.random() * (WORLD_HEIGHT - player.height);
 
-    const pad = 5;
+    const pad = 15;
 
     if (
       !isCollidingWithObstacles(
