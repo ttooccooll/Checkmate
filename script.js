@@ -323,6 +323,18 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
+function getPlayerHitbox() {
+  const shrinkX = 10; // left/right forgiveness
+  const shrinkY = 14; // front/back forgiveness
+
+  return {
+    x: player.x + shrinkX,
+    y: player.y + shrinkY,
+    width: player.width - shrinkX * 2,
+    height: player.height - shrinkY * 2,
+  };
+}
+
 function startNewGame() {
   if (startingGame || gameRunning) return;
   if (!grassRendered || !roadTexture.complete) {
@@ -333,7 +345,7 @@ function startNewGame() {
   startingGame = true;
 
   score = 0;
-  invulnerableTimer = 40;
+  invulnerableTimer = 20;
   flashTimer = 0;
 
   generateRoads();
@@ -740,7 +752,8 @@ function update(deltaTime = 1) {
 
   if (invulnerableTimer === 0) {
     for (let b of buildings) {
-      if (rectCollision(player, b)) {
+      const hitbox = getPlayerHitbox();
+      if (circleRectCollision(t, hitbox)) {
         handleCrash();
         return;
       }
@@ -760,7 +773,7 @@ function update(deltaTime = 1) {
   // --- Coins ---
   coins = coins.filter((c) => {
     if (
-      rectCollision(player, { x: c.x, y: c.y, width: c.size, height: c.size })
+      rectCollision(getPlayerHitbox(), { x: c.x, y: c.y, width: c.size, height: c.size })
     ) {
       score++;
       return false;
