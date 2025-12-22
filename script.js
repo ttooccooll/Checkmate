@@ -698,7 +698,7 @@ function update(deltaTime = 1) {
       baseSpeed *= 0.5; // slow down off-road without treads
     }
   } else {
-    offRoadTimer = Math.max(0, offRoadTimer - 1);
+    offRoadTimer = Math.max(0, offRoadTimer - deltaTime);
   }
 
   if (upgrades.speedBoost && baseSpeed > player.speed) {
