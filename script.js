@@ -142,16 +142,10 @@ function isCollidingWithObstacles(x, y, width, height) {
 }
 
 function resizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-  canvas.width = Math.floor(window.innerWidth * dpr);
-  canvas.height = Math.floor(window.innerHeight * dpr);
-
-  canvas.style.width = `${window.innerWidth}px`;
-  canvas.style.height = `${window.innerHeight}px`;
-
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 }
+
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
