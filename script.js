@@ -140,7 +140,7 @@ function isCollidingWithObstacles(x, y, width, height) {
 }
 
 function resizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2
 
   canvas.width = Math.floor(window.innerWidth * dpr);
   canvas.height = Math.floor(window.innerHeight * dpr);
@@ -789,11 +789,11 @@ function update(deltaTime = 1) {
   }
   // --- Dust ---
   dustParticles.forEach((p) => {
-    const alpha = Math.pow(p.life / 60, 1.5);
+    const alpha = Math.max(0, p.life / 60);
 
     ctx.save();
-    ctx.globalAlpha = alpha * 0.15; // more transparent
-    ctx.fillStyle = "#b5a985";
+    ctx.globalAlpha = alpha * 0.35; // more transparent
+    ctx.fillStyle = "#9b8a63"; // softer dusty color
     ctx.shadowColor = "#9b8a63";
     ctx.shadowBlur = 8; // blur amount
 
