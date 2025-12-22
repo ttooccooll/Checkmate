@@ -666,11 +666,13 @@ function update(deltaTime = 1) {
 
   if (touchMove.active) {
     const DEADZONE = 15;
+    const dx = touchMove.dx;
+    const dy = touchMove.dy;
 
-    keys.ArrowUp = touchMove.dy < -DEADZONE;
-    keys.ArrowDown = touchMove.dy > DEADZONE;
-    keys.ArrowLeft = touchMove.dx < -DEADZONE;
-    keys.ArrowRight = touchMove.dx > DEADZONE;
+    keys.ArrowUp = dy < -DEADZONE;
+    keys.ArrowDown = dy > DEADZONE;
+    keys.ArrowLeft = dx < -DEADZONE;
+    keys.ArrowRight = dx > DEADZONE;
   }
 
   let baseSpeed = player.speed + (upgrades.speedBoost ? 3 : 0);
