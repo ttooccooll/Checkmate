@@ -4,7 +4,8 @@ let startingGame = false;
 let usingDragControls = false;
 let speedStress = 0;
 let offRoadTimer = 0;
-const OFFROAD_MAX = 1800; // ~30 seconds
+const OFFROAD_MAX = 900; // ~15 seconds
+let dustParticles = [];
 
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
@@ -674,6 +675,7 @@ function update(deltaTime = 1) {
 
   // Reduce speed if off-road
   if (!isOnRoad(player.x, player.y, player.width, player.height)) {
+    spawnDust();
     if (upgrades.offRoadTreads) {
       offRoadTimer++;
       if (offRoadTimer > OFFROAD_MAX) {
@@ -783,6 +785,15 @@ function update(deltaTime = 1) {
   if (flashTimer > 0) {
     flashTimer--;
   }
+  // --- Dust particles ---
+  dustParticles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+  });
+
+  dustParticles = dustParticles.filter(p => p.life > 0);
+
   updateTouchControlsVisibility();
 }
 
@@ -868,6 +879,15 @@ function draw() {
     canvas.width,
     canvas.height
   );
+
+  // --- Dust ---
+  dustParticles.forEach(p => {
+    const alpha = Math.max(0, p.life / 40);
+    ctx.fillStyle = `rgba(150, 130, 90, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
 
   // --- Player (Delivery Motorcycle) ---
   if (playerSpriteLoaded) {
@@ -976,6 +996,21 @@ function draw() {
       : "Upgrades: None";
 
   ctx.fillText(upgradeText, 10, 45);
+}
+
+function spawnDust() {
+  const count = 2 + Math.random() * 2;
+
+  for (let i = 0; i < count; i++) {
+    dustParticles.push({
+      x: player.x + player.width / 2 + (Math.random() * 6 - 3),
+      y: player.y + player.height / 2 + (Math.random() * 6 - 3),
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      life: 30 + Math.random() * 20,
+      size: 3 + Math.random() * 3,
+    });
+  }
 }
 
 function findSafeSpawn(maxAttempts = 500) {
