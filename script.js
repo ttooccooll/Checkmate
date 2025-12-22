@@ -333,7 +333,7 @@ function startNewGame() {
   startingGame = true;
 
   score = 0;
-  invulnerableTimer = 0;
+  invulnerableTimer = 40;
   flashTimer = 0;
 
   generateRoads();
