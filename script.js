@@ -187,10 +187,12 @@ canvas.addEventListener("pointercancel", () => {
 });
 
 function resetTouchKeys() {
-  keys.ArrowUp = false;
-  keys.ArrowDown = false;
-  keys.ArrowLeft = false;
-  keys.ArrowRight = false;
+  if (!touchMove.active) {
+    keys.ArrowUp = false;
+    keys.ArrowDown = false;
+    keys.ArrowLeft = false;
+    keys.ArrowRight = false;
+  }
 }
 
 let grassRendered = false;
@@ -359,7 +361,6 @@ function startNewGame() {
   player.y = spawn.y;
 
   gameRunning = true;
-  canvas.focus();
   lastTime = performance.now();
 
   const actionButtons = document.querySelectorAll("#action-buttons");
