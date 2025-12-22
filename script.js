@@ -77,10 +77,18 @@ const touchMove = {
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
-let playerWidth = 60;
-let playerHeight = 55;
 
-let player = { x: 50, y: 300, width: 40, height: 20, speed: 5 };
+const PLAYER_WIDTH = 60;
+const PLAYER_HEIGHT = 55;
+
+let player = {
+  x: 50,
+  y: 300,
+  width: PLAYER_WIDTH,
+  height: PLAYER_HEIGHT,
+  speed: 5,
+};
+
 let buildings = [];
 let trees = [];
 let coins = [];
@@ -905,10 +913,10 @@ function draw() {
     ctx.rotate((currentDirection * Math.PI) / 180);
     ctx.drawImage(
       playerSprite,
-      -playerWidth / 2,
-      -playerHeight / 2,
-      playerWidth,
-      playerHeight
+      -player.width / 2,
+      -player.height / 2,
+      player.width,
+      player.height
     );
     ctx.restore();
   } else {
@@ -1019,7 +1027,7 @@ function findSafeSpawn(maxAttempts = 500) {
     const x = Math.random() * (WORLD_WIDTH - player.width);
     const y = Math.random() * (WORLD_HEIGHT - player.height);
 
-    const pad = 5;
+    const pad = 15;
 
     if (
       !isCollidingWithObstacles(
