@@ -427,11 +427,11 @@ function renderRoadsOffscreen() {
                 0,
                 0,
                 tileWidth,
-                tileHeight, // source clipping
+                tileHeight,
                 x,
                 y,
                 tileWidth,
-                tileHeight // destination
+                tileHeight
               );
             }
           }
@@ -498,7 +498,6 @@ function renderRoadsOffscreen() {
 function isOnRoad(x, y, width, height) {
   return roads.some(
     (road) =>
-      // Expand the road dimensions by the buffer size
       x + width > road.x - ROAD_BUFFER &&
       x < road.x + road.width + ROAD_BUFFER &&
       y + height > road.y - ROAD_BUFFER &&
@@ -584,7 +583,7 @@ function generateTrees(count) {
 
   while (arr.length < count && attempts < count * 20) {
     let img = treeImages[Math.floor(Math.random() * treeImages.length)];
-    const size = 20 + Math.random() * 30; // radius: 20–50
+    const size = 30 + Math.random() * 30; // radius: 30–50
     const x = Math.random() * (WORLD_WIDTH - size * 2);
     const y = Math.random() * (WORLD_HEIGHT - size * 2);
 
