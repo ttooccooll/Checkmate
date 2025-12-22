@@ -2,6 +2,9 @@ import * as payments from "./payments.js";
 
 let startingGame = false;
 let usingDragControls = false;
+let speedStress = 0;
+let offRoadTimer = 0;
+const OFFROAD_MAX = 1800; // ~30 seconds
 
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
@@ -673,10 +676,25 @@ function update(deltaTime = 1) {
 
   // Reduce speed if off-road
   if (
-    !isOnRoad(player.x, player.y, player.width, player.height) &&
-    !upgrades.offRoadTreads
+    !isOnRoad(player.x, player.y, player.width, player.height)
   ) {
-    baseSpeed *= 0.5; // 50% of normal speed off-road
+    if (upgrades.offRoadTreads) {
+      offRoadTimer++;
+      if (offRoadTimer > OFFROAD_MAX) {
+        upgrades.offRoadTreads = false;
+        localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
+        showMessage("🛞 Off-Road Treads worn out!");
+        offRoadTimer = 0;
+      }
+    }
+  } else {
+    offRoadTimer = Math.max(0, offRoadTimer - 2);
+  }
+
+  if (upgrades.speedBoost && baseSpeed > player.speed) {
+    speedStress++;
+  } else {
+    speedStress = Math.max(0, speedStress - 1);
   }
 
   const speed = baseSpeed * deltaTime;
@@ -1008,14 +1026,22 @@ function rectCollision(a, b) {
 }
 
 function handleCrash() {
+  speedStress = 0;
   if (upgrades.helmet) {
     upgrades.helmet = false;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-
     invulnerableTimer = INVULNERABLE_DURATION;
     flashTimer = FLASH_DURATION;
-
     showMessage("🪖 Helmet destroyed!");
+    return;
+  }
+
+  if (upgrades.speedBoost && speedStress > 60) {
+    upgrades.speedBoost = false;
+    localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
+    invulnerableTimer = INVULNERABLE_DURATION;
+    flashTimer = FLASH_DURATION;
+    showMessage("⚡ Speed Boost burned out!");
     return;
   }
 
@@ -1042,7 +1068,13 @@ async function buyUpgrade(upgradeName, costSats) {
   if (success) {
     upgrades[upgradeName] = true;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-    showMessage(`⚡ ${upgradeName} unlocked!`);
+    const labels = {
+      helmet: "Helmet",
+      speedBoost: "Speed Boost",
+      offRoadTreads: "Off-Road Treads",
+    };
+
+    showMessage(`✔ ${labels[upgradeName]} unlocked!`);
   } else {
     showMessage(`❌ Payment failed`);
   }
