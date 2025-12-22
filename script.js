@@ -688,8 +688,8 @@ function update(deltaTime = 1) {
   if (!isOnRoad(player.x, player.y, player.width, player.height)) {
     spawnDust();
     if (upgrades.offRoadTreads) {
-      offRoadTimer++;
-      if (offRoadTimer > OFFROAD_MAX) {
+      offRoadTimer += deltaTime;
+        if (offRoadTimer >= OFFROAD_MAX) {
         upgrades.offRoadTreads = false;
         localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
         showMessage("🛞 Off-Road Treads worn out!");
