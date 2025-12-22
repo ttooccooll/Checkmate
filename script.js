@@ -785,14 +785,24 @@ function update(deltaTime = 1) {
   if (flashTimer > 0) {
     flashTimer--;
   }
-  // --- Dust particles ---
-  dustParticles.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life--;
+  // --- Dust ---
+  dustParticles.forEach((p) => {
+    const alpha = Math.pow(p.life / 60, 1.5);
+
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.35; // more transparent
+    ctx.fillStyle = "#b5a985";
+    ctx.shadowColor = "#9b8a63";
+    ctx.shadowBlur = 8; // blur amount
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   });
 
-  dustParticles = dustParticles.filter(p => p.life > 0);
+  dustParticles = dustParticles.filter((p) => p.life > 0);
 
   updateTouchControlsVisibility();
 }
@@ -881,7 +891,7 @@ function draw() {
   );
 
   // --- Dust ---
-  dustParticles.forEach(p => {
+  dustParticles.forEach((p) => {
     const alpha = Math.max(0, p.life / 40);
     ctx.fillStyle = `rgba(150, 130, 90, ${alpha})`;
     ctx.beginPath();
@@ -1007,8 +1017,8 @@ function spawnDust() {
       y: player.y + player.height / 2 + (Math.random() * 6 - 3),
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
-      life: 30 + Math.random() * 20,
-      size: 3 + Math.random() * 3,
+      size: 4 + Math.random() * 4,
+      life: 35 + Math.random() * 25,
     });
   }
 }
@@ -1069,7 +1079,7 @@ function handleCrash() {
 
   if (upgrades.speedBoost && speedStress > 60) {
     upgrades.speedBoost = false;
-    speedStress = 0; 
+    speedStress = 0;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     invulnerableTimer = INVULNERABLE_DURATION;
     flashTimer = FLASH_DURATION;
