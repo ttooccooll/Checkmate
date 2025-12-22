@@ -87,7 +87,6 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
 
     cancelQRPayment = false;
 
-    // Calculate available height for the QR code
     const containerStyle = getComputedStyle(container);
     const containerHeight = container.clientHeight 
                             - parseFloat(containerStyle.paddingTop)
@@ -95,9 +94,8 @@ export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
 
     const textHeight = invoiceText.offsetHeight;
     const buttonsHeight = document.querySelector(".qr-buttons").offsetHeight;
-    const availableHeight = containerHeight - textHeight - buttonsHeight - 24; // 24px extra margin
+    const availableHeight = containerHeight - textHeight - buttonsHeight - 24;
 
-    // Set canvas size (square)
     const canvasSize = Math.min(container.clientWidth * 0.8, availableHeight);
     canvas.width = canvasSize;
     canvas.height = canvasSize;

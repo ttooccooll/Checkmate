@@ -10,8 +10,6 @@ let dustParticles = [];
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 600;
 const WORLD_WIDTH = 3000;
 const WORLD_HEIGHT = 3000;
 const ROAD_HEIGHT = 100;
@@ -93,10 +91,8 @@ const INVULNERABLE_DURATION = 80;
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
-// Variable to store the current facing direction
 let currentDirection = 0;
 
-// Wait until the sprite is loaded
 playerSprite.onload = () => {
   playerSpriteLoaded = true;
   console.log("Player sprite loaded!");
@@ -105,7 +101,6 @@ playerSprite.onload = () => {
 function loadWorldTextures() {
   if (!grassTexture.complete || !roadTexture.complete) return;
 
-  // --- Grass offscreen ---
   const pattern = grassCtx.createPattern(grassTexture, "repeat");
   if (pattern) {
     grassCtx.fillStyle = pattern;
@@ -113,7 +108,6 @@ function loadWorldTextures() {
     grassRendered = true;
   }
 
-  // --- Roads offscreen ---
   if (roads.length > 0) renderRoadsOffscreen();
 }
 
@@ -140,7 +134,7 @@ function isCollidingWithObstacles(x, y, width, height) {
 }
 
 function resizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2); // cap at 2
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
   canvas.width = Math.floor(window.innerWidth * dpr);
   canvas.height = Math.floor(window.innerHeight * dpr);
@@ -197,7 +191,6 @@ function resetTouchKeys() {
   keys.ArrowRight = false;
 }
 
-// Only render the grass once when the texture is loaded
 let grassRendered = false;
 
 grassTexture.onload = () => {
@@ -889,10 +882,10 @@ function draw() {
     const alpha = Math.max(0, p.life / 60);
 
     ctx.save();
-    ctx.globalAlpha = alpha * 0.10; // more transparent
+    ctx.globalAlpha = alpha * 0.10;
     ctx.fillStyle = "#9b8a63";
     ctx.shadowColor = "#9b8a63";
-    ctx.shadowBlur = 10; // softer blur
+    ctx.shadowBlur = 10;
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -901,27 +894,25 @@ function draw() {
     ctx.restore();
   });
 
-  // --- Player (Delivery Motorcycle) ---
+  // --- Player ---
   if (playerSpriteLoaded) {
     ctx.save();
     ctx.shadowColor = "rgba(0, 0, 0, 2)";
-    ctx.shadowBlur = 25; // soft blur
+    ctx.shadowBlur = 25;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
 
     ctx.rotate((currentDirection * Math.PI) / 180);
-    // Determine direction based on key presses
     ctx.drawImage(
       playerSprite,
-      -playerWidth / 2, // Offset to center sprite
-      -playerHeight / 2, // Offset to center sprite
-      playerWidth, // Width of the player (resize sprite)
-      playerHeight // Height of the player (resize sprite)
+      -playerWidth / 2,
+      -playerHeight / 2,
+      playerWidth,
+      playerHeight
     );
     ctx.restore();
   } else {
-    // Fallback: If the sprite is not loaded yet, draw a simple rectangle
     ctx.fillStyle = "red";
     ctx.fillRect(player.x, player.y, player.width, player.height);
   }
@@ -942,11 +933,10 @@ function draw() {
   buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
 
-    // --- Draw soft shadow around all sides ---
     ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 1)"; // subtle shadow color
+    ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.shadowColor = "rgba(0, 0, 0, 3)";
-    ctx.shadowBlur = 25; // soft blur
+    ctx.shadowBlur = 25;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 
@@ -983,7 +973,7 @@ function draw() {
     ctx.fill();
   });
 
-  ctx.restore(); // undo camera translation
+  ctx.restore();
 
   if (flashTimer > 0) {
     ctx.fillStyle = `rgba(255,0,0,${0.4 * (flashTimer / FLASH_DURATION)})`;
@@ -1030,7 +1020,6 @@ function findSafeSpawn(maxAttempts = 500) {
     const x = Math.random() * (WORLD_WIDTH - player.width);
     const y = Math.random() * (WORLD_HEIGHT - player.height);
 
-    // Slight padding around player
     const pad = 5;
 
     if (
