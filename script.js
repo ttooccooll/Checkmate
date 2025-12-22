@@ -936,7 +936,7 @@ function draw() {
 
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
-    ctx.shadowColor = "rgba(0, 0, 0, 3)";
+    ctx.shadowColor = "rgba(0, 0, 0, .9)";
     ctx.shadowBlur = 25;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
