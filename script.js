@@ -790,10 +790,10 @@ function update(deltaTime = 1) {
     const alpha = Math.pow(p.life / 60, 1.5);
 
     ctx.save();
-    ctx.globalAlpha = alpha * 0.35; // more transparent
+    ctx.globalAlpha = alpha * 0.55; // more transparent
     ctx.fillStyle = "#b5a985";
     ctx.shadowColor = "#9b8a63";
-    ctx.shadowBlur = 8; // blur amount
+    ctx.shadowBlur = 9; // blur amount
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
