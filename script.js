@@ -146,7 +146,6 @@ function resizeCanvas() {
   canvas.height = window.innerHeight;
 }
 
-
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
@@ -611,7 +610,7 @@ function generateTrees(count) {
         img,
         cx: x + size,
         cy: y + size,
-        radius: size * 0.30,
+        radius: size * 0.3,
       });
     }
     attempts++;
@@ -689,7 +688,7 @@ function update(deltaTime = 1) {
     spawnDust();
     if (upgrades.offRoadTreads) {
       offRoadTimer += deltaTime;
-        if (offRoadTimer >= OFFROAD_MAX) {
+      if (offRoadTimer > OFFROAD_MAX) {
         upgrades.offRoadTreads = false;
         localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
         showMessage("🛞 Off-Road Treads worn out!");
@@ -761,7 +760,6 @@ function update(deltaTime = 1) {
     }
   }
 
-
   if (invulnerableTimer === 0) {
     for (let t of trees) {
       if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
@@ -775,7 +773,12 @@ function update(deltaTime = 1) {
   // --- Coins ---
   coins = coins.filter((c) => {
     if (
-      rectCollision(getPlayerHitbox(), { x: c.x, y: c.y, width: c.size, height: c.size })
+      rectCollision(getPlayerHitbox(), {
+        x: c.x,
+        y: c.y,
+        width: c.size,
+        height: c.size,
+      })
     ) {
       score++;
       return false;
@@ -799,7 +802,7 @@ function update(deltaTime = 1) {
     flashTimer--;
   }
 
-    dustParticles.forEach((p) => {
+  dustParticles.forEach((p) => {
     p.x += p.vx * deltaTime;
     p.y += p.vy * deltaTime;
     p.life -= deltaTime;
@@ -898,7 +901,7 @@ function draw() {
     const alpha = Math.max(0, p.life / 60);
 
     ctx.save();
-    ctx.globalAlpha = alpha * 0.10;
+    ctx.globalAlpha = alpha * 0.1;
     ctx.fillStyle = "#9b8a63";
     ctx.shadowColor = "#9b8a63";
     ctx.shadowBlur = 10;
