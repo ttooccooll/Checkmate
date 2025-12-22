@@ -1029,6 +1029,12 @@ function spawnDust() {
       life: 35 + Math.random() * 25,
     });
   }
+
+  // --- Cap the array length ---
+  const MAX_DUST = 100;
+  if (dustParticles.length > MAX_DUST) {
+    dustParticles.splice(0, dustParticles.length - MAX_DUST);
+  }
 }
 
 function findSafeSpawn(maxAttempts = 500) {
