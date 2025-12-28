@@ -2,7 +2,7 @@ let cancelQRPayment = false;
 
 export async function generateInvoice(amountSats, memo = "Motorcycle Game Payment") {
   try {
-    const resp = await fetch("/api/create-invoice", {
+    const resp = await fetch("./api/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
@@ -57,7 +57,7 @@ async function renderQR(invoice) {
 
 export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
   try {
-    const resp = await fetch("/api/create-invoice", {
+    const resp = await fetch("./api/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
@@ -133,7 +133,7 @@ export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
       }
 
       try {
-        const resp = await fetch(`/api/check-invoice?paymentHash=${paymentHash}`, {
+        const resp = await fetch(`./api/check-invoice?paymentHash=${paymentHash}`, {
           cache: "no-store",
         });
         if (!resp.ok) throw new Error(`Invoice check failed: ${resp.status}`);
