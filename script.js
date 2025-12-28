@@ -1065,7 +1065,7 @@ function findSafeSpawn(maxAttempts = 500) {
 
 function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
-  deltaTime = Math.min(deltaTime, 5);
+  deltaTime = Math.min(deltaTime, 3);
   lastTime = timestamp;
 
   update(deltaTime);
