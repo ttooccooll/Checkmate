@@ -13,6 +13,8 @@ import {
   OFFROAD_MAX
 } from "./core/constants.js";
 
+import {rectCollision, circleRectCollision} from "./core/collision.js";
+
 let startingGame = false;
 let usingDragControls = false;
 let speedStress = 0;
@@ -854,18 +856,6 @@ function generateRoads() {
   renderRoadsOffscreen();
 }
 
-function circleRectCollision(circle, rect) {
-  // Find closest point on rectangle to circle center
-  const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.width));
-  const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.height));
-
-  const dx = circle.x - closestX;
-  const dy = circle.y - closestY;
-
-  // Collision occurs if distance is less than circle radius
-  return dx * dx + dy * dy < circle.radius * circle.radius;
-}
-
 function draw() {
   // Clear the screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1078,15 +1068,6 @@ function gameLoop(timestamp) {
   draw();
 
   if (gameRunning || flashTimer > 0) requestAnimationFrame(gameLoop);
-}
-
-function rectCollision(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
 }
 
 function handleCrash() {
