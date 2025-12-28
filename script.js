@@ -1034,7 +1034,7 @@ function spawnDust() {
   }
 
   // --- Cap the array length ---
-  const MAX_DUST = 100;
+  const MAX_DUST = 60;
   if (dustParticles.length > MAX_DUST) {
     dustParticles.splice(0, dustParticles.length - MAX_DUST);
   }
