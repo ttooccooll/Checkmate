@@ -10,10 +10,10 @@ import {
   PLAYER_HEIGHT,
   INVULNERABLE_DURATION,
   FLASH_DURATION,
-  OFFROAD_MAX
+  OFFROAD_MAX,
 } from "./core/constants.js";
 
-import {rectCollision, circleRectCollision} from "./core/collision.js";
+import { rectCollision, circleRectCollision } from "./core/collision.js";
 
 let startingGame = false;
 let usingDragControls = false;
