@@ -1,20 +1,29 @@
 import * as payments from "./services/payments.js";
 
+import {
+  WORLD_WIDTH,
+  WORLD_HEIGHT,
+  ROAD_HEIGHT,
+  COLLISION_FACTOR,
+  ROAD_BUFFER,
+  PLAYER_WIDTH,
+  PLAYER_HEIGHT,
+  INVULNERABLE_DURATION,
+  FLASH_DURATION,
+  OFFROAD_MAX
+} from "./core/constants.js";
+
 let startingGame = false;
 let usingDragControls = false;
 let speedStress = 0;
 let offRoadTimer = 0;
-const OFFROAD_MAX = 1200; // ~20 seconds
+
 let dustParticles = [];
 
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
-const WORLD_WIDTH = 3000;
-const WORLD_HEIGHT = 3000;
-const ROAD_HEIGHT = 100;
-const COLLISION_FACTOR = 0.5;
-const ROAD_BUFFER = 10;
+
 const roadCanvas = document.createElement("canvas");
 roadCanvas.width = WORLD_WIDTH;
 roadCanvas.height = WORLD_HEIGHT;
@@ -78,9 +87,6 @@ const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
 let playerSpriteLoaded = false;
 
-const PLAYER_WIDTH = 60;
-const PLAYER_HEIGHT = 55;
-
 let player = {
   x: 50,
   y: 300,
@@ -95,7 +101,7 @@ let coins = [];
 let score = 0;
 let gameRunning = false;
 let invulnerableTimer = 0;
-const INVULNERABLE_DURATION = 80;
+
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
@@ -215,7 +221,7 @@ let upgrades = {
 
 const keys = {};
 let flashTimer = 0;
-const FLASH_DURATION = 150;
+
 const camera = {
   x: 0,
   y: 0,
