@@ -1,4 +1,4 @@
-import * as payments from "./payments.js";
+import * as payments from "../payments.js";
 
 let startingGame = false;
 let usingDragControls = false;
