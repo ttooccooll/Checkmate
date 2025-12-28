@@ -585,7 +585,7 @@ function renderTreesOffscreen() {
 
     treeCtx.save();
     treeCtx.shadowColor = "rgba(0,0,0,0.4)";
-    treeCtx.shadowBlur = 15;
+    treeCtx.shadowBlur = 10;
     treeCtx.drawImage(t.img, t.x, t.y, t.size * 2, t.size * 2);
     treeCtx.restore();
   });
@@ -904,7 +904,7 @@ function draw() {
     ctx.globalAlpha = alpha * 0.1;
     ctx.fillStyle = "#9b8a63";
     ctx.shadowColor = "#9b8a63";
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 7;
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -917,7 +917,7 @@ function draw() {
   if (playerSpriteLoaded) {
     ctx.save();
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-    ctx.shadowBlur = 25;
+    ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
@@ -955,7 +955,7 @@ function draw() {
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 1)";
     ctx.shadowColor = "rgba(0, 0, 0, .9)";
-    ctx.shadowBlur = 25;
+    ctx.shadowBlur = 10;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 
