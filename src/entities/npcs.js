@@ -1,4 +1,3 @@
-// entities/npcs.js
 export class NPC {
   constructor(name, x, y, dialog = [], quest = null) {
     this.name = name;
@@ -6,7 +5,6 @@ export class NPC {
     this.y = y;
     this.width = 40;
     this.height = 60;
-    this.sprite = new Image();
     const npcImages = [
       "/assets/npc1.png",
       "/assets/npc2.png",
