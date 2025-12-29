@@ -2,8 +2,6 @@
   {
     "id": "bob",
     "name": "Bob",
-    "x": 300,
-    "y": 400,
     "dialog": [
       "Hey there, traveler!",
       "I lost 5 coins near the river.",
@@ -17,8 +15,6 @@
   {
     "id": "alice",
     "name": "Alice",
-    "x": 600,
-    "y": 200,
     "dialog": [
       "I love sunny days!",
       "Have you seen the rainbow waterfall?",
@@ -28,8 +24,6 @@
   {
     "id": "sam",
     "name": "Sam",
-    "x": 500,
-    "y": 550,
     "dialog": [
       "Hey! Do you like puzzles?",
       "I have a challenge for you!"
@@ -37,240 +31,6 @@
     "quest": {
       "id": "solve_puzzle",
       "description": "Solve Sam's riddle near the forest."
-    }
-  },
-  {
-    "id": "lily",
-    "name": "Lily",
-    "x": 750,
-    "y": 350,
-    "dialog": [
-      "I'm looking for rare flowers.",
-      "Can you gather 3 blue lilies for me?"
-    ],
-    "quest": {
-      "id": "gather_flowers",
-      "description": "Collect 3 blue lilies in the meadow."
-    }
-  },
-  {
-    "id": "mark",
-    "name": "Mark",
-    "x": 200,
-    "y": 300,
-    "dialog": [
-      "The wind whispers secrets at night.",
-      "Do you want to hear one?"
-    ]
-  },
-  {
-    "id": "sara",
-    "name": "Sara",
-    "x": 450,
-    "y": 600,
-    "dialog": [
-      "I lost my map!",
-      "Can you help me find the treasure location?"
-    ],
-    "quest": {
-      "id": "find_map",
-      "description": "Find Sara's lost map near the mountains."
-    }
-  },
-  {
-    "id": "henry",
-    "name": "Henry",
-    "x": 800,
-    "y": 150,
-    "dialog": [
-      "I love fishing by the lake.",
-      "Catch 3 fish for me?"
-    ],
-    "quest": {
-      "id": "catch_fish",
-      "description": "Catch 3 fish at the lake."
-    }
-  },
-  {
-    "id": "nina",
-    "name": "Nina",
-    "x": 100,
-    "y": 500,
-    "dialog": [
-      "I make magical potions.",
-      "Bring me 2 herbs and 1 mushroom."
-    ],
-    "quest": {
-      "id": "collect_ingredients",
-      "description": "Collect 2 herbs and 1 mushroom for Nina."
-    }
-  },
-  {
-    "id": "tom",
-    "name": "Tom",
-    "x": 350,
-    "y": 250,
-    "dialog": [
-      "The cave nearby is dangerous.",
-      "Can you explore it carefully?"
-    ],
-    "quest": {
-      "id": "explore_cave",
-      "description": "Explore the nearby cave and report back."
-    }
-  },
-  {
-    "id": "emma",
-    "name": "Emma",
-    "x": 700,
-    "y": 450,
-    "dialog": [
-      "I heard there are shiny crystals in the forest.",
-      "Can you collect 3 of them?"
-    ],
-    "quest": {
-      "id": "collect_crystals",
-      "description": "Collect 3 shiny crystals in the forest."
-    }
-  },
-  {
-    "id": "oliver",
-    "name": "Oliver",
-    "x": 600,
-    "y": 500,
-    "dialog": [
-      "I lost my lucky coin!",
-      "Can you find it for me?"
-    ],
-    "quest": {
-      "id": "find_lucky_coin",
-      "description": "Find Oliver's lucky coin."
-    }
-  },
-  {
-    "id": "mia",
-    "name": "Mia",
-    "x": 250,
-    "y": 150,
-    "dialog": [
-      "I love painting!",
-      "Can you bring me a canvas and paintbrush?"
-    ],
-    "quest": {
-      "id": "gather_painting_supplies",
-      "description": "Bring Mia a canvas and a paintbrush."
-    }
-  },
-  {
-    "id": "jack",
-    "name": "Jack",
-    "x": 400,
-    "y": 700,
-    "dialog": [
-      "I have a tricky riddle for you.",
-      "Solve it and get a reward!"
-    ],
-    "quest": {
-      "id": "solve_riddle",
-      "description": "Solve Jack's tricky riddle."
-    }
-  },
-  {
-    "id": "zoe",
-    "name": "Zoe",
-    "x": 550,
-    "y": 100,
-    "dialog": [
-      "The forest is full of secrets.",
-      "Can you find the hidden treehouse?"
-    ],
-    "quest": {
-      "id": "find_treehouse",
-      "description": "Locate the hidden treehouse in the forest."
-    }
-  },
-  {
-    "id": "liam",
-    "name": "Liam",
-    "x": 150,
-    "y": 400,
-    "dialog": [
-      "I love racing!",
-      "Beat my best time in the nearby track!"
-    ],
-    "quest": {
-      "id": "race_challenge",
-      "description": "Beat Liam's best time on the track."
-    }
-  },
-  {
-    "id": "sophia",
-    "name": "Sophia",
-    "x": 750,
-    "y": 600,
-    "dialog": [
-      "The bakery is missing sugar.",
-      "Can you bring some from the market?"
-    ],
-    "quest": {
-      "id": "bring_sugar",
-      "description": "Bring sugar to Sophia's bakery."
-    }
-  },
-  {
-    "id": "noah",
-    "name": "Noah",
-    "x": 300,
-    "y": 650,
-    "dialog": [
-      "I like collecting rocks.",
-      "Find me 3 unique stones!"
-    ],
-    "quest": {
-      "id": "collect_stones",
-      "description": "Collect 3 unique stones for Noah."
-    }
-  },
-  {
-    "id": "ava",
-    "name": "Ava",
-    "x": 500,
-    "y": 350,
-    "dialog": [
-      "I want to bake a cake!",
-      "Bring me milk, eggs, and flour."
-    ],
-    "quest": {
-      "id": "collect_cake_ingredients",
-      "description": "Bring Ava milk, eggs, and flour."
-    }
-  },
-  {
-    "id": "ethan",
-    "name": "Ethan",
-    "x": 650,
-    "y": 250,
-    "dialog": [
-      "The mountain trail is tricky.",
-      "Can you mark safe paths for me?"
-    ],
-    "quest": {
-      "id": "mark_trail",
-      "description": "Mark safe paths on the mountain trail."
-    }
-  },
-  {
-    "id": "isabella",
-    "name": "Isabella",
-    "x": 200,
-    "y": 550,
-    "dialog": [
-      "I love reading books!",
-      "Bring me 2 books from the library."
-    ],
-    "quest": {
-      "id": "bring_books",
-      "description": "Bring Isabella 2 books from the library."
     }
   }
 ]
