@@ -893,6 +893,11 @@ function draw() {
 
   player.draw(ctx);
 
+  // Draw NPCs
+  npcs.forEach(npc => {
+    npc.draw(ctx, camera);
+  });
+
   npcs.forEach(npc => {
     if (npc.isPlayerNearby(player) && keys.Enter) {
       npc.interact(player, dialogManager);
