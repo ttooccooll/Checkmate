@@ -911,15 +911,15 @@ function spawnDust() {
 
 function findSafeSpawn(avoid = [], maxAttempts = 500) {
   for (let i = 0; i < maxAttempts; i++) {
-    const x = Math.random() * (WORLD_WIDTH - 40); // assuming NPC width ~40
-    const y = Math.random() * (WORLD_HEIGHT - 60); // assuming NPC height ~60
+    const x = Math.random() * (WORLD_WIDTH - 40);
+    const y = Math.random() * (WORLD_HEIGHT - 40);
 
     const pad = 15;
     const hitbox = {
       x: x - pad,
       y: y - pad,
       width: 40 + pad * 2,
-      height: 60 + pad * 2,
+      height: 40 + pad * 2,
     };
 
     // Check collisions with buildings, trees, and anything in avoid array
@@ -935,7 +935,7 @@ function findSafeSpawn(avoid = [], maxAttempts = 500) {
           x: e.x,
           y: e.y,
           width: e.width || 40,
-          height: e.height || 60,
+          height: e.height || 40,
         })
       );
 

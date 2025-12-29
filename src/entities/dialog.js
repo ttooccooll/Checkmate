@@ -59,7 +59,7 @@ export class DialogManager {
       )
       .join("");
 
-    this.dialogBox.innerHTML += `<div>${choicesHtml}</div>`;
+    this.dialogBox.innerHTML = `<div>${choicesHtml}</div>`;
 
     this.dialogBox.querySelectorAll(".dialog-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -71,13 +71,19 @@ export class DialogManager {
     });
   }
 
-  handleDialogClick(e) {
-    if (e.target.classList.contains("dialog-choice")) return;
+handleDialogClick(e) {
+  if (e.target.classList.contains("dialog-choice")) return;
 
-    if (this.activeDialog && this.activeDialog.length > 0) {
-      this.showNextLine();
-    }
+  if (!this.activeDialog) return;
+
+  if (this.activeDialog.length > 0) {
+    this.showNextLine();
+  } else {
+    // No lines left → no choices → close dialog
+    this.endDialog();
   }
+}
+
 
   endDialog() {
     this.activeDialog = null;

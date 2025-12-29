@@ -3,8 +3,9 @@ export class NPC {
     this.name = name;
     this.x = x;
     this.y = y;
-    this.width = 40;
-    this.height = 60;
+    this.width = 30;
+    this.height = 30;
+    this.lastTalkTime = 0;
     const npcImages = [
       "/assets/npc1.png",
       "/assets/npc2.png",
@@ -25,7 +26,10 @@ export class NPC {
   }
 
   interact(player, dialogManager, { showMessage }) {
-    if (!this.dialogQueue.length && !this.currentQuest) return false;
+  const now = performance.now();
+  if (now - this.lastTalkTime < 500) return false;
+
+  if (!this.dialogQueue.length && !this.currentQuest) return false;
 
     const lines = [...this.dialogQueue]; // copy of dialog lines
     const choices = []; // ✅ declare it here
@@ -50,13 +54,14 @@ export class NPC {
       });
     }
 
-    dialogManager.startDialog(lines, choices, () => {
-      this.talking = false; // mark NPC as not talking after dialog
-    });
+      dialogManager.startDialog(lines, choices, () => {
+    this.talking = false;
+    this.lastTalkTime = performance.now();
+  });
 
-    this.talking = true;
-    return true;
-  }
+  this.talking = true;
+  return true;
+}
 
   checkQuestCompletion(player) {
     if (
