@@ -233,7 +233,6 @@ function isTouchDevice() {
 }
 
 document.addEventListener("keydown", (e) => {
-  console.log("Key pressed:", e.key);
   keys[e.key] = true;
 
   switch (e.key) {
