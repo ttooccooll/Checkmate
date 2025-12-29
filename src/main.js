@@ -326,7 +326,7 @@ document.addEventListener("keyup", (e) => {
 });
 
 async function loadNPCs() {
-  const response = await fetch("/npcDialog.json");
+  const response = await fetch("npcDialog.json");
   const npcData = await response.json();
 
   npcs = npcData.map((n) => {
