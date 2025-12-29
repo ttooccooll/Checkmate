@@ -14,6 +14,9 @@ import {
 import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, createQuest } from "./entities/npcs.js";
+import { DialogManager } from "./entities/dialog.js";
+
+const dialogManager = new DialogManager();
 
 let npcs = [];
 
@@ -777,12 +780,14 @@ function update(deltaTime = 1) {
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
-  npcs.forEach((npc) => {
+  npcs.forEach(npc => {
     npc.update(deltaTime);
 
     if (npc.isPlayerNearby(player)) {
-      const message = npc.interact(player);
-      if (message) showMessage(message, 2000);
+      // Only trigger if no dialog is active
+      if (!dialogManager.activeDialog) {
+        npc.interact(player, dialogManager);
+      }
 
       if (npc.checkQuestCompletion(player)) {
         showMessage(`🎉 Quest completed!`, 2000);

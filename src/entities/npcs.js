@@ -28,22 +28,38 @@ export class NPC {
     this.y += Math.sin(rad) * this.speed * deltaTime;
 
     // Bounce off world edges
-    if (this.x < 0 || this.x + this.width > 2000) this.direction = 180 - this.direction;
-    if (this.y < 0 || this.y + this.height > 2000) this.direction = 360 - this.direction;
+    if (this.x < 0 || this.x + this.width > 2000)
+      this.direction = 180 - this.direction;
+    if (this.y < 0 || this.y + this.height > 2000)
+      this.direction = 360 - this.direction;
     this.direction = (this.direction + Math.random() * 2 - 1) % 360;
   }
 
-  interact(player) {
+  interact(player, dialogManager) {
     if (this.dialogQueue.length > 0) {
-      const line = this.dialogQueue.shift();
-      return `${this.name}: ${line}`;
+      const lines = [...this.dialogQueue];
+      const choices = [];
+
+      // Example: dynamic quest choice
+      if (
+        this.currentQuest &&
+        !this.completedQuests.includes(this.currentQuest.id)
+      ) {
+        choices.push({
+          text: "Accept Quest",
+          callback: () => {
+            showMessage(`Quest accepted: ${this.currentQuest.description}`);
+          },
+        });
+      }
+
+      dialogManager.startDialog(lines, choices);
+      return true; // interaction happened
     }
 
-    if (this.currentQuest && !this.completedQuests.includes(this.currentQuest.id)) {
-      return `${this.name}: Quest - ${this.currentQuest.description}`;
-    }
-
-    return `${this.name}: Hello there!`;
+    // fallback simple dialog
+    dialogManager.startDialog([`Hello, I am ${this.name}`]);
+    return true;
   }
 
   assignQuest(quest) {
@@ -65,7 +81,12 @@ export class NPC {
 
   isPlayerNearby(player, range = 60) {
     return rectCollision(
-      { x: this.x - range, y: this.y - range, width: this.width + range * 2, height: this.height + range * 2 },
+      {
+        x: this.x - range,
+        y: this.y - range,
+        width: this.width + range * 2,
+        height: this.height + range * 2,
+      },
       player.getHitbox()
     );
   }
