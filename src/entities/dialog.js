@@ -3,10 +3,11 @@ export class DialogManager {
     this.activeDialog = null;
     this.currentChoices = [];
     this.callback = null;
-    this.handleDialogClick = this.handleDialogClick.bind(this);
-    this.dialogBox.addEventListener("click", this.handleDialogClick);
+    this.onClose = null;
+
     this.dialogBox = document.createElement("div");
     this.dialogBox.id = "dialog-box";
+
     Object.assign(this.dialogBox.style, {
       position: "absolute",
       bottom: "50%",
@@ -23,6 +24,9 @@ export class DialogManager {
       zIndex: 1000,
     });
     document.body.appendChild(this.dialogBox);
+
+    this.handleDialogClick = this.handleDialogClick.bind(this);
+    this.dialogBox.addEventListener("click", this.handleDialogClick);
   }
 
   startDialog(lines = [], choices = [], callback = null) {
