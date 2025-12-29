@@ -13,6 +13,9 @@ import {
 
 import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
+import { NPC, createQuest } from "./entities/npcs.js";
+
+let npcs = [];
 
 let startingGame = false;
 let usingDragControls = false;
@@ -320,6 +323,41 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
+function generateNPCs() {
+  const npcSprites = [
+    "./assets/npc1.png",
+    "./assets/npc2.png",
+    "./assets/npc3.png",
+  ].map((src) => {
+    const img = new Image();
+    img.src = src;
+    return img;
+  });
+
+  const arr = [];
+  for (let i = 0; i < 5; i++) {
+    const sprite = npcSprites[Math.floor(Math.random() * npcSprites.length)];
+    const x = Math.random() * (WORLD_WIDTH - 50);
+    const y = Math.random() * (WORLD_HEIGHT - 50);
+
+    const npc = new NPC(x, y, sprite, `NPC ${i + 1}`);
+
+    // Assign a simple quest
+    const quest = createQuest(
+      `quest${i + 1}`,
+      "collect",
+      `Collect ${i + 1} coins!`,
+      i + 1
+    );
+    npc.assignQuest(quest);
+
+    npc.dialogQueue.push(`Hi! I have a quest for you: Collect ${i + 1} coins.`);
+    arr.push(npc);
+  }
+
+  return arr;
+}
+
 function startNewGame() {
   if (startingGame || gameRunning) return;
   if (!grassRendered || !roadTexture.complete) {
@@ -337,6 +375,7 @@ function startNewGame() {
   renderTreesOffscreen();
   buildings = generateBuildings(50);
   coins = generateCoins(15);
+  npcs = generateNPCs();
 
   const spawn = findSafeSpawn();
   player.x = spawn.x;
@@ -652,7 +691,6 @@ function updateTouchControlsVisibility() {
 }
 
 function update(deltaTime = 1) {
-
   if (!gameRunning) return;
   player.update();
 
@@ -738,6 +776,19 @@ function update(deltaTime = 1) {
 
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
+
+  npcs.forEach((npc) => {
+    npc.update(deltaTime);
+
+    if (npc.isPlayerNearby(player)) {
+      const message = npc.interact(player);
+      if (message) showMessage(message, 2000);
+
+      if (npc.checkQuestCompletion(player)) {
+        showMessage(`🎉 Quest completed!`, 2000);
+      }
+    }
+  });
 
   // --- Coins ---
   coins = coins.filter((c) => {
@@ -868,6 +919,11 @@ function draw() {
   });
 
   player.draw(ctx);
+
+  npcs.forEach((npc) => {
+    if (!isVisible(npc.x, npc.y, npc.width, npc.height)) return;
+    npc.draw(ctx);
+  });
 
   ctx.drawImage(
     treeCanvas,
