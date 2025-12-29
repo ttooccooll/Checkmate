@@ -89,12 +89,15 @@ playerSprite.src = "./assets/player.png";
 
 const player = new Player(playerSprite);
 
+player.onCrash = (reason) => {
+  handleCrash(reason);
+};
+
 let buildings = [];
 let trees = [];
 let coins = [];
 let score = 0;
 let gameRunning = false;
-let invulnerableTimer = 0;
 
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
@@ -327,7 +330,6 @@ function startNewGame() {
   startingGame = true;
 
   score = 0;
-  invulnerableTimer = 20;
   flashTimer = 0;
 
   generateRoads();
@@ -649,7 +651,9 @@ function updateTouchControlsVisibility() {
 }
 
 function update(deltaTime = 1) {
+
   if (!gameRunning) return;
+  player.update();
 
   if (touchMove.active) {
     const DEADZONE = 15;
@@ -731,25 +735,8 @@ function update(deltaTime = 1) {
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
-  if (invulnerableTimer === 0) {
-    const hitbox = player.getHitbox();
-    for (let b of buildings) {
-      if (rectCollision(hitbox, b)) {
-        handleCrash();
-        return;
-      }
-    }
-  }
-
-  if (invulnerableTimer === 0) {
-    for (let t of trees) {
-      if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
-      if (circleRectCollision(t, player.getHitbox())) {
-        handleCrash();
-        return;
-      }
-    }
-  }
+  player.checkBuildingCollisions(buildings, rectCollision);
+  player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
   // --- Coins ---
   coins = coins.filter((c) => {
@@ -776,9 +763,8 @@ function update(deltaTime = 1) {
   camera.x = Math.round(camera.x);
   camera.y = Math.round(camera.y);
 
-  if (invulnerableTimer > 0) {
-    invulnerableTimer--;
-  }
+  player.setInvulnerable(20);
+
   if (flashTimer > 0) {
     flashTimer--;
   }
@@ -1022,11 +1008,11 @@ function gameLoop(timestamp) {
   if (gameRunning || flashTimer > 0) requestAnimationFrame(gameLoop);
 }
 
-function handleCrash() {
+function handleCrash(reason) {
   if (upgrades.helmet) {
     upgrades.helmet = false;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-    invulnerableTimer = INVULNERABLE_DURATION;
+    player.setInvulnerable(INVULNERABLE_DURATION);
     flashTimer = FLASH_DURATION;
     showMessage("🪖 Helmet destroyed!");
     return;
@@ -1036,7 +1022,7 @@ function handleCrash() {
     upgrades.speedBoost = false;
     speedStress = 0;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-    invulnerableTimer = INVULNERABLE_DURATION;
+    player.setInvulnerable(INVULNERABLE_DURATION);
     flashTimer = FLASH_DURATION;
     endGame();
     return;

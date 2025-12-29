@@ -8,6 +8,10 @@ export class Player {
     this.height = PLAYER_HEIGHT;
     this.speed = 5;
     this.direction = 0;
+
+    this.invulnerableTimer = 0;
+    this.onCrash = null;
+
     this.sprite = sprite;
     this.spriteLoaded = false;
 
@@ -57,5 +61,60 @@ export class Player {
       this.height
     );
     ctx.restore();
+  }
+
+  setInvulnerable(frames) {
+    this.invulnerableTimer = frames;
+  }
+
+  update() {
+    if (this.invulnerableTimer > 0) {
+      this.invulnerableTimer--;
+    }
+  }
+
+  canCrash() {
+    return this.invulnerableTimer === 0;
+  }
+
+  crash(reason = "obstacle") {
+    if (!this.canCrash()) return;
+
+    if (this.onCrash) {
+      this.onCrash(reason);
+    }
+  }
+
+  checkBuildingCollisions(buildings, rectCollision) {
+    if (!this.canCrash()) return;
+
+    const hitbox = this.getHitbox();
+    for (let b of buildings) {
+      if (rectCollision(hitbox, b)) {
+        this.crash("building");
+        return;
+      }
+    }
+  }
+
+  checkTreeCollisions(trees, circleRectCollision, isVisible) {
+    if (!this.canCrash()) return;
+
+    const hitbox = this.getHitbox();
+
+    for (let t of trees) {
+      if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
+
+      const circle = {
+        x: t.x + t.size,
+        y: t.y + t.size,
+        radius: t.size * 0.3,
+      };
+
+      if (circleRectCollision(circle, hitbox)) {
+        this.crash("tree");
+        return;
+      }
+    }
   }
 }
