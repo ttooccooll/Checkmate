@@ -1,38 +1,210 @@
 [
   {
-    "id": "bob",
-    "name": "Bob",
+    "id": "thabo",
+    "name": "Thabo",
     "dialog": [
-      "Hey there, traveler!",
-      "I lost 5 coins near the river.",
-      "Can you help me find them?"
+      "Howzit, my friend!",
+      "Joburg traffic is something else, hey?",
+      "You really need patience to survive the city."
     ],
     "quest": {
-      "id": "collect_coins",
-      "description": "Collect 5 coins near the town!",
+      "id": "collect_taxi_fares",
+      "description": "Collect 3 lost taxi fare coins near the main road.",
       "type": "collect",
-      "amount": 5,
+      "amount": 3,
       "item": "coin"
     }
   },
   {
-    "id": "alice",
-    "name": "Alice",
+    "id": "lerato",
+    "name": "Lerato",
     "dialog": [
-      "I love sunny days!",
-      "Have you seen the rainbow waterfall?",
-      "It's beautiful this time of year."
+      "I miss the smell of rain in Limpopo.",
+      "Summer storms hit hard but fade quickly.",
+      "Nature really shows off here."
     ]
   },
   {
-    "id": "sam",
-    "name": "Sam",
-    "dialog": ["Hey! Do you like puzzles?", "I have a challenge for you!"],
+    "id": "sipho",
+    "name": "Sipho",
+    "dialog": [
+      "Braai day is the best day of the week.",
+      "Everyone argues about boerewors brands.",
+      "But as long as the fire is hot, we’re good."
+    ]
+  },
+  {
+    "id": "nomsa",
+    "name": "Nomsa",
+    "dialog": [
+      "Cape Town winds are no joke.",
+      "One minute it's calm, the next your hat is gone.",
+      "Still, the ocean makes it worth it."
+    ]
+  },
+  {
+    "id": "kagiso",
+    "name": "Kagiso",
+    "dialog": [
+      "Soweto has so much history.",
+      "Every street tells a story.",
+      "You can feel it when you walk around."
+    ],
     "quest": {
-      "id": "solve_puzzle",
-      "description": "Solve Sam's riddle near the forest.",
-      "type": "solvePuzzle",
-      "puzzleId": "sam_riddle"
+      "id": "visit_landmarks",
+      "description": "Visit 2 landmarks around the township.",
+      "type": "collect",
+      "amount": 2,
+      "item": "landmark"
+    }
+  },
+  {
+    "id": "zanele",
+    "name": "Zanele",
+    "dialog": [
+      "Xitsonga music always lifts my mood.",
+      "The rhythm just gets into your feet.",
+      "You can’t stand still listening to it."
+    ]
+  },
+  {
+    "id": "musa",
+    "name": "Musa",
+    "dialog": [
+      "Durban’s beaches are the best.",
+      "Warm water, warm people.",
+      "Just watch out for the sunburn."
+    ]
+  },
+  {
+    "id": "anele",
+    "name": "Anele",
+    "dialog": [
+      "The Drakensberg mountains are breathtaking.",
+      "Hiking there clears your mind.",
+      "It makes you feel very small."
+    ]
+  },
+  {
+    "id": "vusi",
+    "name": "Vusi",
+    "dialog": [
+      "Load shedding really tests our patience.",
+      "At least we’ve mastered cooking with gas.",
+      "You have to laugh sometimes."
+    ]
+  },
+  {
+    "id": "busisiwe",
+    "name": "Busisiwe",
+    "dialog": [
+      "Xitsonga and isiZulu sound beautiful together.",
+      "Languages connect people.",
+      "South Africa has so many voices."
+    ]
+  },
+  {
+    "id": "sibusiso",
+    "name": "Sibusiso",
+    "dialog": [
+      "Minibus taxis run this country.",
+      "Without them, everything stops.",
+      "You learn to move fast at the rank."
+    ],
+    "quest": {
+      "id": "taxi_route_help",
+      "description": "Help Sibusiso by finding a missing taxi route sign.",
+      "type": "collect",
+      "amount": 1,
+      "item": "sign"
+    }
+  },
+  {
+    "id": "palesa",
+    "name": "Palesa",
+    "dialog": [
+      "Spring flowers in the Free State are stunning.",
+      "The fields turn purple and yellow.",
+      "It’s like a painting."
+    ]
+  },
+  {
+    "id": "andile",
+    "name": "Andile",
+    "dialog": [
+      "Soccer brings everyone together.",
+      "When Bafana Bafana plays, the streets go quiet.",
+      "Until someone scores!"
+    ]
+  },
+  {
+    "id": "kgotso",
+    "name": "Kgotso",
+    "dialog": [
+      "Peace and calm are important in life.",
+      "Sometimes you just sit and watch the sunset.",
+      "That’s enough."
+    ]
+  },
+  {
+    "id": "nandi",
+    "name": "Nandi",
+    "dialog": [
+      "Traditional beadwork takes patience.",
+      "Every color has meaning.",
+      "It’s more than just decoration."
+    ]
+  },
+  {
+    "id": "themba",
+    "name": "Themba",
+    "dialog": [
+      "I learned to drive on gravel roads.",
+      "You really learn control that way.",
+      "City driving feels easy after that."
+    ]
+  },
+  {
+    "id": "ayanda",
+    "name": "Ayanda",
+    "dialog": [
+      "Xitsonga stories from elders are powerful.",
+      "They teach lessons without lectures.",
+      "You remember them forever."
+    ]
+  },
+  {
+    "id": "mandla",
+    "name": "Mandla",
+    "dialog": [
+      "Strength isn’t just physical.",
+      "Surviving tough times builds character.",
+      "South Africans know that well."
+    ]
+  },
+  {
+    "id": "noluthando",
+    "name": "Noluthando",
+    "dialog": [
+      "Love and kindness go a long way.",
+      "Even a small greeting can change a day.",
+      "Ubuntu is real."
+    ]
+  },
+  {
+    "id": "hloko",
+    "name": "Hlokomela",
+    "dialog": [
+      "Looking after each other matters.",
+      "Community makes life easier.",
+      "We are stronger together."
+    ],
+    "quest": {
+      "id": "help_neighbors",
+      "description": "Help 2 neighbors around the area.",
+      "type": "collect",
+      "amount": 2,
+      "item": "help"
     }
   }
 ]
