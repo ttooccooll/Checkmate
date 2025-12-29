@@ -328,6 +328,8 @@ async function loadNPCs() {
   const response = await fetch("./npcDialog.json");
   const npcData = await response.json();
 
+  const spawnedNPCs = [];
+
   npcs = npcData.map((n) => {
     const quest = n.quest
       ? new Quest(
@@ -337,7 +339,11 @@ async function loadNPCs() {
         )
       : null;
 
-    return new NPC(n.name, n.x, n.y, n.dialog, quest);
+    const spawn = findSafeSpawn(spawnedNPCs);
+    const npc = new NPC(n.name, spawn.x, spawn.y, n.dialog, quest);
+
+    spawnedNPCs.push(npc); // so next NPC avoids this one
+    return npc;
   });
 }
 
@@ -761,7 +767,7 @@ function update(deltaTime = 1) {
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
-  npcs.forEach(npc => npc.checkQuestCompletion(player));
+  npcs.forEach((npc) => npc.checkQuestCompletion(player));
 
   // --- Coins ---
   coins = coins.filter((c) => {
@@ -894,7 +900,7 @@ function draw() {
   player.draw(ctx);
 
   // Draw NPCs
-  npcs.forEach(npc => {
+  npcs.forEach((npc) => {
     npc.draw(ctx, camera);
   });
 
@@ -1002,21 +1008,37 @@ function spawnDust() {
   }
 }
 
-function findSafeSpawn(maxAttempts = 500) {
+function findSafeSpawn(avoid = [], maxAttempts = 500) {
   for (let i = 0; i < maxAttempts; i++) {
-    const x = Math.random() * (WORLD_WIDTH - player.width);
-    const y = Math.random() * (WORLD_HEIGHT - player.height);
+    const x = Math.random() * (WORLD_WIDTH - 40); // assuming NPC width ~40
+    const y = Math.random() * (WORLD_HEIGHT - 60); // assuming NPC height ~60
 
     const pad = 15;
+    const hitbox = {
+      x: x - pad,
+      y: y - pad,
+      width: 40 + pad * 2,
+      height: 60 + pad * 2,
+    };
 
-    if (
-      !isCollidingWithObstacles(
-        x - pad,
-        y - pad,
-        player.width + pad * 2,
-        player.height + pad * 2
-      )
-    ) {
+    // Check collisions with buildings, trees, and anything in avoid array
+    let collision =
+      isCollidingWithObstacles(
+        hitbox.x,
+        hitbox.y,
+        hitbox.width,
+        hitbox.height
+      ) ||
+      avoid.some((e) =>
+        rectCollision(hitbox, {
+          x: e.x,
+          y: e.y,
+          width: e.width || 40,
+          height: e.height || 60,
+        })
+      );
+
+    if (!collision) {
       return { x, y };
     }
   }
