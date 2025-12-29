@@ -845,146 +845,44 @@ function generateRoads() {
 }
 
 function draw() {
-  // Clear the screen
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // --- Translate to camera position ---
+  // --- Translate for camera ---
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
 
-  // --- Grass ---
-  if (grassCanvas) {
-    ctx.drawImage(
-      grassCanvas,
-      camera.x,
-      camera.y,
-      canvas.width,
-      canvas.height,
-      camera.x,
-      camera.y,
-      canvas.width,
-      canvas.height
-    );
-  }
+  // --- Draw world ---
+  if (grassCanvas) ctx.drawImage(grassCanvas, 0, 0);
+  ctx.drawImage(roadCanvas, 0, 0);
 
-  // --- Roads ---
-  ctx.drawImage(
-    roadCanvas,
-    camera.x,
-    camera.y,
-    canvas.width,
-    canvas.height,
-    camera.x,
-    camera.y,
-    canvas.width,
-    canvas.height
-  );
+  // --- Draw trees ---
+  ctx.drawImage(treeCanvas, 0, 0);
 
-  // --- Dust (soft + transparent) ---
-  dustParticles.forEach((p) => {
-    const alpha = Math.max(0, p.life / 60);
+  // --- Draw NPCs ---
+  npcs.forEach(npc => npc.draw(ctx));
 
-    ctx.save();
-    ctx.globalAlpha = alpha * 0.1;
-    ctx.fillStyle = "#9b8a63";
-    ctx.shadowColor = "#9b8a63";
-    ctx.shadowBlur = 7;
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  });
-
-  player.draw(ctx);
-
-  // Draw NPCs
-  npcs.forEach((npc) => {
-    npc.draw(ctx, camera);
-  });
-
-  ctx.drawImage(
-    treeCanvas,
-    camera.x,
-    camera.y,
-    canvas.width,
-    canvas.height,
-    camera.x,
-    camera.y,
-    canvas.width,
-    canvas.height
-  );
-
-  // --- Buildings ---
-  buildings.forEach((b) => {
+  // --- Draw buildings ---
+  buildings.forEach(b => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
-
-    ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 1)";
-    ctx.shadowColor = "rgba(0, 0, 0, .9)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    if (b.rotated) {
-      ctx.translate(b.x + b.width / 2, b.y + b.height / 2);
-      ctx.rotate(Math.PI / 2);
-      ctx.fillRect(-b.width / 2, -b.height / 2, b.width, b.height);
-    } else {
-      ctx.fillRect(b.x, b.y, b.width, b.height);
-    }
-
-    ctx.restore();
-
-    // --- Draw the building itself ---
-    if (b.img && b.img.complete) {
-      ctx.save();
-      if (b.rotated) {
-        ctx.translate(b.x + b.width / 2, b.y + b.height / 2);
-        ctx.rotate(Math.PI / 2);
-        ctx.drawImage(b.img, -b.width / 2, -b.height / 2, b.width, b.height);
-      } else {
-        ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
-      }
-      ctx.restore();
-    }
+    ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
   });
 
-  // --- Coins ---
-  coins.forEach((c) => {
-    if (!isVisible(c.x, c.y, c.size, c.size)) return;
+  // --- Draw coins ---
+  coins.forEach(c => {
     ctx.fillStyle = "gold";
     ctx.beginPath();
     ctx.arc(c.x + 10, c.y + 10, 10, 0, Math.PI * 2);
     ctx.fill();
   });
 
-  ctx.restore();
+  // --- Draw player ---
+  player.draw(ctx);
 
-  if (flashTimer > 0) {
-    ctx.fillStyle = `rgba(255,0,0,${0.4 * (flashTimer / FLASH_DURATION)})`;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  ctx.restore();
 
   // --- HUD ---
   ctx.fillStyle = "black";
-  ctx.font = "bold 20px Arial";
-  ctx.textAlign = "left";
   ctx.fillText(`Score: ${score}`, 10, 25);
-
-  // Build upgrade text
-  const ownedUpgrades = [];
-  if (upgrades.speedBoost) ownedUpgrades.push("⚡");
-  if (upgrades.helmet) ownedUpgrades.push("🪖");
-  if (upgrades.offRoadTreads) ownedUpgrades.push("🛞");
-
-  const upgradeText =
-    ownedUpgrades.length > 0
-      ? `Upgrades: ${ownedUpgrades.join(" ")}`
-      : "Upgrades: None";
-
-  ctx.fillText(upgradeText, 10, 45);
 }
 
 function spawnDust() {
