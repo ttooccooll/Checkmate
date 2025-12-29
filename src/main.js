@@ -341,6 +341,7 @@ function startNewGame() {
   const spawn = findSafeSpawn();
   player.x = spawn.x;
   player.y = spawn.y;
+  player.setInvulnerable(20);
 
   gameRunning = true;
   lastTime = performance.now();
