@@ -1,4 +1,3 @@
-// entities/dialog.js
 export class DialogManager {
   constructor() {
     this.activeDialog = null;
