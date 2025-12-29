@@ -74,7 +74,7 @@ export class NPC {
 
     // Optionally, draw a name above NPC
     ctx.fillStyle = "black";
-    ctx.font = "12px Arial";
+    ctx.font = "Arial";
     ctx.fillText(this.name, this.x, this.y - 5);
   }
 }
