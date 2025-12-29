@@ -43,33 +43,33 @@ class RoadSegment {
   }
 }
 const roadTexture = new Image();
-roadTexture.src = "/assets/road.jpg";
+roadTexture.src = "assets/road.jpg";
 
 const grassTexture = new Image();
-grassTexture.src = "/assets/fyn2.jpg";
+grassTexture.src = "assets/fyn2.jpg";
 const grassCanvas = document.createElement("canvas");
 grassCanvas.width = WORLD_WIDTH;
 grassCanvas.height = WORLD_HEIGHT;
 const grassCtx = grassCanvas.getContext("2d");
 
 const buildingImages = [
-  "/assets/house.png",
-  "/assets/house2.png",
-  "/assets/house3.png",
-  "/assets/house4.png",
-  "/assets/shack.png",
-  "/assets/flat.png",
+  "assets/house.png",
+  "assets/house2.png",
+  "assets/house3.png",
+  "assets/house4.png",
+  "assets/shack.png",
+  "assets/flat.png",
 ].map((src) => {
   const img = new Image();
   img.src = src;
   return img;
 });
 const treeImages = [
-  "/assets/tree.png",
-  "/assets/tree2.png",
-  "/assets/tree3.png",
-  "/assets/tree4.png",
-  "/assets/tree5.png",
+  "assets/tree.png",
+  "assets/tree2.png",
+  "assets/tree3.png",
+  "assets/tree4.png",
+  "assets/tree5.png",
 ].map((src) => {
   const img = new Image();
   img.src = src;
@@ -90,7 +90,7 @@ const touchMove = {
 };
 
 const playerSprite = new Image();
-playerSprite.src = "/assets/player.png";
+playerSprite.src = "assets/player.png";
 
 const player = new Player(playerSprite);
 
