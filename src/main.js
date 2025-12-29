@@ -885,6 +885,14 @@ function draw() {
     ctx.fill();
   });
 
+  // --- Draw dust (VERY LIGHT) ---
+dustParticles.forEach((p) => {
+  ctx.fillStyle = `rgba(160, 160, 160, ${p.life / 80})`;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+  ctx.fill();
+});
+
   // --- Draw player ---
   player.draw(ctx);
 
