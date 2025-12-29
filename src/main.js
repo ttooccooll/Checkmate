@@ -761,31 +761,16 @@ function update(deltaTime = 1) {
     }
   }
 
-  npcs.forEach((npc) => {
-    if (npc.isPlayerNearby(player)) {
-      if (!npc.talking) {
-        choices.push({
-          text: "Accept Quest",
-          callback: () => {
-            if (showMessage)
-              showMessage(`Quest accepted: ${this.currentQuest.description}`);
-            this.currentQuest.active = true;
-            dialogManager.endDialog(); // properly close dialog
-          },
-        });
-
-        choices.push({
-          text: "Decline",
-          callback: () => {
-            if (showMessage) showMessage("Maybe next time!");
-            dialogManager.endDialog(); // properly close dialog
-          },
-        });
-      }
-    } else {
-      npc.talking = false;
+npcs.forEach((npc) => {
+  if (npc.isPlayerNearby(player)) {
+    if (!npc.talking) {
+      npc.interact(player, dialogManager, { showMessage });
     }
-  });
+  } else {
+    npc.talking = false;
+  }
+});
+
 
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
