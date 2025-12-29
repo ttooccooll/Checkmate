@@ -6,14 +6,13 @@ import {
   ROAD_HEIGHT,
   COLLISION_FACTOR,
   ROAD_BUFFER,
-  PLAYER_WIDTH,
-  PLAYER_HEIGHT,
   INVULNERABLE_DURATION,
   FLASH_DURATION,
   OFFROAD_MAX,
 } from "./core/constants.js";
 
 import { rectCollision, circleRectCollision } from "./core/collision.js";
+import { Player } from "./entities/player.js";
 
 let startingGame = false;
 let usingDragControls = false;
@@ -87,15 +86,8 @@ const touchMove = {
 
 const playerSprite = new Image();
 playerSprite.src = "./assets/player.png";
-let playerSpriteLoaded = false;
 
-let player = {
-  x: 50,
-  y: 300,
-  width: PLAYER_WIDTH,
-  height: PLAYER_HEIGHT,
-  speed: 5,
-};
+const player = new Player(playerSprite);
 
 let buildings = [];
 let trees = [];
@@ -106,13 +98,6 @@ let invulnerableTimer = 0;
 
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
-
-let currentDirection = 0;
-
-playerSprite.onload = () => {
-  playerSpriteLoaded = true;
-  console.log("Player sprite loaded!");
-};
 
 function loadWorldTextures() {
   if (!grassTexture.complete || !roadTexture.complete) return;
@@ -331,18 +316,6 @@ document.addEventListener("keyup", (e) => {
       break;
   }
 });
-
-function getPlayerHitbox() {
-  const shrinkX = 10; // left/right forgiveness
-  const shrinkY = 14; // front/back forgiveness
-
-  return {
-    x: player.x + shrinkX,
-    y: player.y + shrinkY,
-    width: player.width - shrinkX * 2,
-    height: player.height - shrinkY * 2,
-  };
-}
 
 function startNewGame() {
   if (startingGame || gameRunning) return;
@@ -717,49 +690,49 @@ function update(deltaTime = 1) {
 
   const speed = baseSpeed * deltaTime;
 
-  // Handle key presses and update direction for diagonal movement
+  let dx = 0;
+  let dy = 0;
+
   if (keys["ArrowUp"] && keys["ArrowLeft"]) {
-    player.y -= speed;
-    player.x -= speed;
-    currentDirection = -45; // Diagonal up-left
+    dx = -speed;
+    dy = -speed;
+    player.direction = -45;
   } else if (keys["ArrowUp"] && keys["ArrowRight"]) {
-    player.y -= speed;
-    player.x += speed;
-    currentDirection = 45; // Diagonal up-right
+    dx = speed;
+    dy = -speed;
+    player.direction = 45;
   } else if (keys["ArrowDown"] && keys["ArrowLeft"]) {
-    player.y += speed;
-    player.x -= speed;
-    currentDirection = -135; // Diagonal down-left
+    dx = -speed;
+    dy = speed;
+    player.direction = -135;
   } else if (keys["ArrowDown"] && keys["ArrowRight"]) {
-    player.y += speed;
-    player.x += speed;
-    currentDirection = 135; // Diagonal down-right
+    dx = speed;
+    dy = speed;
+    player.direction = 135;
   } else {
-    // Handle single axis movement
     if (keys["ArrowUp"]) {
-      player.y -= speed;
-      currentDirection = 0; // Facing up
+      dy = -speed;
+      player.direction = 0;
     }
     if (keys["ArrowDown"]) {
-      player.y += speed;
-      currentDirection = 180; // Facing down
+      dy = speed;
+      player.direction = 180;
     }
     if (keys["ArrowLeft"]) {
-      player.x -= speed;
-      currentDirection = -90; // Facing left
+      dx = -speed;
+      player.direction = -90;
     }
     if (keys["ArrowRight"]) {
-      player.x += speed;
-      currentDirection = 90; // Facing right
+      dx = speed;
+      player.direction = 90;
     }
   }
 
-  // Ensure the player stays within bounds
-  player.x = Math.max(0, Math.min(WORLD_WIDTH - player.width, player.x));
-  player.y = Math.max(0, Math.min(WORLD_HEIGHT - player.height, player.y));
+  player.move(dx, dy, deltaTime);
+  player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
   if (invulnerableTimer === 0) {
-    const hitbox = getPlayerHitbox();
+    const hitbox = player.getHitbox();
     for (let b of buildings) {
       if (rectCollision(hitbox, b)) {
         handleCrash();
@@ -771,7 +744,7 @@ function update(deltaTime = 1) {
   if (invulnerableTimer === 0) {
     for (let t of trees) {
       if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
-      if (circleRectCollision(t, getPlayerHitbox())) {
+      if (circleRectCollision(t, player.getHitbox())) {
         handleCrash();
         return;
       }
@@ -781,7 +754,7 @@ function update(deltaTime = 1) {
   // --- Coins ---
   coins = coins.filter((c) => {
     if (
-      rectCollision(getPlayerHitbox(), {
+      rectCollision(player.getHitbox(), {
         x: c.x,
         y: c.y,
         width: c.size,
@@ -909,28 +882,7 @@ function draw() {
     ctx.restore();
   });
 
-  // --- Player ---
-  if (playerSpriteLoaded) {
-    ctx.save();
-    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-
-    ctx.rotate((currentDirection * Math.PI) / 180);
-    ctx.drawImage(
-      playerSprite,
-      -player.width / 2,
-      -player.height / 2,
-      player.width,
-      player.height
-    );
-    ctx.restore();
-  } else {
-    ctx.fillStyle = "red";
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-  }
+  player.draw(ctx);
 
   ctx.drawImage(
     treeCanvas,
