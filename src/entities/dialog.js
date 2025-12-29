@@ -61,6 +61,7 @@ export class DialogManager {
         const choice = this.currentChoices[idx];
         if (choice.callback) choice.callback();
         this.endDialog();
+        if (this.onClose) this.onClose();
       });
     });
   }

@@ -24,7 +24,7 @@ export class NPC {
     return dx * dx + dy * dy <= range * range;
   }
 
-  interact(player, dialogManager) {
+  interact(player, dialogManager, { showMessage }) {
     if (!this.dialogQueue.length && !this.currentQuest) return false;
 
     const choices = [];
@@ -36,14 +36,17 @@ export class NPC {
       choices.push({
         text: "Accept Quest",
         callback: () => {
-          showMessage(`Quest accepted: ${this.currentQuest.description}`);
+          if (showMessage)
+            showMessage(`Quest accepted: ${this.currentQuest.description}`);
           this.currentQuest.active = true;
+          dialogManager.closeDialog(); // <- close dialog
         },
       });
       choices.push({
         text: "Decline",
         callback: () => {
-          showMessage("Maybe next time!");
+          if (showMessage) showMessage("Maybe next time!");
+          dialogManager.closeDialog(); // <- close dialog
         },
       });
     }
@@ -71,11 +74,6 @@ export class NPC {
     // Draw at world coordinates
     if (!this.sprite.complete) return; // avoid drawing before loaded
     ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
-
-    // Optionally, draw a name above NPC
-    ctx.fillStyle = "black";
-    ctx.font = "Arial";
-    ctx.fillText(this.name, this.x, this.y - 5);
   }
 }
 

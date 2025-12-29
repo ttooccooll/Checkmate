@@ -761,16 +761,13 @@ function update(deltaTime = 1) {
     }
   }
 
-  npcs.forEach(npc => {
+  npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
       if (!npc.talking) {
-        npc.interact(player, dialogManager);
-        npc.talking = true;
-
-        // auto-hide after 3 seconds
-        setTimeout(() => {
-          dialogManager.closeDialog();
-        }, 3000);
+        npc.interact(player, dialogManager, { showMessage });
+        dialogManager.onClose = () => {
+          npc.talking = false;
+        };
       }
     } else {
       npc.talking = false;
@@ -875,16 +872,16 @@ function draw() {
   ctx.drawImage(treeCanvas, 0, 0);
 
   // --- Draw NPCs ---
-  npcs.forEach(npc => npc.draw(ctx));
+  npcs.forEach((npc) => npc.draw(ctx));
 
   // --- Draw buildings ---
-  buildings.forEach(b => {
+  buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
     ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
   });
 
   // --- Draw coins ---
-  coins.forEach(c => {
+  coins.forEach((c) => {
     ctx.fillStyle = "gold";
     ctx.beginPath();
     ctx.arc(c.x + 10, c.y + 10, 10, 0, Math.PI * 2);
