@@ -728,7 +728,7 @@ function update(deltaTime = 1) {
     }
   }
 
-  player.move(dx, dy, deltaTime);
+  player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
   if (invulnerableTimer === 0) {
