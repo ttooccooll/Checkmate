@@ -27,7 +27,8 @@ export class NPC {
   interact(player, dialogManager, { showMessage }) {
     if (!this.dialogQueue.length && !this.currentQuest) return false;
 
-    const choices = [];
+    const lines = [...this.dialogQueue]; // copy of dialog lines
+    const choices = []; // ✅ declare it here
 
     if (
       this.currentQuest &&
@@ -36,22 +37,24 @@ export class NPC {
       choices.push({
         text: "Accept Quest",
         callback: () => {
+          this.currentQuest.active = true;
           if (showMessage)
             showMessage(`Quest accepted: ${this.currentQuest.description}`);
-          this.currentQuest.active = true;
-          dialogManager.closeDialog(); // <- close dialog
         },
       });
       choices.push({
-        text: "Decline",
+        text: "Decline Quest",
         callback: () => {
           if (showMessage) showMessage("Maybe next time!");
-          dialogManager.closeDialog(); // <- close dialog
         },
       });
     }
 
-    dialogManager.startDialog([...this.dialogQueue], choices);
+    dialogManager.startDialog(lines, choices, () => {
+      this.talking = false; // mark NPC as not talking after dialog
+    });
+
+    this.talking = true;
     return true;
   }
 
