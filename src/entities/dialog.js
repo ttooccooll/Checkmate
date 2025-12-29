@@ -77,4 +77,9 @@ export class DialogManager {
     if (this.callback) this.callback();
     this.callback = null;
   }
+
+  closeDialog() {
+    this.endDialog();
+    if (this.onClose) this.onClose();
+  }
 }
