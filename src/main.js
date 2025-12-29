@@ -766,6 +766,11 @@ function update(deltaTime = 1) {
       if (!npc.talking) {
         npc.interact(player, dialogManager);
         npc.talking = true;
+
+        // auto-hide after 3 seconds
+        setTimeout(() => {
+          dialogManager.closeDialog();
+        }, 3000);
       }
     } else {
       npc.talking = false;
