@@ -337,8 +337,8 @@ async function loadNPCs() {
           params: {
             amount: n.quest.amount,
             item: n.quest.item,
-            puzzleId: n.quest.puzzleId
-          }
+            puzzleId: n.quest.puzzleId,
+          },
         })
       : null;
 
@@ -764,10 +764,23 @@ function update(deltaTime = 1) {
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
       if (!npc.talking) {
-        npc.interact(player, dialogManager, { showMessage });
-        dialogManager.onClose = () => {
-          npc.talking = false;
-        };
+        choices.push({
+          text: "Accept Quest",
+          callback: () => {
+            if (showMessage)
+              showMessage(`Quest accepted: ${this.currentQuest.description}`);
+            this.currentQuest.active = true;
+            dialogManager.endDialog(); // properly close dialog
+          },
+        });
+
+        choices.push({
+          text: "Decline",
+          callback: () => {
+            if (showMessage) showMessage("Maybe next time!");
+            dialogManager.endDialog(); // properly close dialog
+          },
+        });
       }
     } else {
       npc.talking = false;
@@ -783,20 +796,15 @@ function update(deltaTime = 1) {
   npcs.forEach((npc) => npc.checkQuestCompletion(player));
 
   // --- Coins ---
-  coins = coins.filter((c) => {
-    if (
-      rectCollision(player.getHitbox(), {
-        x: c.x,
-        y: c.y,
-        width: c.size,
-        height: c.size,
-      })
-    ) {
-      score++;
-      return false;
-    }
-    return true;
-  });
+coins = coins.filter((c) => {
+  if (rectCollision(player.getHitbox(), { x: c.x, y: c.y, width: c.size, height: c.size })) {
+    score++;
+    player.coins = (player.coins || 0) + 1;
+    return false;
+  }
+  return true;
+});
+
 
   // --- Camera ---
   camera.x = player.x + player.width / 2 - canvas.width / 2;

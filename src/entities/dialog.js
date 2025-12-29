@@ -37,6 +37,11 @@ export class DialogManager {
       const line = this.activeDialog.shift();
       this.dialogBox.innerHTML = `<p>${line}</p>`;
       this.dialogBox.style.display = "block";
+      this.dialogBox.addEventListener("click", () => {
+        if (this.activeDialog && this.activeDialog.length > 0) {
+          this.showNextLine();
+        }
+      });
     } else {
       this.showChoices();
     }

@@ -9,7 +9,10 @@
     ],
     "quest": {
       "id": "collect_coins",
-      "description": "Collect 5 coins near the town!"
+      "description": "Collect 5 coins near the town!",
+      "type": "collect",
+      "amount": 5,
+      "item": "coin"
     }
   },
   {
