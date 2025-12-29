@@ -13,11 +13,10 @@ import {
 
 import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
-import { NPC, createQuest } from "./entities/npcs.js";
+import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
 
 const dialogManager = new DialogManager();
-
 let npcs = [];
 
 let startingGame = false;
@@ -326,39 +325,21 @@ document.addEventListener("keyup", (e) => {
   }
 });
 
-function generateNPCs() {
-  const npcSprites = [
-    "./assets/npc1.png",
-    "./assets/npc2.png",
-    "./assets/npc3.png",
-  ].map((src) => {
-    const img = new Image();
-    img.src = src;
-    return img;
+async function loadNPCs() {
+  const response = await fetch("/npcDialog.json");
+  const npcData = await response.json();
+
+  npcs = npcData.map((n) => {
+    const quest = n.quest
+      ? new Quest(
+          n.quest.id,
+          n.quest.description,
+          (player) => player.score >= 5
+        )
+      : null;
+
+    return new NPC(n.name, n.x, n.y, n.dialog, quest);
   });
-
-  const arr = [];
-  for (let i = 0; i < 5; i++) {
-    const sprite = npcSprites[Math.floor(Math.random() * npcSprites.length)];
-    const x = Math.random() * (WORLD_WIDTH - 50);
-    const y = Math.random() * (WORLD_HEIGHT - 50);
-
-    const npc = new NPC(x, y, sprite, `NPC ${i + 1}`);
-
-    // Assign a simple quest
-    const quest = createQuest(
-      `quest${i + 1}`,
-      "collect",
-      `Collect ${i + 1} coins!`,
-      i + 1
-    );
-    npc.assignQuest(quest);
-
-    npc.dialogQueue.push(`Hi! I have a quest for you: Collect ${i + 1} coins.`);
-    arr.push(npc);
-  }
-
-  return arr;
 }
 
 function startNewGame() {
@@ -378,7 +359,8 @@ function startNewGame() {
   renderTreesOffscreen();
   buildings = generateBuildings(50);
   coins = generateCoins(15);
-  npcs = generateNPCs();
+
+  loadNPCs();
 
   const spawn = findSafeSpawn();
   player.x = spawn.x;
@@ -780,20 +762,7 @@ function update(deltaTime = 1) {
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
-  npcs.forEach(npc => {
-    npc.update(deltaTime);
-
-    if (npc.isPlayerNearby(player)) {
-      // Only trigger if no dialog is active
-      if (!dialogManager.activeDialog) {
-        npc.interact(player, dialogManager);
-      }
-
-      if (npc.checkQuestCompletion(player)) {
-        showMessage(`🎉 Quest completed!`, 2000);
-      }
-    }
-  });
+  npcs.forEach(npc => npc.checkQuestCompletion(player));
 
   // --- Coins ---
   coins = coins.filter((c) => {
@@ -925,9 +894,10 @@ function draw() {
 
   player.draw(ctx);
 
-  npcs.forEach((npc) => {
-    if (!isVisible(npc.x, npc.y, npc.width, npc.height)) return;
-    npc.draw(ctx);
+  npcs.forEach(npc => {
+    if (npc.isPlayerNearby(player) && keys.Enter) {
+      npc.interact(player, dialogManager);
+    }
   });
 
   ctx.drawImage(

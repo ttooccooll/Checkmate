@@ -1,97 +1,78 @@
 // entities/npcs.js
-import { rectCollision } from "../core/collision.js";
-
 export class NPC {
-  constructor(x, y, sprite, name) {
+  constructor(name, x, y, dialog = [], quest = null) {
+    this.name = name;
     this.x = x;
     this.y = y;
-    this.width = sprite.width || 50;
-    this.height = sprite.height || 50;
-    this.sprite = sprite;
-    this.name = name || "NPC";
-    this.dialogQueue = [];
-    this.currentQuest = null;
+    this.width = 40;
+    this.height = 60;
+    this.dialogQueue = dialog;
+    this.currentQuest = quest;
     this.completedQuests = [];
-    this.speed = 0.5; // for basic wandering
-    this.direction = Math.random() * 360; // degrees
   }
 
-  draw(ctx) {
-    if (!this.sprite.complete) return;
-    ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
-  }
-
-  update(deltaTime) {
-    // Basic wandering movement
-    const rad = (this.direction * Math.PI) / 180;
-    this.x += Math.cos(rad) * this.speed * deltaTime;
-    this.y += Math.sin(rad) * this.speed * deltaTime;
-
-    // Bounce off world edges
-    if (this.x < 0 || this.x + this.width > 2000)
-      this.direction = 180 - this.direction;
-    if (this.y < 0 || this.y + this.height > 2000)
-      this.direction = 360 - this.direction;
-    this.direction = (this.direction + Math.random() * 2 - 1) % 360;
+  isPlayerNearby(player, range = 80) {
+    const dx = player.x + player.width / 2 - (this.x + this.width / 2);
+    const dy = player.y + player.height / 2 - (this.y + this.height / 2);
+    return dx * dx + dy * dy <= range * range;
   }
 
   interact(player, dialogManager) {
-    if (this.dialogQueue.length > 0) {
-      const lines = [...this.dialogQueue];
-      const choices = [];
+    if (!this.dialogQueue.length && !this.currentQuest) return false;
 
-      // Example: dynamic quest choice
-      if (
-        this.currentQuest &&
-        !this.completedQuests.includes(this.currentQuest.id)
-      ) {
-        choices.push({
-          text: "Accept Quest",
-          callback: () => {
-            showMessage(`Quest accepted: ${this.currentQuest.description}`);
-          },
-        });
-      }
+    const choices = [];
 
-      dialogManager.startDialog(lines, choices);
-      return true; // interaction happened
+    if (this.currentQuest && !this.completedQuests.includes(this.currentQuest.id)) {
+      choices.push({
+        text: "Accept Quest",
+        callback: () => {
+          showMessage(`Quest accepted: ${this.currentQuest.description}`);
+          this.currentQuest.active = true;
+        },
+      });
+      choices.push({
+        text: "Decline",
+        callback: () => {
+          showMessage("Maybe next time!");
+        },
+      });
     }
 
-    // fallback simple dialog
-    dialogManager.startDialog([`Hello, I am ${this.name}`]);
+    dialogManager.startDialog([...this.dialogQueue], choices);
     return true;
   }
 
-  assignQuest(quest) {
-    this.currentQuest = quest;
-  }
-
   checkQuestCompletion(player) {
-    if (!this.currentQuest) return false;
-
-    const quest = this.currentQuest;
-    if (quest.type === "collect" && player.score >= quest.goal) {
-      this.completedQuests.push(quest.id);
-      this.currentQuest = null;
-      return true;
+    if (this.currentQuest?.active && !this.completedQuests.includes(this.currentQuest.id)) {
+      if (this.currentQuest.check(player)) {
+        this.completedQuests.push(this.currentQuest.id);
+        this.currentQuest.active = false;
+        showMessage(`🎉 Quest "${this.currentQuest.description}" completed!`);
+        return true;
+      }
     }
-
     return false;
   }
 
-  isPlayerNearby(player, range = 60) {
-    return rectCollision(
-      {
-        x: this.x - range,
-        y: this.y - range,
-        width: this.width + range * 2,
-        height: this.height + range * 2,
-      },
-      player.getHitbox()
-    );
+  draw(ctx, camera) {
+    if (!ctx) return;
+    const screenX = this.x - camera.x;
+    const screenY = this.y - camera.y;
+
+    ctx.fillStyle = "purple";
+    ctx.fillRect(screenX, screenY, this.width, this.height);
+    ctx.fillStyle = "white";
+    ctx.font = "14px Arial";
+    ctx.fillText(this.name, screenX, screenY - 5);
   }
 }
 
-export function createQuest(id, type, description, goal) {
-  return { id, type, description, goal };
+// Example Quest structure
+export class Quest {
+  constructor(id, description, checkCallback) {
+    this.id = id;
+    this.description = description;
+    this.check = checkCallback; // function(player) => boolean
+    this.active = false;
+  }
 }
