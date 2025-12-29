@@ -763,8 +763,6 @@ function update(deltaTime = 1) {
   camera.x = Math.round(camera.x);
   camera.y = Math.round(camera.y);
 
-  player.setInvulnerable(20);
-
   if (flashTimer > 0) {
     flashTimer--;
   }
