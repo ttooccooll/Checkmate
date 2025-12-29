@@ -777,6 +777,13 @@ npcs.forEach((npc) => {
 
   npcs.forEach((npc) => npc.checkQuestCompletion(player));
 
+  npcs.forEach((npc) => {
+  if (npc.talking && !npc.isPlayerNearby(player)) {
+    dialogManager.endDialog();
+    npc.talking = false;
+  }
+});
+
   // --- Coins ---
 coins = coins.filter((c) => {
   if (rectCollision(player.getHitbox(), { x: c.x, y: c.y, width: c.size, height: c.size })) {
