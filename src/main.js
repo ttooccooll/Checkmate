@@ -898,12 +898,6 @@ function draw() {
     npc.draw(ctx, camera);
   });
 
-  npcs.forEach(npc => {
-    if (npc.isPlayerNearby(player) && keys.Enter) {
-      npc.interact(player, dialogManager);
-    }
-  });
-
   ctx.drawImage(
     treeCanvas,
     camera.x,
