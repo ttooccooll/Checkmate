@@ -328,22 +328,22 @@ async function loadNPCs() {
   const response = await fetch("./npcDialog.json");
   const npcData = await response.json();
 
-  const spawnedNPCs = [];
-
   npcs = npcData.map((n) => {
     const quest = n.quest
-      ? new Quest(
-          n.quest.id,
-          n.quest.description,
-          (player) => player.score >= 5
-        )
+      ? new Quest({
+          id: n.quest.id,
+          description: n.quest.description,
+          type: n.quest.type,
+          params: {
+            amount: n.quest.amount,
+            item: n.quest.item,
+            puzzleId: n.quest.puzzleId
+          }
+        })
       : null;
 
-    const spawn = findSafeSpawn(spawnedNPCs);
-    const npc = new NPC(n.name, spawn.x, spawn.y, n.dialog, quest);
-
-    spawnedNPCs.push(npc); // so next NPC avoids this one
-    return npc;
+    const spawn = findSafeSpawn(npcs);
+    return new NPC(n.name, spawn.x, spawn.y, n.dialog, quest);
   });
 }
 

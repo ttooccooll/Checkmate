@@ -78,10 +78,24 @@ export class NPC {
 }
 
 export class Quest {
-  constructor(id, description, checkCallback) {
+  constructor({ id, description, type, params = {} }) {
     this.id = id;
     this.description = description;
-    this.check = checkCallback; // function(player) => boolean
+    this.type = type; // e.g., "collect" or "solvePuzzle"
+    this.params = params; // e.g., { amount: 5, item: "coin" }
     this.active = false;
+  }
+
+  check(player) {
+    if (!this.active) return false;
+
+    switch (this.type) {
+      case "collect":
+        return player[this.params.item + "s"] >= this.params.amount;
+      case "solvePuzzle":
+        return player.solvedPuzzles?.includes(this.params.puzzleId);
+      default:
+        return false;
+    }
   }
 }

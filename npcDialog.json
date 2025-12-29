@@ -24,13 +24,12 @@
   {
     "id": "sam",
     "name": "Sam",
-    "dialog": [
-      "Hey! Do you like puzzles?",
-      "I have a challenge for you!"
-    ],
+    "dialog": ["Hey! Do you like puzzles?", "I have a challenge for you!"],
     "quest": {
       "id": "solve_puzzle",
-      "description": "Solve Sam's riddle near the forest."
+      "description": "Solve Sam's riddle near the forest.",
+      "type": "solvePuzzle",
+      "puzzleId": "sam_riddle"
     }
   }
 ]
