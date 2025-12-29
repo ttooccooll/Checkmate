@@ -15,6 +15,7 @@ export class NPC {
     this.dialogQueue = dialog;
     this.currentQuest = quest;
     this.completedQuests = [];
+    this.talking = false;
   }
 
   isPlayerNearby(player, range = 80) {

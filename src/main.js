@@ -761,17 +761,16 @@ function update(deltaTime = 1) {
     }
   }
 
-  // Interact with NPCs
-  if (keys.Enter) {
-    npcs.forEach(npc => {
-      if (npc.isPlayerNearby(player)) {
+  npcs.forEach(npc => {
+    if (npc.isPlayerNearby(player)) {
+      if (!npc.talking) {
         npc.interact(player, dialogManager);
+        npc.talking = true;
       }
-    });
-
-    // Reset Enter key so it doesn't trigger every frame
-    keys.Enter = false;
-  }
+    } else {
+      npc.talking = false;
+    }
+  });
 
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
