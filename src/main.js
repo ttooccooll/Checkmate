@@ -763,14 +763,11 @@ function update(deltaTime = 1) {
 
 npcs.forEach((npc) => {
   if (npc.isPlayerNearby(player)) {
-    if (!npc.talking) {
+    if (!npc.talking && !dialogManager.activeDialog) {
       npc.interact(player, dialogManager, { showMessage });
     }
-  } else {
-    npc.talking = false;
   }
 });
-
 
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
