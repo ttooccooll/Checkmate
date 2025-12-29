@@ -887,7 +887,7 @@ function draw() {
 
   // --- Draw dust (VERY LIGHT) ---
 dustParticles.forEach((p) => {
-  ctx.fillStyle = `rgba(159, 123, 72, 0.18)`;
+  ctx.fillStyle = `rgba(180, 141, 86, 0.1)`;
   ctx.beginPath();
   ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
   ctx.fill();
