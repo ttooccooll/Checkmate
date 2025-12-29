@@ -886,13 +886,6 @@ function draw() {
 
   ctx.restore();
 
-  dustParticles.forEach((p) => {
-    ctx.fillStyle = "rgba(111, 88, 35, 0.3)";
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
   // --- HUD ---
   ctx.fillStyle = "black";
   ctx.fillText(`Score: ${score}`, 10, 25);
