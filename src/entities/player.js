@@ -37,6 +37,9 @@ export class Player {
   }
 
   move(dx, dy) {
+    this.lastDx = dx;
+    this.lastDy = dy;
+
     this.x += dx;
     this.y += dy;
   }
