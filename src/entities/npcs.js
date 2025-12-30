@@ -59,9 +59,18 @@ export class NPC {
         },
       });
       choices.push({
-        text: "Decline Quest",
+        text: "Accept Quest",
         callback: () => {
-          if (showMessage) showMessage("Maybe next time!");
+          if (!this.currentQuest) return; // 🛡️ safety check
+
+          this.currentQuest.active = true;
+
+          if (showMessage) {
+            showMessage(
+              `Quest accepted: ${this.currentQuest.description}`,
+              5000
+            );
+          }
         },
       });
     }
