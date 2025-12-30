@@ -9,6 +9,11 @@ export class DialogManager {
     this.dialogBox = document.createElement("div");
     this.dialogBox.id = "dialog-box";
 
+    this.typingSpeed = 25; // ms per character
+    this.isTyping = false;
+    this.fullLineText = "";
+    this.typeInterval = null;
+
     Object.assign(this.dialogBox.style, {
       position: "absolute",
       bottom: "50%",
@@ -41,26 +46,50 @@ export class DialogManager {
   showNextLine() {
     if (!this.activeDialog) return;
 
+    // If currently typing, finish instantly
+    if (this.isTyping) {
+      clearInterval(this.typeInterval);
+      this.isTyping = false;
+
+      const textEl = this.dialogBox.querySelector("#dialog-text");
+      if (textEl) textEl.textContent = this.fullLineText;
+      return;
+    }
+
     if (this.activeDialog.length > 0) {
       const line = this.activeDialog.shift();
+      this.fullLineText = line;
 
       this.dialogBox.innerHTML = `
       <div style="margin-bottom:8px;">
         <strong>${this.speakerName}:</strong>
       </div>
-      <div style="margin-bottom:10px;">
-        ${line}
-      </div>
-      <button id="dialog-next-btn" style="padding:6px 12px; display:block; margin:0 auto;">
+      <div id="dialog-text" style="margin-bottom:10px;"></div>
+      <button id="dialog-next-btn"
+        style="padding:6px 12px; display:block; margin:0 auto;">
         Next
       </button>
     `;
 
       this.dialogBox.style.display = "block";
 
-      document
-        .getElementById("dialog-next-btn")
-        .addEventListener("click", () => this.showNextLine());
+      const textEl = this.dialogBox.querySelector("#dialog-text");
+      const nextBtn = this.dialogBox.querySelector("#dialog-next-btn");
+
+      this.isTyping = true;
+      textEl.textContent = "";
+
+      let index = 0;
+      this.typeInterval = setInterval(() => {
+        if (index < line.length) {
+          textEl.textContent += line[index++];
+        } else {
+          clearInterval(this.typeInterval);
+          this.isTyping = false;
+        }
+      }, this.typingSpeed);
+
+      nextBtn.addEventListener("click", () => this.showNextLine());
     } else {
       this.showChoices();
     }
@@ -107,6 +136,12 @@ export class DialogManager {
   }
 
   endDialog() {
+    if (this.typeInterval) {
+      clearInterval(this.typeInterval);
+      this.typeInterval = null;
+    }
+
+    this.isTyping = false;
     this.activeDialog = null;
     this.currentChoices = [];
     this.dialogBox.style.display = "none";
