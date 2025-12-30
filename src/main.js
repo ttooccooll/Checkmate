@@ -343,7 +343,7 @@ async function loadNPCs() {
       : null;
 
     const spawn = findSafeSpawn(npcs);
-    return new NPC(n.name, spawn.x, spawn.y, n.dialog, quest);
+    return new NPC(n, spawn.x, spawn.y, quest);
   });
 }
 
