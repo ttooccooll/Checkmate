@@ -65,8 +65,7 @@ export class DialogManager {
         <strong>${this.speakerName}:</strong>
       </div>
       <div id="dialog-text" style="margin-bottom:10px; min-width:300px;"></div>
-      <button id="dialog-next-btn"
-        style="padding:6px 12px; display:block; margin:0 auto;">
+      <button id="dialog-next-btn" style="padding:6px 12px; display:block; margin:0 auto; cursor:pointer;">
         Next
       </button>
     `;
@@ -101,7 +100,7 @@ export class DialogManager {
     const choicesHtml = this.currentChoices
       .map(
         (choice, idx) =>
-          `<button class="dialog-choice" data-idx="${idx}" style="margin:5px;padding:5px 10px;">${choice.text}</button>`
+          `<button class="dialog-choice" data-idx="${idx}" style="margin:5px;padding:5px 10px; cursor:pointer;">${choice.text}</button>`
       )
       .join("");
 
