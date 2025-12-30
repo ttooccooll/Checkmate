@@ -38,41 +38,35 @@ export class NPC {
     if (this.hasTalked) return false;
     this.hasTalked = true;
 
-    this.currentQuest.active = true;
-    questLog.update(npcs);
+    const lines = [...this.dialogQueue];
+    const choices = [];
 
-    if (!this.dialogQueue.length && !this.currentQuest) return false;
-
-    const lines = [...this.dialogQueue]; // copy of dialog lines
-    const choices = []; // ✅ declare it here
-
+    // ✅ ONLY create quest choices if a quest exists
     if (
-      this.currentQuest &&
+      this.currentQuest !== null &&
       !this.completedQuests.includes(this.currentQuest.id)
     ) {
-      choices.push({
-        text: "Accept Quest",
-        callback: () => {
-          this.currentQuest.active = true;
-          if (showMessage)
-            showMessage(`Quest accepted: ${this.currentQuest.description}`);
-        },
-      });
-      choices.push({
-        text: "Accept Quest",
-        callback: () => {
-          if (!this.currentQuest) return; // 🛡️ safety check
+      choices.push(
+        {
+          text: "Accept Quest",
+          callback: () => {
+            this.currentQuest.active = true;
 
-          this.currentQuest.active = true;
-
-          if (showMessage) {
-            showMessage(
-              `Quest accepted: ${this.currentQuest.description}`,
-              5000
-            );
-          }
+            if (showMessage) {
+              showMessage(
+                `Quest accepted: ${this.currentQuest.description}`,
+                5000
+              );
+            }
+          },
         },
-      });
+        {
+          text: "Decline Quest",
+          callback: () => {
+            if (showMessage) showMessage("Maybe next time!");
+          },
+        }
+      );
     }
 
     dialogManager.startDialog(this.name, lines, choices, () => {
