@@ -946,9 +946,18 @@ function draw() {
   ctx.drawImage(treeCanvas, 0, 0);
 
   // --- Draw buildings ---
+  // --- Draw buildings with shadows ---
   buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.4)"; // soft black shadow
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
+
     ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
+    ctx.restore();
   });
 
   ctx.restore();
