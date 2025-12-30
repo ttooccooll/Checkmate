@@ -830,14 +830,7 @@ function update(deltaTime = 1) {
     return true;
   });
 
-  // --- Camera ---
-  camera.x = player.x + player.width / 2 - canvas.width / 2;
-  camera.y = player.y + player.height / 2 - canvas.height / 2;
-
-  camera.x = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, camera.x));
-  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - canvas.height, camera.y));
-  camera.x = Math.round(camera.x);
-  camera.y = Math.round(camera.y);
+  updateCamera(deltaTime);
 
   if (flashTimer > 0) {
     flashTimer--;
@@ -854,6 +847,19 @@ function update(deltaTime = 1) {
   questLog.update(npcs, player);
 
   updateTouchControlsVisibility();
+}
+
+function updateCamera(deltaTime) {
+  const targetX = player.x + player.width / 2 - canvas.width / 2;
+  const targetY = player.y + player.height / 2 - canvas.height / 2;
+
+  const lerpFactor = 0.1; // 0.05–0.2 for smoother or snappier movement
+  camera.x += (targetX - camera.x) * lerpFactor;
+  camera.y += (targetY - camera.y) * lerpFactor;
+
+  // Clamp camera
+  camera.x = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - canvas.height, camera.y));
 }
 
 function endGame(reason = "Game Over") {
