@@ -658,14 +658,24 @@ function isVisible(x, y, w, h) {
   );
 }
 
-function showMessage(text, duration = 2000) {
+function showMessage(text, duration = 2000, closable = false) {
   const modal = document.getElementById("message-modal");
   modal.textContent = text;
   modal.style.display = "block";
+
   clearTimeout(modal._timer);
-  modal._timer = setTimeout(() => {
-    modal.style.display = "none";
-  }, duration);
+
+  if (closable) {
+    modal.onclick = () => {
+      modal.style.display = "none";
+      modal.onclick = null;
+    };
+  } else {
+    modal.onclick = null;
+    modal._timer = setTimeout(() => {
+      modal.style.display = "none";
+    }, duration);
+  }
 }
 
 function updateTouchControlsVisibility() {
