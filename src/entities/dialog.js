@@ -64,7 +64,7 @@ export class DialogManager {
       <div style="margin-bottom:8px;">
         <strong>${this.speakerName}:</strong>
       </div>
-      <div id="dialog-text" style="margin-bottom:10px;"></div>
+      <div id="dialog-text" style="margin-bottom:10px; min-height:60px;"></div>
       <button id="dialog-next-btn"
         style="padding:6px 12px; display:block; margin:0 auto;">
         Next

@@ -761,13 +761,13 @@ function update(deltaTime = 1) {
     }
   }
 
-npcs.forEach((npc) => {
-  if (npc.isPlayerNearby(player)) {
-    if (!npc.talking && !dialogManager.activeDialog) {
-      npc.interact(player, dialogManager, { showMessage });
+  npcs.forEach((npc) => {
+    if (npc.isPlayerNearby(player)) {
+      if (!npc.talking && !dialogManager.activeDialog) {
+        npc.interact(player, dialogManager, { showMessage });
+      }
     }
-  }
-});
+  });
 
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
@@ -778,22 +778,28 @@ npcs.forEach((npc) => {
   npcs.forEach((npc) => npc.checkQuestCompletion(player));
 
   npcs.forEach((npc) => {
-  if (npc.talking && !npc.isPlayerNearby(player)) {
-    dialogManager.endDialog();
-    npc.talking = false;
-  }
-});
+    if (!npc.isPlayerNearby(player)) {
+      npc.talking = false;
+      npc.hasTalked = false;
+    }
+  });
 
   // --- Coins ---
-coins = coins.filter((c) => {
-  if (rectCollision(player.getHitbox(), { x: c.x, y: c.y, width: c.size, height: c.size })) {
-    score++;
-    player.coins = (player.coins || 0) + 1;
-    return false;
-  }
-  return true;
-});
-
+  coins = coins.filter((c) => {
+    if (
+      rectCollision(player.getHitbox(), {
+        x: c.x,
+        y: c.y,
+        width: c.size,
+        height: c.size,
+      })
+    ) {
+      score++;
+      player.coins = (player.coins || 0) + 1;
+      return false;
+    }
+    return true;
+  });
 
   // --- Camera ---
   camera.x = player.x + player.width / 2 - canvas.width / 2;
@@ -886,12 +892,12 @@ function draw() {
   });
 
   // --- Draw dust (VERY LIGHT) ---
-dustParticles.forEach((p) => {
-  ctx.fillStyle = `rgba(180, 141, 86, 0.1)`;
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-  ctx.fill();
-});
+  dustParticles.forEach((p) => {
+    ctx.fillStyle = `rgba(180, 141, 86, 0.1)`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
 
   // --- Draw player ---
   player.draw(ctx);

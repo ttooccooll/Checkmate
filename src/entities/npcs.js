@@ -22,6 +22,7 @@ export class NPC {
     this.currentQuest = quest;
     this.completedQuests = [];
     this.talking = false;
+    this.hasTalked = false;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -33,6 +34,9 @@ export class NPC {
   interact(player, dialogManager, { showMessage }) {
     const now = performance.now();
     if (now - this.lastTalkTime < 500) return false;
+
+    if (this.hasTalked) return false;
+    this.hasTalked = true;
 
     if (!this.dialogQueue.length && !this.currentQuest) return false;
 
