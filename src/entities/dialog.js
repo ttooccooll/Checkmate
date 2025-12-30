@@ -4,6 +4,7 @@ export class DialogManager {
     this.currentChoices = [];
     this.callback = null;
     this.onClose = null;
+    this.speakerName = "";
 
     this.dialogBox = document.createElement("div");
     this.dialogBox.id = "dialog-box";
@@ -26,10 +27,9 @@ export class DialogManager {
     document.body.appendChild(this.dialogBox);
 
     this.handleDialogClick = this.handleDialogClick.bind(this);
-    this.dialogBox.addEventListener("click", this.handleDialogClick);
   }
 
-  startDialog(lines = [], choices = [], callback = null) {
+  startDialog(name, lines = [], choices = [], callback = null) {
     if (!lines.length && !choices.length) return;
     this.activeDialog = [...lines];
     this.currentChoices = choices;
@@ -42,8 +42,24 @@ export class DialogManager {
 
     if (this.activeDialog.length > 0) {
       const line = this.activeDialog.shift();
-      this.dialogBox.innerHTML = `<p>${line}</p>`;
+
+      this.dialogBox.innerHTML = `
+      <div style="margin-bottom:8px;">
+        <strong>${this.speakerName}:</strong>
+      </div>
+      <div style="margin-bottom:10px;">
+        ${line}
+      </div>
+      <button id="dialog-next-btn" style="padding:6px 12px;">
+        Next
+      </button>
+    `;
+
       this.dialogBox.style.display = "block";
+
+      document
+        .getElementById("dialog-next-btn")
+        .addEventListener("click", () => this.showNextLine());
     } else {
       this.showChoices();
     }
@@ -59,7 +75,12 @@ export class DialogManager {
       )
       .join("");
 
-    this.dialogBox.innerHTML = `<div>${choicesHtml}</div>`;
+    this.dialogBox.innerHTML = `
+  <div style="margin-bottom:8px;">
+    <strong>${this.speakerName}:</strong>
+  </div>
+  <div>${choicesHtml}</div>
+`;
 
     this.dialogBox.querySelectorAll(".dialog-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -71,19 +92,18 @@ export class DialogManager {
     });
   }
 
-handleDialogClick(e) {
-  if (e.target.classList.contains("dialog-choice")) return;
+  handleDialogClick(e) {
+    if (e.target.classList.contains("dialog-choice")) return;
 
-  if (!this.activeDialog) return;
+    if (!this.activeDialog) return;
 
-  if (this.activeDialog.length > 0) {
-    this.showNextLine();
-  } else {
-    // No lines left → no choices → close dialog
-    this.endDialog();
+    if (this.activeDialog.length > 0) {
+      this.showNextLine();
+    } else {
+      // No lines left → no choices → close dialog
+      this.endDialog();
+    }
   }
-}
-
 
   endDialog() {
     this.activeDialog = null;

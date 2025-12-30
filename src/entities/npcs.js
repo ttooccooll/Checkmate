@@ -54,10 +54,15 @@ export class NPC {
       });
     }
 
-      dialogManager.startDialog(lines, choices, () => {
+    dialogManager.startDialog(
+  this.name,
+  lines,
+  choices,
+  () => {
     this.talking = false;
     this.lastTalkTime = performance.now();
-  });
+  }
+);
 
   this.talking = true;
   return true;
