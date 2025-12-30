@@ -82,28 +82,24 @@ export class NPC {
   }
 
   checkDangerCollision(player) {
-  // Never trigger while talking
-  if (this.talking) return false;
+    // Tiny 1×1 hitbox in the center of the NPC
+    const npcCenterBox = {
+      x: this.x + this.width / 2,
+      y: this.y + this.height / 2,
+      width: 1,
+      height: 1,
+    };
 
-  const npcBox = {
-    x: this.x,
-    y: this.y,
-    width: this.width,
-    height: this.height,
-  };
+    const playerBox = player.getHitbox();
 
-  const playerBox = player.getHitbox();
-
-  // Standard AABB collision
-  const overlap =
-    playerBox.x < npcBox.x + npcBox.width &&
-    playerBox.x + playerBox.width > npcBox.x &&
-    playerBox.y < npcBox.y + npcBox.height &&
-    playerBox.y + playerBox.height > npcBox.y;
-
-  return overlap;
-}
-
+    // Standard AABB collision
+    return (
+      playerBox.x < npcCenterBox.x + npcCenterBox.width &&
+      playerBox.x + playerBox.width > npcCenterBox.x &&
+      playerBox.y < npcCenterBox.y + npcCenterBox.height &&
+      playerBox.y + playerBox.height > npcCenterBox.y
+    );
+  }
 
   checkQuestCompletion(player) {
     if (
