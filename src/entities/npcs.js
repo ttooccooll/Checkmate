@@ -38,6 +38,9 @@ export class NPC {
     if (this.hasTalked) return false;
     this.hasTalked = true;
 
+    this.currentQuest.active = true;
+    questLog.update(npcs);
+
     if (!this.dialogQueue.length && !this.currentQuest) return false;
 
     const lines = [...this.dialogQueue]; // copy of dialog lines
@@ -80,6 +83,7 @@ export class NPC {
       if (this.currentQuest.check(player)) {
         this.completedQuests.push(this.currentQuest.id);
         this.currentQuest.active = false;
+        questLog.update(npcs);
         showMessage(`🎉 Quest "${this.currentQuest.description}" completed!`);
         return true;
       }

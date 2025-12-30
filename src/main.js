@@ -15,8 +15,12 @@ import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
+import { QuestLogManager } from "./ui/questLog.js";
+
 
 const dialogManager = new DialogManager();
+const questLog = new QuestLogManager();
+
 let npcs = [];
 
 let startingGame = false;
@@ -373,6 +377,11 @@ function startNewGame() {
   player.setInvulnerable(20);
 
   gameRunning = true;
+
+  const newGameBtn = document.getElementById("new-game-btn");
+  newGameBtn.textContent = "Quest Log";
+  newGameBtn.onclick = () => questLog.toggle();
+
   lastTime = performance.now();
 
   const actionButtons = document.querySelectorAll("#action-buttons");
@@ -840,10 +849,23 @@ function update(deltaTime = 1) {
 
   dustParticles = dustParticles.filter((p) => p.life > 0);
 
+  questLog.update(npcs);
+
   updateTouchControlsVisibility();
 }
 
 function endGame() {
+  const newGameBtn = document.getElementById("new-game-btn");
+  newGameBtn.textContent = "New Game";
+  newGameBtn.onclick = () => {
+    document.getElementById("intro-screen").style.display = "none";
+    document.getElementById("game-container").style.display = "block";
+    document.getElementById("touch-controls").style.display = "grid";
+    document.getElementById("action-buttons").style.display = "flex";
+    startNewGame();
+  };
+
+  questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
   showMessage(`💥 Game Over! Score: ${score}`);
