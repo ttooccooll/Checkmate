@@ -44,7 +44,7 @@ export class QuestLogManager {
     this.container.style.display = "none";
   }
 
-  update(npcs) {
+  update(npcs, player) {
     const active = this.container.querySelector("#quest-log-active");
     const completed = this.container.querySelector("#quest-log-completed");
 
@@ -57,7 +57,7 @@ export class QuestLogManager {
 
       if (q.active && !npc.completedQuests.includes(q.id)) {
         const li = document.createElement("li");
-        li.textContent = q.description;
+        li.textContent = q.description + q.getProgressText(player);
         active.appendChild(li);
       }
 

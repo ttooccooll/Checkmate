@@ -122,4 +122,34 @@ export class Quest {
         return false;
     }
   }
+  getProgress(player) {
+    switch (this.type) {
+      case "collect": {
+        const current = player[this.params.item + "s"] || 0;
+        return {
+          current,
+          total: this.params.amount,
+        };
+      }
+
+      case "solvePuzzle": {
+        const solved = player.solvedPuzzles?.includes(this.params.puzzleId)
+          ? 1
+          : 0;
+        return {
+          current: solved,
+          total: 1,
+        };
+      }
+
+      default:
+        return null;
+    }
+  }
+
+  getProgressText(player) {
+    const progress = this.getProgress(player);
+    if (!progress) return "";
+    return ` (${progress.current} / ${progress.total})`;
+  }
 }

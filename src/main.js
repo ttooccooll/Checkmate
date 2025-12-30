@@ -849,7 +849,7 @@ function update(deltaTime = 1) {
 
   dustParticles = dustParticles.filter((p) => p.life > 0);
 
-  questLog.update(npcs);
+  questLog.update(npcs, player);
 
   updateTouchControlsVisibility();
 }
