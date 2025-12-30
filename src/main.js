@@ -17,7 +17,6 @@ import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
-
 const dialogManager = new DialogManager();
 const questLog = new QuestLogManager();
 
@@ -786,6 +785,9 @@ function update(deltaTime = 1) {
         npc.interact(player, dialogManager, { showMessage });
       }
     }
+    if (npc.checkDangerCollision(player, deltaTime)) {
+      endGame("You hit a pedestrian!");
+    }
   });
 
   player.move(dx, dy);
@@ -855,6 +857,7 @@ function update(deltaTime = 1) {
 }
 
 function endGame() {
+  showMessage(reason, 0, true);
   const newGameBtn = document.getElementById("new-game-btn");
   newGameBtn.textContent = "New Game";
   newGameBtn.onclick = () => {

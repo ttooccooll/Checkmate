@@ -4,6 +4,9 @@ export class NPC {
     this.name = data.name;
     this.dialogQueue = data.dialog || [];
 
+    this.hitCooldown = 0;
+    this.collisionTime = 0;
+
     this.x = x;
     this.y = y;
     this.width = 30;
@@ -151,5 +154,39 @@ export class Quest {
     const progress = this.getProgress(player);
     if (!progress) return "";
     return ` (${progress.current} / ${progress.total})`;
+  }
+
+  checkDangerCollision(player, deltaTime) {
+    // Don't kill player while talking
+    if (this.talking) return false;
+
+    // Simple AABB overlap
+    const overlap =
+      player.x < this.x + this.width &&
+      player.x + player.width > this.x &&
+      player.y < this.y + this.height &&
+      player.y + player.height > this.y;
+
+    if (!overlap) {
+      this.collisionTime = 0;
+      return false;
+    }
+
+    // Speed check (VERY forgiving)
+    const speed = Math.hypot(player.vx || 0, player.vy || 0);
+
+    if (speed < 2.5) {
+      this.collisionTime = 0;
+      return false;
+    }
+
+    // Require sustained impact (~150ms)
+    this.collisionTime += deltaTime;
+
+    if (this.collisionTime > 150) {
+      return true;
+    }
+
+    return false;
   }
 }
