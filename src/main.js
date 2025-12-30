@@ -785,7 +785,7 @@ function update(deltaTime = 1) {
         npc.interact(player, dialogManager, { showMessage });
       }
     }
-    if (npc.checkDangerCollision(player, deltaTime)) {
+    if (npc.checkDangerCollision(player)) {
       endGame("You hit a pedestrian!");
     }
   });

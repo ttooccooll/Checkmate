@@ -81,48 +81,29 @@ export class NPC {
     return true;
   }
 
-  checkDangerCollision(player, deltaTime) {
-    // Never kill player during dialog
-    if (this.talking) return false;
+  checkDangerCollision(player) {
+  // Never trigger while talking
+  if (this.talking) return false;
 
-    // Shrink NPC hitbox to avoid accidental grazes
-    const PADDING = 8;
+  const npcBox = {
+    x: this.x,
+    y: this.y,
+    width: this.width,
+    height: this.height,
+  };
 
-    const npcBox = {
-      x: this.x + PADDING,
-      y: this.y + PADDING,
-      width: this.width - PADDING * 2,
-      height: this.height - PADDING * 2,
-    };
+  const playerBox = player.getHitbox();
 
-    const playerBox = player.getHitbox();
+  // Standard AABB collision
+  const overlap =
+    playerBox.x < npcBox.x + npcBox.width &&
+    playerBox.x + playerBox.width > npcBox.x &&
+    playerBox.y < npcBox.y + npcBox.height &&
+    playerBox.y + playerBox.height > npcBox.y;
 
-    const overlap =
-      playerBox.x < npcBox.x + npcBox.width &&
-      playerBox.x + playerBox.width > npcBox.x &&
-      playerBox.y < npcBox.y + npcBox.height &&
-      playerBox.y + playerBox.height > npcBox.y;
+  return overlap;
+}
 
-    if (!overlap) {
-      this.collisionTime = 0;
-      return false;
-    }
-
-    // Use actual movement magnitude (much more reliable)
-    const movement =
-      Math.abs(player.lastDx || 0) + Math.abs(player.lastDy || 0);
-
-    // Too slow = just a bump
-    if (movement < 1.5) {
-      this.collisionTime = 0;
-      return false;
-    }
-
-    // Short but real impact (~2 frames)
-    this.collisionTime = (this.collisionTime || 0) + deltaTime;
-
-    return this.collisionTime > 30;
-  }
 
   checkQuestCompletion(player) {
     if (
