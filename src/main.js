@@ -778,8 +778,16 @@ function update(deltaTime = 1) {
   npcs.forEach((npc) => npc.checkQuestCompletion(player));
 
   npcs.forEach((npc) => {
-    if (!npc.isPlayerNearby(player)) {
+    const nearby = npc.isPlayerNearby(player);
+
+    // Player drove off while dialog is active → close dialog
+    if (npc.talking && !nearby) {
+      dialogManager.endDialog();
       npc.talking = false;
+    }
+
+    // Allow re-talk only after fully leaving range
+    if (!nearby) {
       npc.hasTalked = false;
     }
   });
