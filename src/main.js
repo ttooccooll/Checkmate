@@ -767,6 +767,10 @@ function update(deltaTime = 1) {
         npc.interact(player, dialogManager, { showMessage });
       }
     }
+    if (npc.talking && !nearby) {
+      dialogManager.endDialog();
+      npc.talking = false;
+    }
   });
 
   player.move(dx, dy);
