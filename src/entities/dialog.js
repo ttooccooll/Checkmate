@@ -31,6 +31,7 @@ export class DialogManager {
 
   startDialog(name, lines = [], choices = [], callback = null) {
     if (!lines.length && !choices.length) return;
+    this.speakerName = name;
     this.activeDialog = [...lines];
     this.currentChoices = choices;
     this.callback = callback;
