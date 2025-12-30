@@ -81,6 +81,35 @@ export class NPC {
     return true;
   }
 
+  checkDangerCollision(player, deltaTime) {
+    // Do not kill player while dialog is active
+    if (this.talking) return false;
+
+    // Forgiving AABB overlap
+    const overlap =
+      player.x < this.x + this.width &&
+      player.x + player.width > this.x &&
+      player.y < this.y + this.height &&
+      player.y + player.height > this.y;
+
+    if (!overlap) {
+      this.collisionTime = 0;
+      return false;
+    }
+
+    // Speed check (VERY forgiving)
+    const speed = Math.hypot(player.vx || 0, player.vy || 0);
+    if (speed < 2.5) {
+      this.collisionTime = 0;
+      return false;
+    }
+
+    // Require sustained collision (~150ms)
+    this.collisionTime = (this.collisionTime || 0) + deltaTime;
+
+    return this.collisionTime > 150;
+  }
+
   checkQuestCompletion(player) {
     if (
       this.currentQuest?.active &&
@@ -154,39 +183,5 @@ export class Quest {
     const progress = this.getProgress(player);
     if (!progress) return "";
     return ` (${progress.current} / ${progress.total})`;
-  }
-
-  checkDangerCollision(player, deltaTime) {
-    // Don't kill player while talking
-    if (this.talking) return false;
-
-    // Simple AABB overlap
-    const overlap =
-      player.x < this.x + this.width &&
-      player.x + player.width > this.x &&
-      player.y < this.y + this.height &&
-      player.y + player.height > this.y;
-
-    if (!overlap) {
-      this.collisionTime = 0;
-      return false;
-    }
-
-    // Speed check (VERY forgiving)
-    const speed = Math.hypot(player.vx || 0, player.vy || 0);
-
-    if (speed < 2.5) {
-      this.collisionTime = 0;
-      return false;
-    }
-
-    // Require sustained impact (~150ms)
-    this.collisionTime += deltaTime;
-
-    if (this.collisionTime > 150) {
-      return true;
-    }
-
-    return false;
   }
 }

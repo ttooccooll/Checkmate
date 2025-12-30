@@ -856,7 +856,7 @@ function update(deltaTime = 1) {
   updateTouchControlsVisibility();
 }
 
-function endGame() {
+function endGame(reason = "Game Over") {
   showMessage(reason, 0, true);
   const newGameBtn = document.getElementById("new-game-btn");
   newGameBtn.textContent = "New Game";
