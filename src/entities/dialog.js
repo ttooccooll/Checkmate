@@ -51,7 +51,7 @@ export class DialogManager {
       <div style="margin-bottom:10px;">
         ${line}
       </div>
-      <button id="dialog-next-btn" style="padding:6px 12px;">
+      <button id="dialog-next-btn" style="padding:6px 12px; display:block; margin:0 auto;">
         Next
       </button>
     `;

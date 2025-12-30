@@ -1,19 +1,24 @@
 export class NPC {
-  constructor(name, x, y, dialog = [], quest = null) {
-    this.name = name;
+  constructor(data, x, y, quest = null) {
+    this.id = data.id;
+    this.name = data.name;
+    this.dialogQueue = data.dialog || [];
+
     this.x = x;
     this.y = y;
     this.width = 30;
     this.height = 30;
     this.lastTalkTime = 0;
+
     const npcImages = [
       "/assets/npc1.png",
       "/assets/npc2.png",
       "/assets/npc3.png",
     ];
+
     this.sprite = new Image();
     this.sprite.src = npcImages[Math.floor(Math.random() * npcImages.length)];
-    this.dialogQueue = dialog;
+
     this.currentQuest = quest;
     this.completedQuests = [];
     this.talking = false;
@@ -26,10 +31,10 @@ export class NPC {
   }
 
   interact(player, dialogManager, { showMessage }) {
-  const now = performance.now();
-  if (now - this.lastTalkTime < 500) return false;
+    const now = performance.now();
+    if (now - this.lastTalkTime < 500) return false;
 
-  if (!this.dialogQueue.length && !this.currentQuest) return false;
+    if (!this.dialogQueue.length && !this.currentQuest) return false;
 
     const lines = [...this.dialogQueue]; // copy of dialog lines
     const choices = []; // ✅ declare it here
@@ -54,19 +59,14 @@ export class NPC {
       });
     }
 
-    dialogManager.startDialog(
-  this.name,
-  lines,
-  choices,
-  () => {
-    this.talking = false;
-    this.lastTalkTime = performance.now();
-  }
-);
+    dialogManager.startDialog(this.name, lines, choices, () => {
+      this.talking = false;
+      this.lastTalkTime = performance.now();
+    });
 
-  this.talking = true;
-  return true;
-}
+    this.talking = true;
+    return true;
+  }
 
   checkQuestCompletion(player) {
     if (
