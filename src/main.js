@@ -942,14 +942,14 @@ function draw() {
   // --- Draw player ---
   player.draw(ctx);
 
-    // --- Draw buildings ---
+  // --- Draw trees ---
+  ctx.drawImage(treeCanvas, 0, 0);
+
+  // --- Draw buildings ---
   buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
     ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
   });
-  
-  // --- Draw trees ---
-  ctx.drawImage(treeCanvas, 0, 0);
 
   ctx.restore();
 
