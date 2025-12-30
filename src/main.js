@@ -920,17 +920,8 @@ function draw() {
   if (grassCanvas) ctx.drawImage(grassCanvas, 0, 0);
   ctx.drawImage(roadCanvas, 0, 0);
 
-  // --- Draw trees ---
-  ctx.drawImage(treeCanvas, 0, 0);
-
   // --- Draw NPCs ---
   npcs.forEach((npc) => npc.draw(ctx));
-
-  // --- Draw buildings ---
-  buildings.forEach((b) => {
-    if (!isVisible(b.x, b.y, b.width, b.height)) return;
-    ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
-  });
 
   // --- Draw coins ---
   coins.forEach((c) => {
@@ -950,6 +941,15 @@ function draw() {
 
   // --- Draw player ---
   player.draw(ctx);
+
+    // --- Draw buildings ---
+  buildings.forEach((b) => {
+    if (!isVisible(b.x, b.y, b.width, b.height)) return;
+    ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
+  });
+  
+  // --- Draw trees ---
+  ctx.drawImage(treeCanvas, 0, 0);
 
   ctx.restore();
 
