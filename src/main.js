@@ -378,8 +378,10 @@ function startNewGame() {
   gameRunning = true;
 
   const newGameBtn = document.getElementById("new-game-btn");
-  newGameBtn.textContent = "Quest Log";
-  newGameBtn.onclick = () => questLog.toggle();
+  setTimeout(() => {
+    newGameBtn.textContent = "Quest Log";
+    newGameBtn.onclick = () => questLog.toggle();
+  }, 0);
 
   lastTime = performance.now();
 
@@ -1112,11 +1114,15 @@ function bindPointerButton(id, onDown, onUp = onDown) {
   el.addEventListener("pointerleave", onUp);
 }
 
-document.getElementById("new-game-btn").addEventListener("click", () => {
+document.getElementById("new-game-btn").addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+
   document.getElementById("intro-screen").style.display = "none";
   document.getElementById("game-container").style.display = "block";
   document.getElementById("touch-controls").style.display = "grid";
   document.getElementById("action-buttons").style.display = "flex";
+
   startNewGame();
 });
 
