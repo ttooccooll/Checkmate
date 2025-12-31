@@ -991,7 +991,7 @@ function draw() {
 
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.4)";
-    ctx.shadowBlur = 15;
+    ctx.shadowBlur = 20;
 
     ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
     ctx.restore();
