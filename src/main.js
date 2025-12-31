@@ -990,10 +990,8 @@ function draw() {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
 
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.4)"; // soft black shadow
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
     ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
 
     ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
     ctx.restore();
