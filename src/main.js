@@ -964,8 +964,11 @@ function draw() {
   ctx.restore();
 
   // --- HUD ---
-  ctx.fillStyle = "black";
-  ctx.fillText(`Score: ${score}`, 10, 25);
+  ctx.font = "16px monospace";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#111";
+
+  ctx.fillText(`Score: ${score}`, 10, 10);
 }
 
 function spawnDust() {
