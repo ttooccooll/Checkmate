@@ -3,132 +3,132 @@
     "id": "thabo",
     "name": "Thabo",
     "dialog": [
-      "Howzit, my friend!",
-      "Joburg traffic is something else, hey?",
-      "You really need patience to survive the city."
+      "The lighthouse keeper?",
+      "He didn’t leave town.",
+      "He just… stopped being seen."
     ],
     "postQuestDialog": [
-      "Hey! You actually found all the taxi coins.",
-      "That helps more people than you think.",
-      "Respect, my friend."
+      "You found his things?",
+      "Then he was still trying to do his job.",
+      "Even after everyone else moved on."
     ],
     "quest": {
-      "id": "collect_taxi_fares",
-      "description": "Recover 3 coins dropped during the early-morning taxi rush near the harbour road.",
+      "id": "mystery_keeper_clues",
+      "description": "Recover belongings left behind by the lighthouse keeper.",
       "type": "collect",
-      "amount": 3,
-      "item": "coin"
+      "params": { "item": "clue", "amount": 3 },
+      "rewardScore": 25
     }
   },
   {
     "id": "lerato",
     "name": "Lerato",
     "dialog": [
-      "I miss the smell of rain in Limpopo.",
-      "Summer storms hit hard but fade quickly.",
-      "Nature really shows off here."
+      "I miss the smell of rain along the cliffs.",
+      "Storms come fast, then disappear into the bay.",
+      "The coast really shows its moods here."
     ]
   },
   {
     "id": "sipho",
     "name": "Sipho",
     "dialog": [
-      "Braai day is the best day of the week.",
-      "Everyone argues about boerewors brands.",
-      "But as long as the fire is hot, we’re good."
+      "Nothing beats a braai by the seaside.",
+      "Everyone debates which boerewors brand is best.",
+      "As long as the fire is hot, the day’s a win."
     ]
   },
   {
     "id": "nomsa",
     "name": "Nomsa",
     "dialog": [
-      "Cape Town winds are no joke.",
-      "One minute it's calm, the next your hat is gone.",
-      "Still, the ocean makes it worth it."
+      "The wind off the ocean is fierce.",
+      "One second calm, next your hat sails away.",
+      "Still, the view over the cliffs makes it worth it."
     ]
   },
   {
     "id": "kagiso",
     "name": "Kagiso",
     "dialog": [
-      "Soweto has so much history.",
-      "Every street tells a story.",
-      "You can feel it when you walk around."
+      "You’re asking about the bell?",
+      "It wasn’t for ships. It was for people.",
+      "When someone didn’t come home… it rang."
     ],
     "postQuestDialog": [
-      "You found those landmarks, hey?",
-      "Good. People forget how important they are.",
-      "Thanks for taking the time."
+      "I’m glad someone still listens.",
+      "Places don’t forget things.",
+      "People do."
     ],
     "quest": {
-      "id": "visit_landmarks",
-      "description": "Follow Kagiso’s memories by finding 2 places that still carry the town’s old stories.",
+      "id": "mystery_old_routes",
+      "description": "Find remnants of the town’s old emergency paths.",
       "type": "collect",
-      "amount": 2,
-      "item": "landmark"
+      "params": { "item": "marker", "amount": 2 },
+      "rewardScore": 20
     }
   },
   {
     "id": "zanele",
     "name": "Zanele",
     "dialog": [
-      "Xitsonga music always lifts my mood.",
-      "The rhythm just gets into your feet.",
-      "You can’t stand still listening to it."
+      "Local music by the waves lifts the spirit.",
+      "The rhythm makes your feet chase the shoreline.",
+      "You can’t help but move with it."
     ]
   },
   {
     "id": "musa",
     "name": "Musa",
     "dialog": [
-      "Durban’s beaches are the best.",
-      "Warm water, warm people.",
-      "Just watch out for the sunburn."
+      "The beaches here are peaceful, with warm water and warmer smiles.",
+      "Just don’t forget sun protection.",
+      "The tide and the people are what make it magical."
     ]
   },
   {
     "id": "anele",
     "name": "Anele",
     "dialog": [
-      "The Drakensberg mountains are breathtaking.",
-      "Hiking there clears your mind.",
-      "It makes you feel very small."
+      "Hiking the coastal cliffs clears the mind.",
+      "The cliffs make you feel small, yet part of something larger.",
+      "Adventure is all around here if you look."
     ]
   },
   {
     "id": "vusi",
     "name": "Vusi",
     "dialog": [
-      "Load shedding really tests our patience.",
-      "At least we’ve mastered cooking with gas.",
-      "You have to laugh sometimes."
+      "Even small power outages reveal our patience.",
+      "Cooking on gas becomes an art.",
+      "You have to laugh and enjoy the moment."
     ]
   },
   {
     "id": "busisiwe",
     "name": "Busisiwe",
     "dialog": [
-      "Xitsonga and isiZulu sound beautiful together.",
-      "Languages connect people.",
-      "South Africa has so many voices."
+      "Hearing different languages on the wind is beautiful.",
+      "They connect people, even strangers.",
+      "Our town has many voices waiting to be heard."
     ]
   },
   {
     "id": "sibusiso",
     "name": "Sibusiso",
     "dialog": [
-      "Minibus taxis run this country.",
-      "Without them, everything stops.",
-      "You learn to move fast at the rank."
+      "The taxis are the heartbeat of our town.",
+      "Without them, the coast is silent.",
+      "Finding lost signs keeps life moving smoothly."
     ],
     "postQuestDialog": [
-      "You found the missing route sign!",
-      "Now drivers won’t be arguing all day.",
-      "Sharp work, thanks."
+      "You recovered the missing route sign?",
+      "Drivers won’t argue at the harbor anymore.",
+      "You’ve kept the rhythm of the town alive."
     ],
     "quest": {
       "id": "taxi_route_help",
-      "description": "Help Sibusiso by finding a missing taxi route sign.",
+      "description": "Locate the missing taxi route sign to help the early commuters navigate the coastal roads.",
       "type": "collect",
       "amount": 1,
       "item": "sign"
@@ -138,120 +138,132 @@
     "id": "palesa",
     "name": "Palesa",
     "dialog": [
-      "Spring flowers in the Free State are stunning.",
-      "The fields turn purple and yellow.",
-      "It’s like a painting."
+      "Spring here paints the cliffs in gold and violet.",
+      "The wildflowers sway with the breeze.",
+      "It’s like walking through a living painting."
     ]
   },
   {
     "id": "andile",
     "name": "Andile",
     "dialog": [
-      "Soccer brings everyone together.",
-      "When Bafana Bafana plays, the streets go quiet.",
-      "Until someone scores!"
+      "Soccer brings the town together.",
+      "Even the seagulls pause when the ball rolls by.",
+      "It’s chaos, laughter, and cheers in one field."
     ]
   },
   {
     "id": "kgotso",
     "name": "Kgotso",
     "dialog": [
-      "Peace and calm are important in life.",
-      "Sometimes you just sit and watch the sunset.",
-      "That’s enough."
+      "Evenings on the cliffs are calm.",
+      "Watching the sun set over the waves is enough for reflection.",
+      "Peace lives here if you stop and look."
     ]
   },
   {
     "id": "nandi",
     "name": "Nandi",
     "dialog": [
-      "Traditional beadwork takes patience.",
-      "Every color has meaning.",
-      "It’s more than just decoration."
-    ]
+      "Some nights, when the fog rolls in, I hear a bell.",
+      "Not from the harbor — from somewhere deeper.",
+      "People say it’s just the sea, but it feels… intentional."
+    ],
+    "postQuestDialog": [
+      "You found something, didn’t you?",
+      "That sound… it wasn’t just in my head.",
+      "Maybe the town is trying to remember."
+    ],
+    "quest": {
+      "id": "mystery_bell_fragments",
+      "description": "Search the shoreline and forest edge for traces of the bell.",
+      "type": "collect",
+      "params": { "item": "fragment", "amount": 2 },
+      "rewardScore": 15
+    }
   },
   {
     "id": "themba",
     "name": "Themba",
     "dialog": [
-      "I learned to drive on gravel roads.",
-      "You really learn control that way.",
-      "City driving feels easy after that."
+      "Driving along winding coastal roads teaches focus.",
+      "Every turn matters, every view is a reward.",
+      "City driving feels easy after this."
     ]
   },
   {
     "id": "ayanda",
     "name": "Ayanda",
     "dialog": [
-      "Xitsonga stories from elders are powerful.",
-      "They teach lessons without lectures.",
-      "You remember them forever."
+      "Elder stories whisper lessons without lectures.",
+      "Along the cliffs, the wind carries them far.",
+      "You remember them long after you hear them."
     ]
   },
   {
     "id": "mandla",
     "name": "Mandla",
     "dialog": [
-      "Strength isn’t just physical.",
-      "Surviving tough times builds character.",
-      "South Africans know that well."
+      "Strength is more than muscle.",
+      "Enduring challenges along the coast builds resilience.",
+      "Our town teaches it quietly to everyone."
     ]
   },
   {
     "id": "noluthando",
     "name": "Noluthando",
     "dialog": [
-      "Love and kindness go a long way.",
-      "Even a small greeting can change a day.",
-      "Ubuntu is real."
+      "Kindness travels further than the tides.",
+      "A smile or greeting brightens the busiest street.",
+      "Ubuntu is alive here, if you care to see it."
     ]
   },
   {
     "id": "hlokomela",
     "name": "Hlokomela",
     "dialog": [
-      "Looking after each other matters.",
-      "Community makes life easier.",
-      "We are stronger together."
+      "No one walks up there anymore.",
+      "Paths don’t vanish on their own.",
+      "They disappear when people stop caring."
     ],
     "postQuestDialog": [
-      "I heard you helped the neighbors.",
-      "That kind of kindness spreads quickly.",
-      "Thank you for being there."
+      "The path feels open again.",
+      "Like it’s breathing.",
+      "Thank you for that."
     ],
     "quest": {
-      "id": "help_neighbors",
-      "description": "Help 2 neighbors around the area.",
+      "id": "mystery_clear_path",
+      "description": "Restore the forgotten markers leading to the lighthouse.",
       "type": "collect",
-      "amount": 2,
-      "item": "help"
+      "params": { "item": "marker", "amount": 3 },
+      "rewardScore": 30
     }
   },
   {
     "id": "thandi",
     "name": "Thandi",
     "dialog": [
-      "Morning traffic feels different before sunrise.",
-      "The city sounds quieter then.",
-      "You notice things you normally miss."
+      "Early mornings along the coast are quiet.",
+      "The town wakes with the sunrise and the waves.",
+      "Notice the little details others miss."
     ]
   },
   {
     "id": "refilwe",
     "name": "Refilwe",
     "dialog": [
-      "The park used to be full of kids.",
-      "Lately it feels forgotten.",
-      "Small things can bring life back."
+      "The park along the cliffs is forgotten lately.",
+      "Litter dulls its beauty.",
+      "Even small actions can bring life back."
     ],
     "postQuestDialog": [
       "You picked up the litter?",
-      "It already feels better here.",
+      "The park already feels lighter and alive.",
       "Thank you for caring."
     ],
     "quest": {
       "id": "clean_park",
-      "description": "Pick up 5 pieces of litter in the park.",
+      "description": "Collect 5 pieces of litter scattered along the park pathways and cliff edge.",
       "type": "collect",
       "amount": 5,
       "item": "litter"
@@ -261,18 +273,18 @@
     "id": "bongani",
     "name": "Bongani",
     "dialog": [
-      "Street lights make people feel safer.",
-      "This one’s been broken for weeks.",
-      "Someone needs to check on it."
+      "Broken street lights make the town feel shadowed.",
+      "This one hasn’t worked for weeks.",
+      "Someone needs to restore it for night safety."
     ],
     "postQuestDialog": [
-      "You got the light working again!",
-      "Now people won’t rush home in fear.",
-      "I appreciate that."
+      "You fixed the street light?",
+      "Even one light changes how safe the streets feel.",
+      "The town thanks you."
     ],
     "quest": {
       "id": "fix_street_light",
-      "description": "Inspect and restore the broken street light.",
+      "description": "Inspect and restore the broken street light along the coastal promenade.",
       "type": "collect",
       "amount": 1,
       "item": "light"
@@ -282,18 +294,18 @@
     "id": "keabetswe",
     "name": "Keabetswe",
     "dialog": [
-      "Kids love chasing pigeons here.",
-      "But they keep losing their balls.",
-      "Always rolling into the street."
+      "Children chase seagulls and balls near the promenade.",
+      "Balls often roll into the tide or the street.",
+      "Someone needs to gather them before they’re lost."
     ],
     "postQuestDialog": [
       "You found the missing balls?",
-      "They’re going to be so happy.",
-      "You’re a hero today."
+      "The kids are thrilled!",
+      "You’ve made their day."
     ],
     "quest": {
       "id": "lost_play_balls",
-      "description": "Find 3 lost play balls near the street.",
+      "description": "Find 3 lost play balls near the town promenade and pier.",
       "type": "collect",
       "amount": 3,
       "item": "ball"
@@ -303,18 +315,18 @@
     "id": "samkelo",
     "name": "Samkelo",
     "dialog": [
-      "Vendors rely on foot traffic.",
-      "Signs help people find us.",
-      "Mine blew away last night."
+      "Vendors along the coast rely on foot traffic.",
+      "Signs guide visitors, but mine blew away last night.",
+      "Without it, customers get lost."
     ],
     "postQuestDialog": [
-      "My sign is back up!",
-      "People can find me again.",
-      "Thanks, that helps a lot."
+      "Your sign is back!",
+      "People can find your stall again.",
+      "The morning feels busy and happy once more."
     ],
     "quest": {
       "id": "vendor_sign",
-      "description": "Recover the missing vendor sign.",
+      "description": "Recover the missing vendor sign along the coastal market street.",
       "type": "collect",
       "amount": 1,
       "item": "sign"
@@ -324,18 +336,18 @@
     "id": "mpho",
     "name": "Mpho",
     "dialog": [
-      "The community board keeps us informed.",
-      "Not many people check it anymore.",
-      "Notices get lost."
+      "The community board shares news for the town.",
+      "Lately, few check it.",
+      "Missing notices mean missed opportunities."
     ],
     "postQuestDialog": [
-      "You pinned the notices back up?",
-      "Now everyone will see them.",
-      "That really matters."
+      "You put the notices back up?",
+      "Everyone can see them again.",
+      "It’s amazing how much that matters."
     ],
     "quest": {
       "id": "community_notices",
-      "description": "Put up 3 missing community notices.",
+      "description": "Post 3 missing community notices along the promenade and market square.",
       "type": "collect",
       "amount": 3,
       "item": "notice"

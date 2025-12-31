@@ -825,9 +825,23 @@ function update(deltaTime = 1) {
     const completedQuest = npc.checkQuestCompletion(player);
 
     if (completedQuest) {
-      const reward = completedQuest.rewardScore || 10;
+      addScore(completedQuest.rewardScore);
 
-      score += reward;
+      if (completedQuest.id === "mystery_bell_fragments") {
+        unlockNPC("kagiso");
+      }
+
+      if (completedQuest.id === "mystery_old_routes") {
+        unlockNPC("thabo");
+      }
+
+      if (completedQuest.id === "mystery_keeper_clues") {
+        unlockNPC("hlokomela");
+      }
+
+      if (completedQuest.id === "mystery_clear_path") {
+        enableLighthouseBell();
+      }
 
       showMessage(
         `🎉 Quest "${completedQuest.description}" completed! +${reward} score`,
