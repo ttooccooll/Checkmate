@@ -1116,6 +1116,23 @@ function draw() {
   ctx.fillStyle = "#111";
 
   ctx.fillText(`Score: ${score}`, 10, 10);
+
+  const hudX = 10;
+  let hudY = 30;
+
+  const upgradeLabels = {
+    helmet: "🪖 Helmet",
+    speedBoost: "⚡ Speed Boost",
+    offRoadTreads: "🛞 Off-Road Treads",
+    metalDetector: "🧲 Metal Detector",
+  };
+
+  Object.keys(upgrades).forEach((key) => {
+    if (upgrades[key]) {
+      ctx.fillText(upgradeLabels[key], hudX, hudY);
+      hudY += 18; // spacing between upgrades
+    }
+  });
 }
 
 function spawnDust() {
