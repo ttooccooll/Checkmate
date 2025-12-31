@@ -15,6 +15,7 @@ import {
   rectCollision,
   circleRectCollision,
   isCollidingWithObstacles,
+  isOnRoad
 } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
@@ -548,16 +549,6 @@ function renderRoadsOffscreen() {
     });
 
   roadCtx.setLineDash([]);
-}
-
-function isOnRoad(x, y, width, height) {
-  return roads.some(
-    (road) =>
-      x + width > road.x - ROAD_BUFFER &&
-      x < road.x + road.width + ROAD_BUFFER &&
-      y + height > road.y - ROAD_BUFFER &&
-      y < road.y + road.height + ROAD_BUFFER
-  );
 }
 
 function generateBuildings(count) {

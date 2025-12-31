@@ -29,3 +29,13 @@ export function isCollidingWithObstacles(x, y, width, height, buildings = [], tr
 
   return false;
 }
+
+export function isOnRoad(x, y, width, height) {
+  return roads.some(
+    (road) =>
+      x + width > road.x - ROAD_BUFFER &&
+      x < road.x + road.width + ROAD_BUFFER &&
+      y + height > road.y - ROAD_BUFFER &&
+      y < road.y + road.height + ROAD_BUFFER
+  );
+}
