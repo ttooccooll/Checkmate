@@ -16,6 +16,7 @@ import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
 import { Tree } from "./entities/trees.js";
+import { generateItems } from "./entities/items.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
 const dialogManager = new DialogManager();
@@ -107,6 +108,14 @@ let trees = [];
 let coins = [];
 let score = 0;
 let gameRunning = false;
+
+let items = [];
+npcs.forEach((npc) => {
+  if (npc.quest) {
+    const questItems = generateItems(npc.quest.params?.item || npc.quest.item, npc.quest.params?.amount || npc.quest.amount);
+    items.push(...questItems);
+  }
+});
 
 window.addScore = (amount) => {
   score += amount;
