@@ -110,6 +110,7 @@ player.onCrash = (reason) => {
 let buildings = [];
 let trees = [];
 let coins = [];
+let items = [];
 let score = 0;
 let gameRunning = false;
 
@@ -371,7 +372,6 @@ function startNewGame() {
   buildings = generateBuildings(50);
   coins = generateCoins(15);
 
-  let items = [];
   npcs.forEach((npc) => {
     if (npc.quest) {
       const questItems = generateItems(
