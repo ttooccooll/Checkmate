@@ -184,35 +184,85 @@ canvas {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.97);
-    padding: 25px 35px;
-    border-radius: 16px;
+    transform: translate(-50%, -50%) scale(0.95);
+    background: linear-gradient(180deg, #ffffff, #eef8fb);
+    padding: 28px 34px;
+    border-radius: 18px;
     display: none;
     z-index: 20;
-    font-size: 20px;
+
+    font-size: 18px;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    color: #05445e;
+    color: #043a4f;
     font-weight: 600;
+    line-height: 1.4;
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.8);
+
+    animation: messageFadeIn 0.25s ease-out forwards;
+}
+
+@keyframes messageFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -55%) scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Quest accepted / progress */
+.message-quest {
+    border-left: 6px solid #4fad99;
+}
+
+/* Discovery / mystery */
+.message-mystery {
+    background: linear-gradient(180deg, #f9f6ff, #ece6ff);
+    border-left: 6px solid #9b7fe3;
+    color: #3a2c6e;
+}
+
+/* World feedback (cleanup, helping town) */
+.message-world {
+    background: linear-gradient(180deg, #ffffff, #f3f7f5);
+    border-left: 6px solid #58d68d;
+}
+
+/* Warning or important info */
+.message-warning {
+    background: linear-gradient(180deg, #fff5f5, #ffe3e3);
+    border-left: 6px solid #e74c3c;
+    color: #7a1f1f;
 }
 
 #message-modal button {
-    margin-top: 15px;
+    margin-top: 18px;
     background: linear-gradient(145deg, #48a385, #4fad99);
-    color: #fff;
+    color: #ffffff;
     border: none;
-    padding: 8px 16px;
-    border-radius: 12px;
-    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow: 0 4px 0 #317264, 0 6px 10px rgba(0,0,0,0.2);
-    transition: transform 0.08s, box-shadow 0.08s;
+
+    box-shadow:
+        0 5px 0 #317264,
+        0 8px 14px rgba(0,0,0,0.25);
+
+    transition: transform 0.08s, box-shadow 0.08s, background 0.2s;
 }
 
 #message-modal button:active {
     transform: translateY(4px);
-    box-shadow: 0 1px 0 #317264, 0 4px 6px rgba(0,0,0,0.2);
+    box-shadow:
+        0 1px 0 #317264,
+        0 4px 8px rgba(0,0,0,0.2);
 }
 
 #qr-container {
