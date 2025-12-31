@@ -1,5 +1,5 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
-import { isCollidingWithObstacles } from "../core/collisionUtils.js";
+import { isCollidingWithObstacles } from "../core/collision.js";
 
 export class Item {
   constructor(id, x, y, size = 20, sprite = null) {
