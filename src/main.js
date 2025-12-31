@@ -631,8 +631,8 @@ function renderTreesOffscreen() {
     if (!t.img || !t.img.complete) return;
 
     treeCtx.save();
-    treeCtx.shadowColor = "rgba(0,0,0,0.4)";
-    treeCtx.shadowBlur = 10;
+    treeCtx.shadowColor = "rgba(0,0,0,0.6)";
+    treeCtx.shadowBlur = 15;
     treeCtx.drawImage(t.img, t.x, t.y, t.size * 2, t.size * 2);
     treeCtx.restore();
   });
