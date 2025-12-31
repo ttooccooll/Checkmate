@@ -11,7 +11,11 @@ import {
   OFFROAD_MAX,
 } from "./core/constants.js";
 
-import { rectCollision, circleRectCollision, isCollidingWithObstacles } from "./core/collision.js";
+import {
+  rectCollision,
+  circleRectCollision,
+  isCollidingWithObstacles,
+} from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
@@ -108,17 +112,6 @@ let trees = [];
 let coins = [];
 let score = 0;
 let gameRunning = false;
-
-let items = [];
-npcs.forEach((npc) => {
-  if (npc.quest) {
-    const questItems = generateItems(
-      npc.quest.params?.item || npc.quest.item,
-      npc.quest.params?.amount || npc.quest.amount
-    );
-    items.push(...questItems);
-  }
-});
 
 window.addScore = (amount) => {
   score += amount;
@@ -377,6 +370,17 @@ function startNewGame() {
   renderTreesOffscreen();
   buildings = generateBuildings(50);
   coins = generateCoins(15);
+
+  let items = [];
+  npcs.forEach((npc) => {
+    if (npc.quest) {
+      const questItems = generateItems(
+        npc.quest.params?.item || npc.quest.item,
+        npc.quest.params?.amount || npc.quest.amount
+      );
+      items.push(...questItems);
+    }
+  });
 
   loadNPCs();
 
