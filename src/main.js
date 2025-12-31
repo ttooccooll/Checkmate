@@ -854,8 +854,6 @@ function update(deltaTime = 1) {
         }" completed! +${reward} score`,
         3000
       );
-
-      questLog.update(npcs, player);
     }
   });
 
