@@ -16,14 +16,12 @@ import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
 import { Tree } from "./entities/trees.js";
-import { Coin, generateCoins } from "./entities/items.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
 const dialogManager = new DialogManager();
 const questLog = new QuestLogManager();
 
 let npcs = [];
-let coins = [];
 
 let startingGame = false;
 let usingDragControls = false;
@@ -106,6 +104,7 @@ player.onCrash = (reason) => {
 
 let buildings = [];
 let trees = [];
+let coins = [];
 let score = 0;
 let gameRunning = false;
 
@@ -385,15 +384,7 @@ function startNewGame() {
   trees = generateTrees(70);
   renderTreesOffscreen();
   buildings = generateBuildings(50);
-  coins = generateCoins(15, [
-    ...buildings,
-    ...trees.map((t) => ({
-      x: t.x,
-      y: t.y,
-      width: t.size * 2,
-      height: t.size * 2,
-    })),
-  ]);
+  coins = generateCoins(15);
 
   loadNPCs();
 
@@ -674,6 +665,23 @@ function generateTrees(count) {
   return arr;
 }
 
+function generateCoins(count) {
+  const arr = [];
+  let attempts = 0;
+
+  while (arr.length < count && attempts < count * 20) {
+    const x = Math.random() * (WORLD_WIDTH - 20);
+    const y = Math.random() * (WORLD_HEIGHT - 20);
+
+    if (!isCollidingWithObstacles(x, y, 20, 20)) {
+      arr.push({ x, y, size: 20 });
+    }
+    attempts++;
+  }
+
+  return arr;
+}
+
 function isVisible(x, y, w, h) {
   return (
     x + w > camera.x &&
@@ -864,7 +872,22 @@ function update(deltaTime = 1) {
     }
   });
 
-  coins = coins.filter((c) => !c.collect(player));
+  // --- Coins ---
+  coins = coins.filter((c) => {
+    if (
+      rectCollision(player.getHitbox(), {
+        x: c.x,
+        y: c.y,
+        width: c.size,
+        height: c.size,
+      })
+    ) {
+      score++;
+      player.coins = (player.coins || 0) + 1;
+      return false;
+    }
+    return true;
+  });
 
   updateCamera(deltaTime);
 
@@ -888,7 +911,7 @@ function update(deltaTime = 1) {
 function enableLighthouseBell() {
   // Example: show a message and maybe activate a visual indicator
   showMessage("🔔 Go ring the lighthouse bell!");
-
+  
   // Optionally, set a game state for the bell
   window.lighthouseBellActive = true;
 }
