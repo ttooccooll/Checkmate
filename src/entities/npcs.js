@@ -17,6 +17,8 @@ export class NPC {
       "/assets/npc1.png",
       "/assets/npc2.png",
       "/assets/npc3.png",
+      "/assets/npc4.png",
+      "/assets/npc5.png",
     ];
 
     this.sprite = new Image();
@@ -102,21 +104,20 @@ export class NPC {
   }
 
   checkQuestCompletion(player) {
-  if (
-    this.currentQuest?.active &&
-    !this.completedQuests.includes(this.currentQuest.id)
-  ) {
-    if (this.currentQuest.check(player)) {
-      this.completedQuests.push(this.currentQuest.id);
-      this.currentQuest.active = false;
-      this.currentQuest.completed = true;
+    if (
+      this.currentQuest?.active &&
+      !this.completedQuests.includes(this.currentQuest.id)
+    ) {
+      if (this.currentQuest.check(player)) {
+        this.completedQuests.push(this.currentQuest.id);
+        this.currentQuest.active = false;
+        this.currentQuest.completed = true;
 
-      return this.currentQuest; // hand control back to main.js
+        return this.currentQuest; // hand control back to main.js
+      }
     }
+    return null;
   }
-  return null;
-}
-
 
   draw(ctx) {
     // Draw at world coordinates
