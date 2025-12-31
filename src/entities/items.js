@@ -28,7 +28,7 @@ export class Coin {
 export function generateCoins(count, obstacles = []) {
   const coins = [];
   let attempts = 0;
-  const MAX_ATTEMPTS = count * 20;
+  const MAX_ATTEMPTS = count * 2000;
 
   while (coins.length < count && attempts < MAX_ATTEMPTS) {
     const x = Math.random() * (window.WORLD_WIDTH - 20);
