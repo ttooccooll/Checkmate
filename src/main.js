@@ -637,9 +637,9 @@ function renderTreesOffscreen() {
     treeCtx.beginPath();
     treeCtx.ellipse(
       t.x + t.size,
-      t.y + t.size * 2 - 4,
-      t.size * 0.6,  // slightly wider
-      t.size * 0.6,  // slightly taller
+      t.y + t.size,
+      t.size * 1.0,  // slightly wider
+      t.size * 1.0,  // slightly taller
       0,
       0,
       Math.PI * 2
