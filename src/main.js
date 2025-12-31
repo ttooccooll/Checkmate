@@ -346,9 +346,10 @@ async function loadNPCs() {
     const spawn = findSafeSpawn([...npcs, player]);
     return new NPC(n, spawn.x, spawn.y, quest);
   });
+  return npcs;
 }
 
-function startNewGame() {
+async function startNewGame() {
   if (startingGame || gameRunning) return;
   if (!grassRendered || !roadTexture.complete) {
     showMessage("Loading textures…", 1000);
@@ -372,12 +373,14 @@ function startNewGame() {
   buildings = generateBuildings(50);
   coins = generateCoins(15);
 
-  // Spawn quest items for each NPC
+  // Load NPCs
+  await loadNPCs();
+
+  // spawn quest items
+  items = []; // reset
   npcs.forEach((npc) => {
     spawnQuestItems(npc, items);
   });
-
-  loadNPCs();
 
   const spawn = findSafeSpawn();
   player.x = spawn.x;
@@ -1017,7 +1020,16 @@ function draw() {
     ctx.fill();
   });
 
-  items.forEach((item) => item.draw(ctx));
+  items.forEach((item) => {
+    if (item.collected) return;
+
+    ctx.fillStyle =rgba(76, 163, 175, 1)50";
+    ctx.fillRect(item.x, item.y, item.size, item.size);
+
+    ctx.fillStyle = "#000";
+    ctx.font = "10px monospace";
+    ctx.fillText(item.id, item.x, item.y - 2);
+  });
 
   // --- Draw dust (VERY LIGHT) ---
   dustParticles.forEach((p) => {
