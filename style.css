@@ -190,7 +190,7 @@ canvas {
     border-radius: 18px;
     display: none;
     z-index: 20;
-
+    opacity: 0.75;
     font-size: 18px;
     text-align: center;
     color: #043a4f;
