@@ -18,6 +18,18 @@ export class Player {
     sprite.onload = () => {
       this.spriteLoaded = true;
     };
+
+    this.clues = 0;       // For Thabo
+    this.markers = 0;     // For Kagiso & Hlokomela
+    this.fragments = 0;   // For Nandi
+    this.lights = 0;      // For Bongani
+    this.balls = 0;       // For Keabetswe
+    this.signs = 0;       // For Sibusiso & Samkelo
+    this.notices = 0;     // For Mpho
+    this.bells = 0;       // For lighthouse bell quest
+
+    // 🧩 Puzzle tracking (already in quests)
+    this.solvedPuzzles = [];
   }
 
   getHitbox() {
