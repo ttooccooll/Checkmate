@@ -1024,9 +1024,9 @@ function draw() {
     ctx.fillStyle = "gold";
     ctx.beginPath();
     ctx.arc(
-      coins.x + coins.size / 2,
-      coins.y + coins.size / 2,
-      coins.size / 2,
+      c.x + c.size / 2,
+      c.y + c.size / 2,
+      c.size / 2,
       0,
       Math.PI * 2
     );
