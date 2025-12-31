@@ -16,7 +16,7 @@ export class DialogManager {
 
     Object.assign(this.dialogBox.style, {
       position: "absolute",
-      bottom: "50%",
+      bottom: "70%",
       left: "50%",
       transform: "translateX(-50%)",
       padding: "10px",
@@ -25,7 +25,7 @@ export class DialogManager {
       fontFamily: "Arial",
       fontSize: "18px",
       borderRadius: "8px",
-      maxWidth: "400px",
+      maxWidth: "500px",
       display: "none",
       zIndex: 1000,
     });
