@@ -977,7 +977,12 @@ function draw() {
   npcs.forEach((npc) => npc.draw(ctx));
 
   // --- Draw coins ---
-  coins.forEach((c) => c.draw(ctx));
+  coins.forEach((c) => {
+    ctx.fillStyle = "gold";
+    ctx.beginPath();
+    ctx.arc(c.x + 10, c.y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+  });
 
   // --- Draw dust (VERY LIGHT) ---
   dustParticles.forEach((p) => {
