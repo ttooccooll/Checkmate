@@ -45,27 +45,30 @@ export class QuestLogManager {
   }
 
   update(npcs, player) {
-    const active = this.container.querySelector("#quest-log-active");
-    const completed = this.container.querySelector("#quest-log-completed");
+  const active = this.container.querySelector("#quest-log-active");
+  const completed = this.container.querySelector("#quest-log-completed");
 
-    active.innerHTML = "";
-    completed.innerHTML = "";
+  active.innerHTML = "";
+  completed.innerHTML = "";
 
-    npcs.forEach((npc) => {
-      const q = npc.currentQuest;
-      if (!q) return;
+  npcs.forEach(npc => {
+    const q = npc.currentQuest;
+    if (!q) return;
 
-      if (q.active && !npc.completedQuests.includes(q.id)) {
-        const li = document.createElement("li");
-        li.textContent = q.description + q.getProgressText(player);
-        active.appendChild(li);
-      }
+    // Active quests: not completed yet
+    if (q.active && !npc.completedQuests.includes(q.id)) {
+      const li = document.createElement("li");
+      li.textContent = q.description + q.getProgressText(player);
+      active.appendChild(li);
+    }
 
-      if (npc.completedQuests.includes(q.id)) {
-        const li = document.createElement("li");
-        li.textContent = `✔ ${q.description}`;
-        completed.appendChild(li);
-      }
-    });
-  }
+    // Completed quests
+    if (npc.completedQuests.includes(q.id)) {
+      const li = document.createElement("li");
+      li.textContent = `✔ ${q.description}`;
+      completed.appendChild(li);
+    }
+  });
+}
+
 }

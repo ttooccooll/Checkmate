@@ -200,35 +200,22 @@ export class Quest {
     }
   }
   getProgress(player) {
-    switch (this.type) {
-      case "collect": {
-        const current = player[this.params.item + "s"] || 0;
-        return {
-          current,
-          total: this.params.amount,
-        };
-      }
-
-      case "solvePuzzle": {
-        const solved = player.solvedPuzzles?.includes(this.params.puzzleId)
-          ? 1
-          : 0;
-        return {
-          current: solved,
-          total: 1,
-        };
-      }
-
-      default:
-        return null;
-    }
+  if (this.type === "collect") {
+    const current = player[this.params.item + "s"] || 0;
+    return { current, total: this.params.amount };
+  } else if (this.type === "solvePuzzle") {
+    const solved = player.solvedPuzzles?.includes(this.params.puzzleId) ? 1 : 0;
+    return { current: solved, total: 1 };
   }
+  return null;
+}
 
-  getProgressText(player) {
-    const progress = this.getProgress(player);
-    if (!progress) return "";
-    return ` (${progress.current} / ${progress.total})`;
-  }
+getProgressText(player) {
+  const progress = this.getProgress(player);
+  if (!progress) return "";
+  return ` (${progress.current} / ${progress.total})`;
+}
+
 
   unlockNPC(npcId, npcs, { showMessage } = {}) {
     const npc = npcs.find((n) => n.id === npcId);
