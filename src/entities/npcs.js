@@ -137,7 +137,7 @@ export class NPC {
 
   draw(ctx) {
     if (!this.sprite.complete) return;
-
+    if (!this.visible) return;
     // --- Fake shadow (VERY cheap) ---
     ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();

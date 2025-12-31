@@ -825,26 +825,31 @@ function update(deltaTime = 1) {
     const completedQuest = npc.checkQuestCompletion(player);
 
     if (completedQuest) {
-      addScore(completedQuest.rewardScore);
+      const reward = completedQuest.rewardScore || 0;
+      addScore(reward);
 
-      if (completedQuest.id === "mystery_bell_fragments") {
-        unlockNPC("kagiso");
-      }
-
-      if (completedQuest.id === "mystery_old_routes") {
-        unlockNPC("thabo");
-      }
-
-      if (completedQuest.id === "mystery_keeper_clues") {
-        unlockNPC("hlokomela");
-      }
-
-      if (completedQuest.id === "mystery_clear_path") {
-        enableLighthouseBell();
+      // Safe handling for special quest effects
+      switch (completedQuest.id) {
+        case "mystery_bell_fragments":
+          unlockNPC("kagiso");
+          break;
+        case "mystery_old_routes":
+          unlockNPC("thabo");
+          break;
+        case "mystery_keeper_clues":
+          unlockNPC("hlokomela");
+          break;
+        case "mystery_clear_path":
+          enableLighthouseBell();
+          break;
+        default:
+          break;
       }
 
       showMessage(
-        `🎉 Quest "${completedQuest.description}" completed! +${reward} score`,
+        `🎉 Quest "${
+          completedQuest.description || "Unnamed Quest"
+        }" completed! +${reward} score`,
         3000
       );
 
@@ -901,6 +906,25 @@ function update(deltaTime = 1) {
   questLog.update(npcs, player);
 
   updateTouchControlsVisibility();
+}
+
+function unlockNPC(npcId) {
+  const npc = npcs.find((n) => n.id === npcId);
+  if (!npc) {
+    console.warn(`NPC with ID "${npcId}" not found.`);
+    return;
+  }
+
+  npc.visible = true;
+  showMessage(`I believe that ${npc.name} may know more about what's happening at the lighthouse.`);
+}
+
+function enableLighthouseBell() {
+  // Example: show a message and maybe activate a visual indicator
+  showMessage("🔔 Go ring the lighthouse bell!");
+  
+  // Optionally, set a game state for the bell
+  window.lighthouseBellActive = true;
 }
 
 function updateCamera(deltaTime) {
