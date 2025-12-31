@@ -1,6 +1,4 @@
-// items.js
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
-import { isCollidingWithObstacles } from "../main.js"; // or wherever your collision logic is
 
 export class Item {
   constructor(id, x, y, size = 20, sprite = null) {
@@ -25,6 +23,26 @@ export class Item {
       ctx.fill();
     }
   }
+}
+
+function isCollidingWithObstacles(x, y, width, height) {
+  // Buildings
+  for (let b of buildings) {
+    if (rectCollision({ x, y, width, height }, b)) return true;
+  }
+
+  // Trees
+  for (let t of trees) {
+    if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
+    const circle = {
+      x: t.x + t.size,
+      y: t.y + t.size,
+      radius: t.size * COLLISION_FACTOR,
+    };
+    if (circleRectCollision(circle, { x, y, width, height })) return true;
+  }
+
+  return false;
 }
 
 // --- Utility function to spawn random items ---
