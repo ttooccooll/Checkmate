@@ -18,7 +18,7 @@ export class Item {
       ctx.drawImage(this.sprite, this.x, this.y, this.size, this.size);
     } else {
       // fallback placeholder
-      ctx.fillStyle = "gold";
+      ctx.fillStyle = "red";
       ctx.beginPath();
       ctx.arc(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, 0, Math.PI * 2);
       ctx.fill();
