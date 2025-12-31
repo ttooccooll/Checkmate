@@ -200,8 +200,10 @@ export class Quest {
   }
   getProgress(player) {
     if (this.type === "collect") {
-      const current = player[this.params.item + "s"] || 0;
-      return { current, total: this.params.amount };
+        const singular = player[this.params.item] || 0;
+        const plural = player[this.params.item + "s"] || 0;
+        const current = Math.max(singular, plural);
+        return { current, total: this.params.amount };
     } else if (this.type === "solvePuzzle") {
       const solved = player.solvedPuzzles?.includes(this.params.puzzleId)
         ? 1
