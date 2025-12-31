@@ -212,6 +212,7 @@ let upgrades = {
   speedBoost: false,
   helmet: true,
   offRoadTreads: false,
+  metalDetector: false,
   ...savedUpgrades,
 };
 
@@ -1023,13 +1024,7 @@ function draw() {
   coins.forEach((c) => {
     ctx.fillStyle = "gold";
     ctx.beginPath();
-    ctx.arc(
-      c.x + c.size / 2,
-      c.y + c.size / 2,
-      c.size / 2,
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(c.x + c.size / 2, c.y + c.size / 2, c.size / 2, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.lineWidth = 1;
@@ -1055,6 +1050,37 @@ function draw() {
     ctx.strokeStyle = "black";
     ctx.stroke();
   });
+
+  // --- Metal Detector Overlay ---
+  if (upgrades.metalDetector) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 255, 0, 0.7)";
+    ctx.lineWidth = 2;
+
+    const detectorRange = 50; // radius around player
+
+    items.forEach((item) => {
+      if (!item.collected) {
+        const dx = item.x + item.size / 2 - (player.x + player.width / 2);
+        const dy = item.y + item.size / 2 - (player.y + player.height / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist <= detectorRange) {
+          ctx.beginPath();
+          ctx.arc(
+            item.x + item.size / 2,
+            item.y + item.size / 2,
+            item.size + 8, // highlight
+            0,
+            Math.PI * 2
+          );
+          ctx.stroke();
+        }
+      }
+    });
+
+    ctx.restore();
+  }
 
   // --- Draw dust (VERY LIGHT) ---
   dustParticles.forEach((p) => {
@@ -1296,6 +1322,12 @@ bindPointerButton(
 bindPointerButton(
   "off-road-treads-btn",
   () => buyUpgrade("offRoadTreads", 75),
+  () => {}
+);
+
+bindPointerButton(
+  "metal-detector-btn",
+  () => buyUpgrade("metalDetector", 75),
   () => {}
 );
 
