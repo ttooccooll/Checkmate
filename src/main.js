@@ -887,16 +887,19 @@ function update(deltaTime = 1) {
 }
 
 function updateCamera(deltaTime) {
-  const targetX = player.x + player.width / 2 - canvas.width / 2;
-  const targetY = player.y + player.height / 2 - canvas.height / 2;
+  const targetX = player.x + player.width / 2 - canvas.width / 2 / (window.devicePixelRatio || 1);
+  const targetY = player.y + player.height / 2 - canvas.height / 2 / (window.devicePixelRatio || 1);
 
-  const lerpFactor = 0.1; // 0.05–0.2 for smoother or snappier movement
+  const lerpFactor = 0.1;
   camera.x += (targetX - camera.x) * lerpFactor;
   camera.y += (targetY - camera.y) * lerpFactor;
 
-  // Clamp camera
-  camera.x = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, camera.x));
-  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - canvas.height, camera.y));
+  // Clamp in world coordinates
+  const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
+  const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
+
+  camera.x = Math.max(0, Math.min(WORLD_WIDTH - visibleWidth, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
 }
 
 function endGame(reason = "Game Over") {
