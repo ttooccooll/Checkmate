@@ -1023,7 +1023,7 @@ function draw() {
   items.forEach((item) => {
     if (item.collected) return;
 
-    ctx.fillStyle =rgba(76, 163, 175, 1)50";
+    ctx.fillStyle ="rgba(76, 163, 175, 1)50";
     ctx.fillRect(item.x, item.y, item.size, item.size);
 
     ctx.fillStyle = "#000";
