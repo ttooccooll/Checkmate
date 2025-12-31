@@ -1,11 +1,22 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
-import { isOnRoad, isCollidingWithObstacles } from "../core/collision.js";
+import { isCollidingWithObstacles } from "../core/collision.js";
 
 /**
  * Spawn quest items into the world for a specific NPC.
  * @param {NPC} npc - The NPC that owns the quest.
  * @param {Array} itemsArray - The global items array to push new items into.
  */
+
+function isOnRoad(x, y, width, height) {
+  return roads.some(
+    (road) =>
+      x + width > road.x - ROAD_BUFFER &&
+      x < road.x + road.width + ROAD_BUFFER &&
+      y + height > road.y - ROAD_BUFFER &&
+      y < road.y + road.height + ROAD_BUFFER
+  );
+}
+
 export function spawnQuestItems(npc, itemsArray) {
   if (!npc.quest) return;
 
