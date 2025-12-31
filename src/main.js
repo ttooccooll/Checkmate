@@ -973,9 +973,8 @@ function endGame(reason = "Game Over") {
   
   questLog.hide();
   gameRunning = false;
-  upgrades.metalDetector = false;
   flashTimer = FLASH_DURATION;
-  showMessage(`💥 Game Over! ${reason} Score: ${score}`);
+  showMessage(`💥 Game Over! Score: ${score}`);
   resetButtonSize();
 }
 
@@ -1218,11 +1217,12 @@ function handleCrash(reason) {
 
   if (upgrades.speedBoost && speedStress > 60) {
     upgrades.speedBoost = false;
+    upgrades.metalDetector = false;
     speedStress = 0;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     player.setInvulnerable(INVULNERABLE_DURATION);
     flashTimer = FLASH_DURATION;
-    endGame();
+    endGame("You crashed!");
     return;
   }
 
