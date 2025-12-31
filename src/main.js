@@ -970,9 +970,10 @@ function endGame(reason = "Game Over") {
     document.getElementById("action-buttons").style.display = "flex";
     startNewGame();
   };
-  upgrades.metalDetector = false;
+  
   questLog.hide();
   gameRunning = false;
+  upgrades.metalDetector = false;
   flashTimer = FLASH_DURATION;
   showMessage(`💥 Game Over! ${reason} Score: ${score}`);
   resetButtonSize();
