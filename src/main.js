@@ -411,6 +411,13 @@ async function startNewGame() {
     button.classList.add("smaller-buttons");
   });
 
+  setTimeout(() => {
+    showMessage(
+      "🔔 A distant bell echoes through the air… It reminds you of your aunt Nandi who always described mysterious ringing at the lighthouse.",
+      4000
+    );
+  }, 3000);
+
   requestAnimationFrame((t) => {
     lastTime = t;
     startingGame = false;
