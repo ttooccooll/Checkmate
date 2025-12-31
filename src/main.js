@@ -1161,41 +1161,45 @@ function spawnDust() {
   }
 }
 
-function findSafeSpawn(avoid = [], maxAttempts = 800) {
-  for (let i = 0; i < maxAttempts; i++) {
-    const x = Math.random() * (WORLD_WIDTH - 40);
-    const y = Math.random() * (WORLD_HEIGHT - 40);
+function findSafeSpawn(avoid = [], maxAttempts = 1000) {
+  const SPAWN_SIZE = 40;
+  const PADDING = 15;
 
-    const pad = 15;
+  for (let i = 0; i < maxAttempts; i++) {
+    const x = Math.random() * (WORLD_WIDTH - SPAWN_SIZE);
+    const y = Math.random() * (WORLD_HEIGHT - SPAWN_SIZE);
+
     const hitbox = {
-      x: x - pad,
-      y: y - pad,
-      width: 40 + pad * 2,
-      height: 40 + pad * 2,
+      x: x - PADDING,
+      y: y - PADDING,
+      width: SPAWN_SIZE + PADDING * 2,
+      height: SPAWN_SIZE + PADDING * 2,
     };
 
-    let collision =
+    // Check against all obstacles (trees, buildings, coins, roads)
+    const collides =
       isCollidingWithObstacles(
         hitbox.x,
         hitbox.y,
         hitbox.width,
         hitbox.height
       ) ||
+      isOnRoad(hitbox.x, hitbox.y, hitbox.width, hitbox.height) ||
       avoid.some((e) =>
         rectCollision(hitbox, {
           x: e.x,
           y: e.y,
-          width: e.width || 40,
-          height: e.height || 40,
+          width: e.width || SPAWN_SIZE,
+          height: e.height || SPAWN_SIZE,
         })
       );
 
-    if (!collision) {
+    if (!collides) {
       return { x, y };
     }
   }
 
-  console.warn("No free spawn points after random attempts! Using default.");
+  console.warn("No free spawn points! Using default.");
   return { x: 50, y: 300 };
 }
 
