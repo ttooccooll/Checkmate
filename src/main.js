@@ -413,7 +413,7 @@ async function startNewGame() {
 
   setTimeout(() => {
     showMessage(
-      "🔔 A distant bell echoes through the air… It reminds you of your aunt Nandi who always described mysterious ringing at the lighthouse.",
+      "🔔 A distant bell echoes through the air… It reminds you of your sister Nandi, who always described mysterious ringing at the lighthouse.",
       4000
     );
   }, 3000);
