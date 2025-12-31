@@ -336,8 +336,8 @@ async function loadNPCs() {
           description: n.quest.description,
           type: n.quest.type,
           params: {
-            amount: n.quest.amount,
-            item: n.quest.item,
+            amount: n.quest.params?.amount ?? n.quest.amount,
+            item: n.quest.params?.item ?? n.quest.item,
             puzzleId: n.quest.puzzleId,
           },
         })
