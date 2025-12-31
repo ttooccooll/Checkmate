@@ -25,6 +25,7 @@ export class NPC {
     this.sprite.src = npcImages[Math.floor(Math.random() * npcImages.length)];
 
     this.currentQuest = quest;
+    this.quest = quest;
     this.completedQuests = [];
     this.talking = false;
     this.hasTalked = false;
