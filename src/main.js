@@ -1217,7 +1217,6 @@ function handleCrash(reason) {
 
   if (upgrades.speedBoost && speedStress > 60) {
     upgrades.speedBoost = false;
-    upgrades.metalDetector = false;
     speedStress = 0;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     player.setInvulnerable(INVULNERABLE_DURATION);
@@ -1226,7 +1225,7 @@ function handleCrash(reason) {
     return;
   }
 
-  endGame();
+  endGame("You crashed!");
 }
 
 const touchControls = document.getElementById("touch-controls");
