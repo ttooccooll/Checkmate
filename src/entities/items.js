@@ -49,7 +49,7 @@ export function spawnQuestItems(npc, itemsArray) {
           id: itemId,
           x,
           y,
-          size: SIZE,
+          size: 8,
           color: visual.color,
           collected: false,
         });
