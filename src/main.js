@@ -1096,14 +1096,8 @@ function findSafeSpawn(avoid = [], maxAttempts = 800) {
       height: 40 + pad * 2,
     };
 
-    // Check collisions with buildings, trees, and anything in avoid array
     let collision =
-      isCollidingWithObstacles(
-        hitbox.x,
-        hitbox.y,
-        hitbox.width,
-        hitbox.height
-      ) ||
+      isCollidingWithObstacles(hitbox.x, hitbox.y, hitbox.width, hitbox.height) ||
       avoid.some((e) =>
         rectCollision(hitbox, {
           x: e.x,
