@@ -1031,6 +1031,10 @@ function draw() {
       Math.PI * 2
     );
     ctx.fill();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "black";
+    ctx.stroke();
   });
 
   items.forEach((item) => {
@@ -1046,6 +1050,10 @@ function draw() {
       Math.PI * 2
     );
     ctx.fill();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "black";
+    ctx.stroke();
   });
 
   // --- Draw dust (VERY LIGHT) ---
