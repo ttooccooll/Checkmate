@@ -133,7 +133,8 @@
       "description": "Locate the missing taxi route sign to help the early commuters navigate the coastal roads.",
       "type": "collect",
       "amount": 1,
-      "item": "sign"
+      "item": "sign",
+      "rewardScore": 5
     }
   },
   {
@@ -269,7 +270,8 @@
       "description": "Collect 5 pieces of litter scattered along the park pathways and cliff edge.",
       "type": "collect",
       "amount": 5,
-      "item": "litter"
+      "item": "litter",
+      "rewardScore": 8
     }
   },
   {
@@ -290,7 +292,8 @@
       "description": "Inspect and restore the broken street light along the coastal promenade.",
       "type": "collect",
       "amount": 1,
-      "item": "light"
+      "item": "light",
+      "rewardScore": 7
     }
   },
   {
@@ -311,7 +314,8 @@
       "description": "Find 3 lost play balls near the town promenade and pier.",
       "type": "collect",
       "amount": 3,
-      "item": "ball"
+      "item": "ball",
+      "rewardScore": 3
     }
   },
   {
@@ -332,7 +336,8 @@
       "description": "Recover the missing vendor sign along the coastal market street.",
       "type": "collect",
       "amount": 1,
-      "item": "sign"
+      "item": "sign",
+      "rewardScore": 3
     }
   },
   {
@@ -353,7 +358,8 @@
       "description": "Post 3 missing community notices along the promenade and market square.",
       "type": "collect",
       "amount": 3,
-      "item": "notice"
+      "item": "notice",
+      "rewardScore": 5
     }
   },
   {
