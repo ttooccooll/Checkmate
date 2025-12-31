@@ -196,7 +196,7 @@ canvas {
     color: #05445e;
     font-weight: 600;
     opacity: 0.7;
-    animation: messageFadeIn 0.25s ease-out forwards;
+    animation: messageFadeIn 0.75s ease-out forwards backwards;
 }
 
 @keyframes messageFadeIn {
