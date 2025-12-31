@@ -107,6 +107,10 @@ let coins = [];
 let score = 0;
 let gameRunning = false;
 
+window.addScore = (amount) => {
+  score += amount;
+};
+
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
@@ -798,7 +802,21 @@ function update(deltaTime = 1) {
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
-  npcs.forEach((npc) => npc.checkQuestCompletion(player));
+  npcs.forEach((npc) => {
+    const completedQuest = npc.checkQuestCompletion(player);
+
+    if (completedQuest) {
+      const reward = completedQuest.rewardScore || 10;
+
+      score += reward;
+      showMessage(
+        `🎉 Quest "${completedQuest.description}" completed! +${reward} score`,
+        3000
+      );
+
+      questLog.update(npcs, player);
+    }
+  });
 
   npcs.forEach((npc) => {
     const nearby = npc.isPlayerNearby(player);

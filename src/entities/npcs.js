@@ -110,8 +110,8 @@ export class NPC {
         this.completedQuests.push(this.currentQuest.id);
         this.currentQuest.active = false;
         questLog.update(npcs);
-        showMessage(`🎉 Quest "${this.currentQuest.description}" completed!`);
-        return true;
+        showMessage(`🎉 Quest "${this.currentQuest.description}" completed! +${this.currentQuest.rewardScore} score`);
+        return this.currentQuest;
       }
     }
     return false;
@@ -125,12 +125,14 @@ export class NPC {
 }
 
 export class Quest {
-  constructor({ id, description, type, params = {} }) {
+  constructor({ id, description, type, params, rewardScore = 10 }) {
     this.id = id;
     this.description = description;
-    this.type = type; // e.g., "collect" or "solvePuzzle"
-    this.params = params; // e.g., { amount: 5, item: "coin" }
-    this.active = false;
+    this.type = type;
+    this.params = params;
+    this.rewardScore = rewardScore;
+
+    this.completed = false;
   }
 
   check(player) {
