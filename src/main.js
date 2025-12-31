@@ -1030,7 +1030,7 @@ function draw() {
   items.forEach((item) => {
     if (item.collected) return;
 
-    ctx.fillStyle = "rgba(76, 163, 175, 1)";
+    ctx.fillStyle = item.color;
     ctx.beginPath();
     ctx.arc(
       item.x + item.size / 2,

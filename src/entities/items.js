@@ -7,11 +7,24 @@ import { isCollidingWithObstacles } from "../core/collision.js";
  * @param {Array} itemsArray - The global items array to push new items into.
  */
 
+const ITEM_VISUALS = {
+  clue: { color: "#F4D03F" }, // warm yellow
+  marker: { color: "#5DADE2" }, // blue
+  fragment: { color: "#AF7AC5" }, // purple (mystery)
+  sign: { color: "#58D68D" }, // green
+  litter: { color: "#AAB7B8" }, // gray
+  light: { color: "#F7DC6F" }, // pale gold
+  ball: { color: "#EC7063" }, // red
+  notice: { color: "#F5B041" }, // orange
+  bell: { color: "#FAD7A0" }, // antique brass
+};
+
 export function spawnQuestItems(npc, itemsArray) {
   if (!npc.quest) return;
 
   const itemId = npc.quest.params?.item || npc.quest.item;
   const amount = npc.quest.params?.amount || npc.quest.amount || 1;
+  const visual = ITEM_VISUALS[itemId] || { color: "#4CA3AF" };
 
   for (let i = 0; i < amount; i++) {
     let attempts = 0;
@@ -36,7 +49,8 @@ export function spawnQuestItems(npc, itemsArray) {
           id: itemId,
           x,
           y,
-          size: 8,
+          size: SIZE,
+          color: visual.color,
           collected: false,
         });
         break;
