@@ -809,6 +809,7 @@ function update(deltaTime = 1) {
       const reward = completedQuest.rewardScore || 10;
 
       score += reward;
+
       showMessage(
         `🎉 Quest "${completedQuest.description}" completed! +${reward} score`,
         3000

@@ -102,20 +102,21 @@ export class NPC {
   }
 
   checkQuestCompletion(player) {
-    if (
-      this.currentQuest?.active &&
-      !this.completedQuests.includes(this.currentQuest.id)
-    ) {
-      if (this.currentQuest.check(player)) {
-        this.completedQuests.push(this.currentQuest.id);
-        this.currentQuest.active = false;
-        questLog.update(npcs);
-        showMessage(`🎉 Quest "${this.currentQuest.description}" completed! +${this.currentQuest.rewardScore} score`);
-        return this.currentQuest;
-      }
+  if (
+    this.currentQuest?.active &&
+    !this.completedQuests.includes(this.currentQuest.id)
+  ) {
+    if (this.currentQuest.check(player)) {
+      this.completedQuests.push(this.currentQuest.id);
+      this.currentQuest.active = false;
+      this.currentQuest.completed = true;
+
+      return this.currentQuest; // hand control back to main.js
     }
-    return false;
   }
+  return null;
+}
+
 
   draw(ctx) {
     // Draw at world coordinates
