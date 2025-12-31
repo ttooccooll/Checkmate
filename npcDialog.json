@@ -7,6 +7,11 @@
       "Joburg traffic is something else, hey?",
       "You really need patience to survive the city."
     ],
+    "postQuestDialog": [
+      "Hey! You actually found all the taxi coins.",
+      "That helps more people than you think.",
+      "Respect, my friend."
+    ],
     "quest": {
       "id": "collect_taxi_fares",
       "description": "Collect 3 lost taxi fare coins near the main road.",
@@ -49,6 +54,11 @@
       "Soweto has so much history.",
       "Every street tells a story.",
       "You can feel it when you walk around."
+    ],
+    "postQuestDialog": [
+      "You found those landmarks, hey?",
+      "Good. People forget how important they are.",
+      "Thanks for taking the time."
     ],
     "quest": {
       "id": "visit_landmarks",
@@ -110,6 +120,11 @@
       "Minibus taxis run this country.",
       "Without them, everything stops.",
       "You learn to move fast at the rank."
+    ],
+    "postQuestDialog": [
+      "You found the missing route sign!",
+      "Now drivers won’t be arguing all day.",
+      "Sharp work, thanks."
     ],
     "quest": {
       "id": "taxi_route_help",
@@ -192,12 +207,17 @@
     ]
   },
   {
-    "id": "hloko",
+    "id": "hlokomela",
     "name": "Hlokomela",
     "dialog": [
       "Looking after each other matters.",
       "Community makes life easier.",
       "We are stronger together."
+    ],
+    "postQuestDialog": [
+      "I heard you helped the neighbors.",
+      "That kind of kindness spreads quickly.",
+      "Thank you for being there."
     ],
     "quest": {
       "id": "help_neighbors",

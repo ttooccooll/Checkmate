@@ -28,6 +28,9 @@ export class NPC {
     this.completedQuests = [];
     this.talking = false;
     this.hasTalked = false;
+
+    this.postQuestDialog = data.postQuestDialog || [];
+    this.hasReactedToQuest = false;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -43,13 +46,26 @@ export class NPC {
     if (this.hasTalked) return false;
     this.hasTalked = true;
 
-    const lines = [...this.dialogQueue];
+    let lines = [...this.dialogQueue];
+
+    // 🎉 Post-quest reaction takes priority
+    if (
+      this.currentQuest &&
+      this.completedQuests.includes(this.currentQuest.id) &&
+      this.postQuestDialog.length &&
+      !this.hasReactedToQuest
+    ) {
+      lines = [...this.postQuestDialog];
+      this.hasReactedToQuest = true;
+    }
+
     const choices = [];
 
     // ✅ ONLY create quest choices if a quest exists
     if (
-      this.currentQuest !== null &&
-      !this.completedQuests.includes(this.currentQuest.id)
+      this.currentQuest &&
+      !this.completedQuests.includes(this.currentQuest.id) &&
+      !this.hasReactedToQuest
     ) {
       choices.push(
         {
