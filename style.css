@@ -215,31 +215,6 @@ canvas {
     }
 }
 
-/* Quest accepted / progress */
-.message-quest {
-    border-left: 6px solid #4fad99;
-}
-
-/* Discovery / mystery */
-.message-mystery {
-    background: linear-gradient(180deg, #f9f6ff, #ece6ff);
-    border-left: 6px solid #9b7fe3;
-    color: #3a2c6e;
-}
-
-/* World feedback (cleanup, helping town) */
-.message-world {
-    background: linear-gradient(180deg, #ffffff, #f3f7f5);
-    border-left: 6px solid #58d68d;
-}
-
-/* Warning or important info */
-.message-warning {
-    background: linear-gradient(180deg, #fff5f5, #ffe3e3);
-    border-left: 6px solid #e74c3c;
-    color: #7a1f1f;
-}
-
 #message-modal button {
     margin-top: 18px;
     background: linear-gradient(145deg, #48a385, #4fad99);
