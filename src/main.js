@@ -670,12 +670,12 @@ function generateCoins(count) {
   const arr = [];
   let attempts = 0;
 
-  while (arr.length < count && attempts < count * 20) {
-    const x = Math.random() * (WORLD_WIDTH - 20);
-    const y = Math.random() * (WORLD_HEIGHT - 20);
+  while (arr.length < count && attempts < count * 5) {
+    const x = Math.random() * (WORLD_WIDTH - 5);
+    const y = Math.random() * (WORLD_HEIGHT - 5);
 
-    if (!isCollidingWithObstacles(x, y, 20, 20)) {
-      arr.push({ x, y, size: 20 });
+    if (!isCollidingWithObstacles(x, y, 5, 5)) {
+      arr.push({ x, y, size: 5 });
     }
     attempts++;
   }
@@ -1031,11 +1031,15 @@ function draw() {
     if (item.collected) return;
 
     ctx.fillStyle = "rgba(76, 163, 175, 1)";
-    ctx.fillRect(item.x, item.y, item.size, item.size);
-
-    ctx.fillStyle = "#000";
-    ctx.font = "10px monospace";
-    ctx.fillText(item.id, item.x, item.y - 2);
+    ctx.beginPath();
+    ctx.arc(
+      item.x + item.size / 2,
+      item.y + item.size / 2,
+      item.size / 2,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
   });
 
   // --- Draw dust (VERY LIGHT) ---
