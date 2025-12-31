@@ -41,6 +41,7 @@ export class NPC {
   }
 
   interact(player, dialogManager, { showMessage }) {
+    if (!this.visible) return false;
     const now = performance.now();
     if (now - this.lastTalkTime < 500) return false;
 
@@ -120,7 +121,7 @@ export class NPC {
     );
   }
 
-  checkQuestCompletion(player) {
+  checkQuestCompletion(player, npcs, { showMessage } = {}) {
     if (
       this.currentQuest?.active &&
       !this.completedQuests.includes(this.currentQuest.id)
@@ -130,7 +131,23 @@ export class NPC {
         this.currentQuest.active = false;
         this.currentQuest.completed = true;
 
-        return this.currentQuest; // hand control back to main.js
+        // 🔹 Automatically unlock NPCs if needed
+        switch (this.currentQuest.id) {
+          case "mystery_bell_fragments":
+            unlockNPC("kagiso", npcs, { showMessage });
+            break;
+          case "mystery_old_routes":
+            unlockNPC("thabo", npcs, { showMessage });
+            break;
+          case "mystery_keeper_clues":
+            unlockNPC("hlokomela", npcs, { showMessage });
+            break;
+          case "mystery_clear_path":
+            enableLighthouseBell();
+            break;
+        }
+
+        return this.currentQuest;
       }
     }
     return null;
@@ -220,6 +237,9 @@ export class Quest {
     }
 
     npc.visible = true;
-    if (showMessage) showMessage(`I believe that ${npc.name} may know more about what's going on here.`);
+    if (showMessage)
+      showMessage(
+        `I believe that ${npc.name} may know more about what's going on here.`
+      );
   }
 }
