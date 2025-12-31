@@ -365,6 +365,10 @@ function startNewGame() {
 
   score = 0;
   flashTimer = 0;
+  dustParticles = [];
+
+  offRoadTimer = 0;
+  speedStress = 0;
 
   generateRoads();
   trees = generateTrees(70);
