@@ -1054,7 +1054,7 @@ function draw() {
   // --- Metal Detector Overlay ---
   if (upgrades.metalDetector) {
     ctx.save();
-    ctx.strokeStyle = "rgba(161, 96, 39, 0.7)";
+    ctx.strokeStyle = "rgba(201, 91, 27, 0.7)";
     ctx.lineWidth = 2;
 
     const detectorRange = 250; // radius around player
