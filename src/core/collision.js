@@ -16,3 +16,16 @@ export function circleRectCollision(circle, rect) {
 
   return dx * dx + dy * dy < circle.radius * circle.radius;
 }
+
+export function isCollidingWithObstacles(x, y, width, height, buildings = [], trees = []) {
+  for (let b of buildings) {
+    if (rectCollision({ x, y, width, height }, b)) return true;
+  }
+
+  for (let t of trees) {
+    const circle = { x: t.x + t.size, y: t.y + t.size, radius: t.size * 0.8 };
+    if (circleRectCollision(circle, { x, y, width, height })) return true;
+  }
+
+  return false;
+}

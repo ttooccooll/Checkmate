@@ -11,7 +11,7 @@ import {
   OFFROAD_MAX,
 } from "./core/constants.js";
 
-import { rectCollision, circleRectCollision } from "./core/collision.js";
+import { rectCollision, circleRectCollision, isCollidingWithObstacles } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
@@ -112,7 +112,10 @@ let gameRunning = false;
 let items = [];
 npcs.forEach((npc) => {
   if (npc.quest) {
-    const questItems = generateItems(npc.quest.params?.item || npc.quest.item, npc.quest.params?.amount || npc.quest.amount);
+    const questItems = generateItems(
+      npc.quest.params?.item || npc.quest.item,
+      npc.quest.params?.amount || npc.quest.amount
+    );
     items.push(...questItems);
   }
 });
@@ -138,26 +141,6 @@ function loadWorldTextures() {
 }
 
 roadTexture.onload = loadWorldTextures;
-
-function isCollidingWithObstacles(x, y, width, height) {
-  // Buildings
-  for (let b of buildings) {
-    if (rectCollision({ x, y, width, height }, b)) return true;
-  }
-
-  // Trees
-  for (let t of trees) {
-    if (!isVisible(t.x, t.y, t.size * 2, t.size * 2)) continue;
-    const circle = {
-      x: t.x + t.size,
-      y: t.y + t.size,
-      radius: t.size * COLLISION_FACTOR,
-    };
-    if (circleRectCollision(circle, { x, y, width, height })) return true;
-  }
-
-  return false;
-}
 
 function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
@@ -898,6 +881,27 @@ function update(deltaTime = 1) {
     return true;
   });
 
+  items.forEach((item) => {
+    if (
+      !item.collected &&
+      rectCollision(player.getHitbox(), {
+        x: item.x,
+        y: item.y,
+        width: item.size,
+        height: item.size,
+      })
+    ) {
+      item.collected = true;
+      player.inventory = player.inventory || {};
+      player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
+
+      showMessage(`🎉 Collected ${item.id}!`);
+
+      // Optional: update quests
+      questLog.update(npcs, player);
+    }
+  });
+
   updateCamera(deltaTime);
 
   if (flashTimer > 0) {
@@ -920,7 +924,7 @@ function update(deltaTime = 1) {
 function enableLighthouseBell() {
   // Example: show a message and maybe activate a visual indicator
   showMessage("🔔 Go ring the lighthouse bell!");
-  
+
   // Optionally, set a game state for the bell
   window.lighthouseBellActive = true;
 }
@@ -1015,6 +1019,8 @@ function draw() {
     ctx.arc(c.x + 10, c.y + 10, 10, 0, Math.PI * 2);
     ctx.fill();
   });
+
+  items.forEach((item) => item.draw(ctx));
 
   // --- Draw dust (VERY LIGHT) ---
   dustParticles.forEach((p) => {
