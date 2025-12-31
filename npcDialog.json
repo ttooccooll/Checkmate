@@ -2,6 +2,7 @@
   {
     "id": "thabo",
     "name": "Thabo",
+    "hidden": true,
     "dialog": [
       "The lighthouse keeper?",
       "He didn’t leave town.",
@@ -50,6 +51,7 @@
   {
     "id": "kagiso",
     "name": "Kagiso",
+    "hidden": true,
     "dialog": [
       "You’re asking about the bell?",
       "It wasn’t for ships. It was for people.",
@@ -221,6 +223,7 @@
   {
     "id": "hlokomela",
     "name": "Hlokomela",
+    "hidden": true,
     "dialog": [
       "No one walks up there anymore.",
       "Paths don’t vanish on their own.",

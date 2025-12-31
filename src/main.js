@@ -908,17 +908,6 @@ function update(deltaTime = 1) {
   updateTouchControlsVisibility();
 }
 
-function unlockNPC(npcId) {
-  const npc = npcs.find((n) => n.id === npcId);
-  if (!npc) {
-    console.warn(`NPC with ID "${npcId}" not found.`);
-    return;
-  }
-
-  npc.visible = true;
-  showMessage(`I believe that ${npc.name} may know more about what's happening at the lighthouse.`);
-}
-
 function enableLighthouseBell() {
   // Example: show a message and maybe activate a visual indicator
   showMessage("🔔 Go ring the lighthouse bell!");

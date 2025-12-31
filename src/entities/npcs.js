@@ -28,9 +28,10 @@ export class NPC {
     this.completedQuests = [];
     this.talking = false;
     this.hasTalked = false;
-
     this.postQuestDialog = data.postQuestDialog || [];
     this.hasReactedToQuest = false;
+
+    this.visible = !data.hidden;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -209,5 +210,16 @@ export class Quest {
     const progress = this.getProgress(player);
     if (!progress) return "";
     return ` (${progress.current} / ${progress.total})`;
+  }
+
+  unlockNPC(npcId, npcs, { showMessage } = {}) {
+    const npc = npcs.find((n) => n.id === npcId);
+    if (!npc) {
+      console.warn(`NPC with ID "${npcId}" not found.`);
+      return;
+    }
+
+    npc.visible = true;
+    if (showMessage) showMessage(`I believe that ${npc.name} may know more about what's happening at the lighthouse.`);
   }
 }
