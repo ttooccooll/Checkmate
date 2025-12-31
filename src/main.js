@@ -385,7 +385,15 @@ function startNewGame() {
   trees = generateTrees(70);
   renderTreesOffscreen();
   buildings = generateBuildings(50);
-  coins = generateCoins(15, [...buildings, ...trees]);
+  coins = generateCoins(15, [
+    ...buildings,
+    ...trees.map((t) => ({
+      x: t.x,
+      y: t.y,
+      width: t.size * 2,
+      height: t.size * 2,
+    })),
+  ]);
 
   loadNPCs();
 
@@ -856,7 +864,7 @@ function update(deltaTime = 1) {
     }
   });
 
-  coins = coins.filter(c => !c.collect(player));
+  coins = coins.filter((c) => !c.collect(player));
 
   updateCamera(deltaTime);
 
@@ -880,7 +888,7 @@ function update(deltaTime = 1) {
 function enableLighthouseBell() {
   // Example: show a message and maybe activate a visual indicator
   showMessage("🔔 Go ring the lighthouse bell!");
-  
+
   // Optionally, set a game state for the bell
   window.lighthouseBellActive = true;
 }
@@ -969,7 +977,7 @@ function draw() {
   npcs.forEach((npc) => npc.draw(ctx));
 
   // --- Draw coins ---
-  coins.forEach(c => c.draw(ctx));
+  coins.forEach((c) => c.draw(ctx));
 
   // --- Draw dust (VERY LIGHT) ---
   dustParticles.forEach((p) => {
