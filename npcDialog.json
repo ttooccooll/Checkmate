@@ -14,7 +14,7 @@
     ],
     "quest": {
       "id": "collect_taxi_fares",
-      "description": "Collect 3 lost taxi fare coins near the main road.",
+      "description": "Recover 3 coins dropped during the early-morning taxi rush near the harbour road.",
       "type": "collect",
       "amount": 3,
       "item": "coin"
@@ -62,7 +62,7 @@
     ],
     "quest": {
       "id": "visit_landmarks",
-      "description": "Visit 2 landmarks around the township.",
+      "description": "Follow Kagiso’s memories by finding 2 places that still carry the town’s old stories.",
       "type": "collect",
       "amount": 2,
       "item": "landmark"
