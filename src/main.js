@@ -417,7 +417,7 @@ async function startNewGame() {
       "🔔 A distant bell echoes through the air… It reminds you of your sister Nandi, who always described mysterious ringing at the lighthouse.",
       4000
     );
-  }, 3000);
+  }, 5000);
 
   requestAnimationFrame((t) => {
     lastTime = t;
