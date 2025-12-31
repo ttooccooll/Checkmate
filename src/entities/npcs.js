@@ -120,8 +120,23 @@ export class NPC {
   }
 
   draw(ctx) {
-    // Draw at world coordinates
-    if (!this.sprite.complete) return; // avoid drawing before loaded
+    if (!this.sprite.complete) return;
+
+    // --- Fake shadow (VERY cheap) ---
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(
+      this.x + this.width / 2, // center X
+      this.y + this.height - 2, // just under feet
+      this.width * 0.35, // shadow width
+      this.height * 0.18, // shadow height
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    // --- NPC sprite ---
     ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
   }
 }
