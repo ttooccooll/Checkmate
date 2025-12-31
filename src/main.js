@@ -671,11 +671,11 @@ function generateCoins(count) {
   const arr = [];
   let attempts = 0;
 
-  while (arr.length < count && attempts < count * 5) {
+  while (arr.length < count && attempts < count * 500) {
     const x = Math.random() * (WORLD_WIDTH - 5);
     const y = Math.random() * (WORLD_HEIGHT - 5);
 
-    if (!isCollidingWithObstacles(x, y, 5, 5)) {
+    if (!isCollidingWithObstacles(x - 2, y - 2, 9, 9)) {
       arr.push({ x, y, size: 5 });
     }
     attempts++;
@@ -961,6 +961,11 @@ function updateCamera(deltaTime) {
 
 function endGame(reason = "Game Over") {
   showMessage(reason, 0, true);
+
+  upgrades.metalDetector = false;
+  upgrades.speedBoost = false;
+  localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
+
   const newGameBtn = document.getElementById("new-game-btn");
   newGameBtn.textContent = "New Game";
   newGameBtn.onclick = () => {
@@ -970,7 +975,7 @@ function endGame(reason = "Game Over") {
     document.getElementById("action-buttons").style.display = "flex";
     startNewGame();
   };
-  
+
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
