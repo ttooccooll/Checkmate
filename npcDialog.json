@@ -206,5 +206,14 @@
       "amount": 2,
       "item": "help"
     }
+  },
+  {
+    "id": "thandi",
+    "name": "Thandi",
+    "dialog": [
+      "Morning traffic feels different before sunrise.",
+      "The city sounds quieter then.",
+      "You notice things you normally miss."
+    ]
   }
 ]

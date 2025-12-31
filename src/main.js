@@ -357,7 +357,7 @@ async function loadNPCs() {
         })
       : null;
 
-    const spawn = findSafeSpawn(npcs);
+    const spawn = findSafeSpawn([...npcs, player]);
     return new NPC(n, spawn.x, spawn.y, quest);
   });
 }
@@ -1037,7 +1037,7 @@ function spawnDust() {
   }
 }
 
-function findSafeSpawn(avoid = [], maxAttempts = 500) {
+function findSafeSpawn(avoid = [], maxAttempts = 800) {
   for (let i = 0; i < maxAttempts; i++) {
     const x = Math.random() * (WORLD_WIDTH - 40);
     const y = Math.random() * (WORLD_HEIGHT - 40);
