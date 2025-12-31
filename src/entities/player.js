@@ -27,6 +27,7 @@ export class Player {
     this.signs = 0;       // For Sibusiso & Samkelo
     this.notices = 0;     // For Mpho
     this.bells = 0;       // For lighthouse bell quest
+    this.coins = 0;
 
     // 🧩 Puzzle tracking (already in quests)
     this.solvedPuzzles = [];
