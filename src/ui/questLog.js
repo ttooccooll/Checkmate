@@ -45,28 +45,28 @@ export class QuestLogManager {
   }
 
   update(npcs, player) {
-    const active = this.container.querySelector("#quest-log-active");
-    const completed = this.container.querySelector("#quest-log-completed");
+    const activeList = this.container.querySelector("#quest-log-active");
+    const completedList = this.container.querySelector("#quest-log-completed");
 
-    active.innerHTML = "";
-    completed.innerHTML = "";
+    activeList.innerHTML = "";
+    completedList.innerHTML = "";
 
     npcs.forEach((npc) => {
       const q = npc.currentQuest;
       if (!q) return;
 
-      // Active quests: not completed yet
+      // Active quests
       if (q.active && !npc.completedQuests.includes(q.id)) {
         const li = document.createElement("li");
         li.textContent = q.description + q.getProgressText(player);
-        active.appendChild(li);
+        activeList.appendChild(li);
       }
 
       // Completed quests
       if (npc.completedQuests.includes(q.id)) {
         const li = document.createElement("li");
         li.textContent = `✔ ${q.description}`;
-        completed.appendChild(li);
+        completedList.appendChild(li);
       }
     });
   }
