@@ -945,7 +945,6 @@ function draw() {
   // --- Draw trees ---
   ctx.drawImage(treeCanvas, 0, 0);
 
-  // --- Draw buildings ---
   // --- Draw buildings with shadows ---
   buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
