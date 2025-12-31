@@ -382,8 +382,6 @@ async function startNewGame() {
     spawnQuestItems(npc, items);
   });
 
-  console.log("Spawned items:", items);
-
   const spawn = findSafeSpawn();
   player.x = spawn.x;
   player.y = spawn.y;

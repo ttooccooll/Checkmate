@@ -180,7 +180,7 @@ export class Quest {
     this.id = id;
     this.description = description;
     this.type = type;
-    this.params = params;
+    this.params = params || {};
     this.rewardScore = rewardScore;
 
     this.completed = false;
