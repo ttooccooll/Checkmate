@@ -634,7 +634,7 @@ function renderTreesOffscreen() {
 
     // --- Soft shadow behind tree for depth ---
     treeCtx.shadowColor = "rgba(0,0,0,0.5)";
-    treeCtx.shadowBlur = 18;
+    treeCtx.shadowBlur = 25;
 
     treeCtx.drawImage(t.img, t.x, t.y, t.size * 2, t.size * 2);
 
