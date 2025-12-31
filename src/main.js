@@ -15,6 +15,7 @@ import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
+import { Tree } from "./entities/tree.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
 const dialogManager = new DialogManager();
@@ -642,23 +643,15 @@ function generateTrees(count) {
   let attempts = 0;
 
   while (arr.length < count && attempts < count * 20) {
-    let img = treeImages[Math.floor(Math.random() * treeImages.length)];
-    const size = 30 + Math.random() * 30; // radius: 30–50
+    const img = treeImages[Math.floor(Math.random() * treeImages.length)];
+    const size = 30 + Math.random() * 30;
     const x = Math.random() * (WORLD_WIDTH - size * 2);
     const y = Math.random() * (WORLD_HEIGHT - size * 2);
 
-    // Avoid placing trees on roads
     if (!isOnRoad(x, y, size * 2, size * 2)) {
-      arr.push({
-        x,
-        y,
-        size,
-        img,
-        cx: x + size,
-        cy: y + size,
-        radius: size * 0.3,
-      });
+      arr.push(new Tree(x, y, size, img));
     }
+
     attempts++;
   }
 
