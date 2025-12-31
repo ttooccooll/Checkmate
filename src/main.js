@@ -974,7 +974,7 @@ function endGame(reason = "Game Over") {
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
-  showMessage(`💥 Game Over! Score: ${score}`);
+  showMessage(`💥 Game Over! ${reason} Score: ${score}`);
   resetButtonSize();
 }
 
