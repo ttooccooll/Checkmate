@@ -393,11 +393,15 @@ function startNewGame() {
   player.y = spawn.y;
   player.setInvulnerable(20);
 
-  // 🔴 ADD THIS
-  camera.x = player.x + player.width / 2 - canvas.width / 2;
-  camera.y = player.y + player.height / 2 - canvas.height / 2;
-  camera.x = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, camera.x));
-  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - canvas.height, camera.y));
+  const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
+  const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
+
+  camera.x = player.x + player.width / 2 - visibleWidth / 2;
+  camera.y = player.y + player.height / 2 - visibleHeight / 2;
+
+  // Clamp in world coordinates
+  camera.x = Math.max(0, Math.min(WORLD_WIDTH - visibleWidth, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
 
   gameRunning = true;
 
@@ -887,8 +891,14 @@ function update(deltaTime = 1) {
 }
 
 function updateCamera(deltaTime) {
-  const targetX = player.x + player.width / 2 - canvas.width / 2 / (window.devicePixelRatio || 1);
-  const targetY = player.y + player.height / 2 - canvas.height / 2 / (window.devicePixelRatio || 1);
+  const targetX =
+    player.x +
+    player.width / 2 -
+    canvas.width / 2 / (window.devicePixelRatio || 1);
+  const targetY =
+    player.y +
+    player.height / 2 -
+    canvas.height / 2 / (window.devicePixelRatio || 1);
 
   const lerpFactor = 0.1;
   camera.x += (targetX - camera.x) * lerpFactor;
