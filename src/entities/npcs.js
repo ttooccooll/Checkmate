@@ -220,6 +220,6 @@ export class Quest {
     }
 
     npc.visible = true;
-    if (showMessage) showMessage(`I believe that ${npc.name} may know more about what's happening at the lighthouse.`);
+    if (showMessage) showMessage(`I believe that ${npc.name} may know more about what's going on here.`);
   }
 }
