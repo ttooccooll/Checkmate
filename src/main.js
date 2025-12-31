@@ -399,7 +399,6 @@ function startNewGame() {
   camera.x = player.x + player.width / 2 - visibleWidth / 2;
   camera.y = player.y + player.height / 2 - visibleHeight / 2;
 
-  // Clamp in world coordinates
   camera.x = Math.max(0, Math.min(WORLD_WIDTH - visibleWidth, camera.x));
   camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
 
