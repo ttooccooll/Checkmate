@@ -631,9 +631,29 @@ function renderTreesOffscreen() {
     if (!t.img || !t.img.complete) return;
 
     treeCtx.save();
-    treeCtx.shadowColor = "rgba(0,0,0,0.6)";
-    treeCtx.shadowBlur = 15;
+
+    // --- Ground shadow (ellipse) ---
+    treeCtx.fillStyle = "rgba(0,0,0,0.65)"; // a bit darker
+    treeCtx.beginPath();
+    treeCtx.ellipse(
+      t.x + t.size,
+      t.y + t.size * 2 - 4,
+      t.size * 1.0,  // slightly wider
+      t.size * 0.4,  // slightly taller
+      0,
+      0,
+      Math.PI * 2
+    );
+    treeCtx.fill();
+
+    // --- Soft shadow behind tree for depth ---
+    treeCtx.shadowColor = "rgba(0,0,0,0.5)";
+    treeCtx.shadowBlur = 18;   // a touch stronger
+    treeCtx.shadowOffsetX = 2; // slight offset for realism
+    treeCtx.shadowOffsetY = 2;
+
     treeCtx.drawImage(t.img, t.x, t.y, t.size * 2, t.size * 2);
+
     treeCtx.restore();
   });
 }
