@@ -235,5 +235,110 @@
       "The city sounds quieter then.",
       "You notice things you normally miss."
     ]
+  },
+  {
+    "id": "refilwe",
+    "name": "Refilwe",
+    "dialog": [
+      "The park used to be full of kids.",
+      "Lately it feels forgotten.",
+      "Small things can bring life back."
+    ],
+    "postQuestDialog": [
+      "You picked up the litter?",
+      "It already feels better here.",
+      "Thank you for caring."
+    ],
+    "quest": {
+      "id": "clean_park",
+      "description": "Pick up 5 pieces of litter in the park.",
+      "type": "collect",
+      "amount": 5,
+      "item": "litter"
+    }
+  },
+  {
+    "id": "bongani",
+    "name": "Bongani",
+    "dialog": [
+      "Street lights make people feel safer.",
+      "This one’s been broken for weeks.",
+      "Someone needs to check on it."
+    ],
+    "postQuestDialog": [
+      "You got the light working again!",
+      "Now people won’t rush home in fear.",
+      "I appreciate that."
+    ],
+    "quest": {
+      "id": "fix_street_light",
+      "description": "Inspect and restore the broken street light.",
+      "type": "collect",
+      "amount": 1,
+      "item": "light"
+    }
+  },
+  {
+    "id": "keabetswe",
+    "name": "Keabetswe",
+    "dialog": [
+      "Kids love chasing pigeons here.",
+      "But they keep losing their balls.",
+      "Always rolling into the street."
+    ],
+    "postQuestDialog": [
+      "You found the missing balls?",
+      "They’re going to be so happy.",
+      "You’re a hero today."
+    ],
+    "quest": {
+      "id": "lost_play_balls",
+      "description": "Find 3 lost play balls near the street.",
+      "type": "collect",
+      "amount": 3,
+      "item": "ball"
+    }
+  },
+  {
+    "id": "samkelo",
+    "name": "Samkelo",
+    "dialog": [
+      "Vendors rely on foot traffic.",
+      "Signs help people find us.",
+      "Mine blew away last night."
+    ],
+    "postQuestDialog": [
+      "My sign is back up!",
+      "People can find me again.",
+      "Thanks, that helps a lot."
+    ],
+    "quest": {
+      "id": "vendor_sign",
+      "description": "Recover the missing vendor sign.",
+      "type": "collect",
+      "amount": 1,
+      "item": "sign"
+    }
+  },
+  {
+    "id": "mpho",
+    "name": "Mpho",
+    "dialog": [
+      "The community board keeps us informed.",
+      "Not many people check it anymore.",
+      "Notices get lost."
+    ],
+    "postQuestDialog": [
+      "You pinned the notices back up?",
+      "Now everyone will see them.",
+      "That really matters."
+    ],
+    "quest": {
+      "id": "community_notices",
+      "description": "Put up 3 missing community notices.",
+      "type": "collect",
+      "amount": 3,
+      "item": "notice"
+    }
   }
 ]
