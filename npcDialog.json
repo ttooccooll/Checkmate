@@ -352,5 +352,14 @@
       "amount": 3,
       "item": "notice"
     }
+  },
+  {
+    "quest":{
+  "id": "mystery_ring_bell",
+  "description": "Restore the old warning bell at the lighthouse.",
+  "type": "collect",
+  "params": { "item": "bell", "amount": 1 },
+  "rewardScore": 50
+}
   }
 ]
