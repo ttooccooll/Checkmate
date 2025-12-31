@@ -383,6 +383,12 @@ function startNewGame() {
   player.y = spawn.y;
   player.setInvulnerable(20);
 
+  // 🔴 ADD THIS
+  camera.x = player.x + player.width / 2 - canvas.width / 2;
+  camera.y = player.y + player.height / 2 - canvas.height / 2;
+  camera.x = Math.max(0, Math.min(WORLD_WIDTH - canvas.width, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_HEIGHT - canvas.height, camera.y));
+
   gameRunning = true;
 
   const newGameBtn = document.getElementById("new-game-btn");
