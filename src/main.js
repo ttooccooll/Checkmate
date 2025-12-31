@@ -150,8 +150,15 @@ function isCollidingWithObstacles(x, y, width, height) {
 }
 
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -360,6 +367,8 @@ function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
+
+  resizeCanvas();
 
   startingGame = true;
 
