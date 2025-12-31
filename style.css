@@ -186,11 +186,11 @@ canvas {
     left: 50%;
     transform: translate(-50%, -50%);
     background: rgba(255, 255, 255, 0.97);
-    padding: 25px 35px;
+    padding: 15px 20px;
     border-radius: 16px;
     display: none;
     z-index: 20;
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     color: #05445e;
