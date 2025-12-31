@@ -1,47 +1,52 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
-import { isCollidingWithObstacles } from "../core/collision.js";
+import { isOnRoad, isCollidingWithObstacles } from "../core/collision.js";
 
-export class Item {
-  constructor(id, x, y, size = 20, sprite = null) {
-    this.id = id;         // unique item id, e.g., "fragment", "marker", "sign"
-    this.x = x;
-    this.y = y;
-    this.size = size;
-    this.sprite = sprite; // optional image
-    this.collected = false;
-  }
+/**
+ * Spawn quest items into the world for a specific NPC.
+ * @param {NPC} npc - The NPC that owns the quest.
+ * @param {Array} itemsArray - The global items array to push new items into.
+ */
+export function spawnQuestItems(npc, itemsArray) {
+  if (!npc.quest) return;
 
-  draw(ctx) {
-    if (this.collected) return;
+  const itemId = npc.quest.params?.item || npc.quest.item;
+  const amount = npc.quest.params?.amount || npc.quest.amount || 1;
 
-    if (this.sprite && this.sprite.complete) {
-      ctx.drawImage(this.sprite, this.x, this.y, this.size, this.size);
-    } else {
-      // fallback placeholder
-      ctx.fillStyle = "red";
-      ctx.beginPath();
-      ctx.arc(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, 0, Math.PI * 2);
-      ctx.fill();
+  for (let i = 0; i < amount; i++) {
+    let attempts = 0;
+    while (attempts < 500) {
+      // Random position in the world
+      const x = Math.random() * (WORLD_WIDTH - 20);
+      const y = Math.random() * (WORLD_HEIGHT - 20);
+
+      // Check collisions: roads, buildings, trees, other items
+      const safe =
+        !isOnRoad(x, y, 20, 20) &&
+        !isCollidingWithObstacles(x, y, 20, 20) &&
+        !itemsArray.some(
+          (it) =>
+            it.x < x + 20 &&
+            it.x + it.size > x &&
+            it.y < y + 20 &&
+            it.y + it.size > y
+        );
+
+      if (safe) {
+        itemsArray.push({
+          id: itemId,
+          x,
+          y,
+          size: 20,
+          collected: false,
+        });
+        break;
+      }
+
+      attempts++;
+    }
+
+    if (attempts >= 500) {
+      console.warn(`Could not place item ${itemId} in the world safely.`);
     }
   }
-}
-
-// --- Utility function to spawn random items ---
-export function generateItems(itemId, count) {
-  const items = [];
-  let attempts = 0;
-  const size = 20;
-
-  while (items.length < count && attempts < count * 20) {
-    const x = Math.random() * (WORLD_WIDTH - size);
-    const y = Math.random() * (WORLD_HEIGHT - size);
-
-    if (!isCollidingWithObstacles(x, y, size, size)) {
-      items.push(new Item(itemId, x, y, size));
-    }
-
-    attempts++;
-  }
-
-  return items;
 }

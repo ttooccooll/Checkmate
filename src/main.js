@@ -20,7 +20,7 @@ import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
 import { Tree } from "./entities/trees.js";
-import { generateItems } from "./entities/items.js";
+import { spawnQuestItems } from "./entities/items.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
 const dialogManager = new DialogManager();
@@ -372,14 +372,9 @@ function startNewGame() {
   buildings = generateBuildings(50);
   coins = generateCoins(15);
 
+  // Spawn quest items for each NPC
   npcs.forEach((npc) => {
-    if (npc.quest) {
-      const questItems = generateItems(
-        npc.quest.params?.item || npc.quest.item,
-        npc.quest.params?.amount || npc.quest.amount
-      );
-      items.push(...questItems);
-    }
+    spawnQuestItems(npc, items);
   });
 
   loadNPCs();
@@ -900,8 +895,6 @@ function update(deltaTime = 1) {
       player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
 
       showMessage(`🎉 Collected ${item.id}!`);
-
-      // Optional: update quests
       questLog.update(npcs, player);
     }
   });
@@ -1097,7 +1090,12 @@ function findSafeSpawn(avoid = [], maxAttempts = 800) {
     };
 
     let collision =
-      isCollidingWithObstacles(hitbox.x, hitbox.y, hitbox.width, hitbox.height) ||
+      isCollidingWithObstacles(
+        hitbox.x,
+        hitbox.y,
+        hitbox.width,
+        hitbox.height
+      ) ||
       avoid.some((e) =>
         rectCollision(hitbox, {
           x: e.x,
