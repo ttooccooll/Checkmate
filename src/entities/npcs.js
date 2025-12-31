@@ -64,7 +64,6 @@ export class NPC {
 
     const choices = [];
 
-    // ✅ ONLY create quest choices if a quest exists
     if (
       this.currentQuest &&
       !this.completedQuests.includes(this.currentQuest.id) &&
