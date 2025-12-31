@@ -15,7 +15,7 @@ import { rectCollision, circleRectCollision } from "./core/collision.js";
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
-import { Tree } from "./entities/tree.js";
+import { Tree } from "./entities/trees.js";
 import { QuestLogManager } from "./ui/questLog.js";
 
 const dialogManager = new DialogManager();
