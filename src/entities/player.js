@@ -19,15 +19,15 @@ export class Player {
       this.spriteLoaded = true;
     };
 
-    this.clues = 0;       // For Thabo
-    this.markers = 0;     // For Kagiso & Hlokomela
-    this.fragments = 0;   // For Nandi
-    this.lights = 0;      // For Bongani
-    this.balls = 0;       // For Keabetswe
-    this.signs = 0;       // For Sibusiso & Samkelo
-    this.notices = 0;     // For Mpho
-    this.bells = 0;       // For lighthouse bell quest
-    this.coins = 0;
+    this.clue = 0;       // For Thabo
+    this.marker = 0;     // For Kagiso & Hlokomela
+    this.fragment = 0;   // For Nandi
+    this.light = 0;      // For Bongani
+    this.ball = 0;       // For Keabetswe
+    this.sign = 0;       // For Sibusiso & Samkelo
+    this.notice = 0;     // For Mpho
+    this.bell = 0;       // For lighthouse bell quest
+    this.coin = 0;
 
     // 🧩 Puzzle tracking (already in quests)
     this.solvedPuzzles = [];
