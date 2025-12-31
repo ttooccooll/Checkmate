@@ -1023,7 +1023,13 @@ function draw() {
   coins.forEach((c) => {
     ctx.fillStyle = "gold";
     ctx.beginPath();
-    ctx.arc(c.x + 10, c.y + 10, 10, 0, Math.PI * 2);
+    ctx.arc(
+      coins.x + coins.size / 2,
+      coins.y + coins.size / 2,
+      coins.size / 2,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
   });
 
