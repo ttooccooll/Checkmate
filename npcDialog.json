@@ -18,7 +18,8 @@
       "description": "Recover belongings left behind by the lighthouse keeper.",
       "type": "collect",
       "params": { "item": "clue", "amount": 3 },
-      "rewardScore": 25
+      "rewardScore": 25,
+        "unlockNPC": "hlokomela"
     }
   },
   {
@@ -67,7 +68,8 @@
       "description": "Find remnants of the town’s old emergency paths.",
       "type": "collect",
       "params": { "item": "marker", "amount": 2 },
-      "rewardScore": 20
+      "rewardScore": 20,
+        "unlockNPC": "thabo"
     }
   },
   {
@@ -181,7 +183,8 @@
       "description": "Search the shoreline and forest edge for traces of the bell.",
       "type": "collect",
       "params": { "item": "fragment", "amount": 2 },
-      "rewardScore": 15
+      "rewardScore": 15,
+        "unlockNPC": "kagiso"
     }
   },
   {
@@ -239,7 +242,8 @@
       "description": "Restore the forgotten markers leading to the lighthouse.",
       "type": "collect",
       "params": { "item": "marker", "amount": 3 },
-      "rewardScore": 30
+      "rewardScore": 30,
+        "unlockNPC": "lighthouse_keeper"
     }
   },
   {

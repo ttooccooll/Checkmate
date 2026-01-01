@@ -824,33 +824,20 @@ function update(deltaTime = 1) {
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
   npcs.forEach((npc) => {
-    const completedQuest = npc.checkQuestCompletion(player);
+    const completedQuest = npc.checkQuestCompletion(player, npcs, {
+      showMessage,
+    });
 
     if (completedQuest) {
       const reward = completedQuest.rewardScore || 0;
       addScore(reward);
 
-      // Safe handling for special quest effects
-      switch (this.currentQuest.id) {
-        case "mystery_bell_fragments":
-          this.currentQuest.unlockNPC("kagiso", npcs, { showMessage });
-          break;
-        case "mystery_old_routes":
-          this.currentQuest.unlockNPC("thabo", npcs, { showMessage });
-          break;
-        case "mystery_keeper_clues":
-          this.currentQuest.unlockNPC("hlokomela", npcs, { showMessage });
-          break;
-        case "mystery_clear_path":
-          enableLighthouseBell();
-          break;
-      }
-
       showMessage(
         `🎉 Quest "${
           completedQuest.description || "Unnamed Quest"
         }" completed! +${reward} score`,
-        5000
+        0,
+        true
       );
 
       questLog.update(npcs, player);
