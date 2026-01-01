@@ -831,20 +831,18 @@ function update(deltaTime = 1) {
       addScore(reward);
 
       // Safe handling for special quest effects
-      switch (completedQuest.id) {
+      switch (this.currentQuest.id) {
         case "mystery_bell_fragments":
-          unlockNPC("kagiso");
+          this.currentQuest.unlockNPC("kagiso", npcs, { showMessage });
           break;
         case "mystery_old_routes":
-          unlockNPC("thabo");
+          this.currentQuest.unlockNPC("thabo", npcs, { showMessage });
           break;
         case "mystery_keeper_clues":
-          unlockNPC("hlokomela");
+          this.currentQuest.unlockNPC("hlokomela", npcs, { showMessage });
           break;
         case "mystery_clear_path":
           enableLighthouseBell();
-          break;
-        default:
           break;
       }
 
