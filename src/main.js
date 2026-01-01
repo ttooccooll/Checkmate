@@ -1146,7 +1146,9 @@ function spawnDust() {
   }
 }
 
-function findSafeSpawn(avoid = [], maxAttempts = 1000) {
+function findSafeSpawn(avoid = [], maxAttempts = 5000) {
+  const allAvoid = [...avoid, ...npcs, ...buildings, ...trees];
+
   const SPAWN_SIZE = 40;
   const PADDING = 15;
 
@@ -1169,8 +1171,7 @@ function findSafeSpawn(avoid = [], maxAttempts = 1000) {
         hitbox.width,
         hitbox.height
       ) ||
-      isOnRoad(hitbox.x, hitbox.y, hitbox.width, hitbox.height) ||
-      avoid.some((e) =>
+      allAvoid.some((e) =>
         rectCollision(hitbox, {
           x: e.x,
           y: e.y,
