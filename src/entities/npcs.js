@@ -182,7 +182,7 @@ export class Quest {
     this.type = type;
     this.params = params || {};
     this.rewardScore = rewardScore;
-
+    this.active = false;
     this.completed = false;
   }
 
@@ -190,8 +190,10 @@ export class Quest {
     if (!this.active) return false;
 
     switch (this.type) {
-      case "collect":
-        return player[this.params.item + "s"] >= this.params.amount;
+      case "collect": {
+        const have = player.inventory?.[this.params.item] || 0;
+        return have >= this.params.amount;
+      }
       case "solvePuzzle":
         return player.solvedPuzzles?.includes(this.params.puzzleId);
       default:
@@ -200,10 +202,8 @@ export class Quest {
   }
   getProgress(player) {
     if (this.type === "collect") {
-        const singular = player[this.params.item] || 0;
-        const plural = player[this.params.item + "s"] || 0;
-        const current = Math.max(singular, plural);
-        return { current, total: this.params.amount };
+      const current = player.inventory?.[this.params.item] || 0;
+      return { current, total: this.params.amount };
     } else if (this.type === "solvePuzzle") {
       const solved = player.solvedPuzzles?.includes(this.params.puzzleId)
         ? 1
