@@ -134,14 +134,17 @@ export class NPC {
         // 🔹 Automatically unlock NPCs if needed
         switch (this.currentQuest.id) {
           case "mystery_bell_fragments":
-            unlockNPC("kagiso", npcs, { showMessage });
+            this.currentQuest.unlockNPC("kagiso", npcs, { showMessage });
             break;
+
           case "mystery_old_routes":
-            unlockNPC("thabo", npcs, { showMessage });
+            this.currentQuest.unlockNPC("thabo", npcs, { showMessage });
             break;
+
           case "mystery_keeper_clues":
-            unlockNPC("hlokomela", npcs, { showMessage });
+            this.currentQuest.unlockNPC("hlokomela", npcs, { showMessage });
             break;
+
           case "mystery_clear_path":
             enableLighthouseBell();
             break;
