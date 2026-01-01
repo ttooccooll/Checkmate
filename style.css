@@ -196,6 +196,7 @@ canvas {
     color: #05445e;
     font-weight: 600;
     opacity: 0.0;
+    pointer-events: none;
     animation: messageFadeIn 0.75s ease-in-out forwards;
 }
 
