@@ -693,7 +693,7 @@ function isVisible(x, y, w, h) {
   );
 }
 
-function showMessage(text, duration = 2000, closable = false) {
+function showMessage(text, duration = 5000, closable = false) {
   const modal = document.getElementById("message-modal");
   modal.textContent = text;
   modal.style.display = "block";
