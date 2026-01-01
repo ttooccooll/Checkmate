@@ -837,7 +837,7 @@ function update(deltaTime = 1) {
           completedQuest.description || "Unnamed Quest"
         }" completed! +${reward} score`,
         0,
-        true
+        5000
       );
 
       questLog.update(npcs, player);
