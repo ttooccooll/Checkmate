@@ -50,24 +50,5 @@ export class QuestLogManager {
 
     active.innerHTML = "";
     completed.innerHTML = "";
-
-    npcs.forEach((npc) => {
-      const q = npc.currentQuest;
-      if (!q) return;
-
-      // Active quests: not completed yet
-      if (q.active && !npc.completedQuests.includes(q.id)) {
-        const li = document.createElement("li");
-        li.textContent = q.description + q.getProgressText(player);
-        active.appendChild(li);
-      }
-
-      // Completed quests
-      if (npc.completedQuests.includes(q.id)) {
-        const li = document.createElement("li");
-        li.textContent = `✔ ${q.description}`;
-        completed.appendChild(li);
-      }
-    });
   }
 }
