@@ -1247,6 +1247,7 @@ async function buyUpgrade(upgradeName, costSats) {
       helmet: "Helmet",
       speedBoost: "Speed Boost",
       offRoadTreads: "Off-Road Treads",
+      metalDetector: "Metal Detector",
     };
 
     showMessage(`✔ ${labels[upgradeName]} unlocked!`);
