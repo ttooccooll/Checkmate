@@ -874,29 +874,6 @@ function update(deltaTime = 1) {
     }
   });
 
-  npcs.forEach((npc) => {
-  console.log("NPC:", npc.name, "Current quest:", npc.currentQuest);
-  const q = npc.currentQuest;
-  if (!q) return;
-
-  console.log("Quest active?", q.active);
-  console.log("Player progress text:", q.getProgressText(player));
-
-  if (q.active && !npc.completedQuests.includes(q.id)) {
-    console.log("Adding to active quests:", q.description);
-    const li = document.createElement("li");
-    li.textContent = q.description + q.getProgressText(player);
-    active.appendChild(li);
-  }
-
-  if (npc.completedQuests.includes(q.id)) {
-    console.log("Adding to completed quests:", q.description);
-    const li = document.createElement("li");
-    li.textContent = `✔ ${q.description}`;
-    completed.appendChild(li);
-  }
-});
-
   // --- Coins ---
   coins = coins.filter((c) => {
     if (

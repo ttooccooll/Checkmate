@@ -48,7 +48,28 @@ export class QuestLogManager {
     const active = this.container.querySelector("#quest-log-active");
     const completed = this.container.querySelector("#quest-log-completed");
 
+    if (!active || !completed) return;
+
     active.innerHTML = "";
     completed.innerHTML = "";
+
+    npcs.forEach((npc) => {
+      const q = npc.currentQuest;
+      if (!q) return;
+
+      // Active quest
+      if (q.active && !npc.completedQuests.includes(q.id)) {
+        const li = document.createElement("li");
+        li.textContent = q.description + q.getProgressText(player);
+        active.appendChild(li);
+      }
+
+      // Completed quest
+      if (npc.completedQuests.includes(q.id)) {
+        const li = document.createElement("li");
+        li.textContent = `✔ ${q.description}`;
+        completed.appendChild(li);
+      }
+    });
   }
 }
