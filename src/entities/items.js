@@ -28,7 +28,7 @@ export function spawnQuestItems(npc, itemsArray) {
 
   for (let i = 0; i < amount; i++) {
     let attempts = 0;
-    while (attempts < 500) {
+    while (attempts < 5000) {
       // Random position in the world
       const x = Math.random() * (WORLD_WIDTH - 8);
       const y = Math.random() * (WORLD_HEIGHT - 8);
