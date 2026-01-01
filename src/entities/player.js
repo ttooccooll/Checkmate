@@ -34,8 +34,8 @@ export class Player {
   }
 
   getHitbox() {
-    const shrinkX = 10;
-    const shrinkY = 14;
+    const shrinkX = 12;
+    const shrinkY = 15;
     return {
       x: this.x + shrinkX,
       y: this.y + shrinkY,
