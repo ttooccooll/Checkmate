@@ -355,7 +355,7 @@ async function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
-  showMessage("New Game!", 2000)
+  showMessage("New Game!", 2000);
 
   resizeCanvas();
 
@@ -810,7 +810,11 @@ function update(deltaTime = 1) {
       }
     }
     if (npc.checkDangerCollision(player)) {
-      endGame("You hit a pedestrian!");
+      const hb = player.getHitbox();
+      const nhb = npc.getHitbox();
+      if (rectCollision(hb, nhb, 0.8)) {
+        endGame("You hit a pedestrian!");
+      }
     }
   });
 
