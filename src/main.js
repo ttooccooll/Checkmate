@@ -355,7 +355,7 @@ async function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
-  showMessage("New Game!", 2000)
+  showMessage("New Game!", 2000);
 
   resizeCanvas();
 
@@ -954,7 +954,7 @@ function endGame(reason = "Game Over") {
     document.getElementById("action-buttons").style.display = "flex";
     startNewGame();
   };
-
+  dialogManager.endDialog();
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
