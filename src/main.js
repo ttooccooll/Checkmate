@@ -947,6 +947,7 @@ function updateCamera(deltaTime) {
 }
 
 function endGame(reason = "Game Over") {
+  if (!gameRunning) return;
   upgrades.metalDetector = false;
   upgrades.speedBoost = false;
   localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
