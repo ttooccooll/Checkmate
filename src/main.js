@@ -356,6 +356,7 @@ async function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
+  showMessage("New Game", 2000)
 
   resizeCanvas();
 
