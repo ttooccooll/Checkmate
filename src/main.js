@@ -685,11 +685,15 @@ function generateCoins(count) {
 }
 
 function isVisible(x, y, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  const vw = canvas.width / dpr;
+  const vh = canvas.height / dpr;
+
   return (
     x + w > camera.x &&
-    x < camera.x + canvas.width &&
+    x < camera.x + vw &&
     y + h > camera.y &&
-    y < camera.y + canvas.height
+    y < camera.y + vh
   );
 }
 
@@ -943,8 +947,6 @@ function updateCamera(deltaTime) {
 }
 
 function endGame(reason = "Game Over") {
-  showMessage(reason, 0, true);
-
   upgrades.metalDetector = false;
   upgrades.speedBoost = false;
   localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
@@ -962,7 +964,14 @@ function endGame(reason = "Game Over") {
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
-  showMessage(`💥 Game Over! Score: ${score}`);
+  const message = `
+💥 Game Over
+${reason}
+Score: ${score}
+  `.trim();
+
+  showMessage(message, 0, true);
+
   resetButtonSize();
 }
 
