@@ -30,7 +30,6 @@ let npcs = [];
 
 let startingGame = false;
 let usingDragControls = false;
-let speedStress = 0;
 let offRoadTimer = 0;
 
 let dustParticles = [];
@@ -356,7 +355,7 @@ async function startNewGame() {
     showMessage("Loading textures…", 1000);
     return;
   }
-  showMessage("New Game", 2000)
+  showMessage("New Game!", 2000)
 
   resizeCanvas();
 
@@ -367,7 +366,6 @@ async function startNewGame() {
   dustParticles = [];
 
   offRoadTimer = 0;
-  speedStress = 0;
 
   generateRoads();
   trees = generateTrees(70);
@@ -763,12 +761,6 @@ function update(deltaTime = 1) {
     }
   } else {
     offRoadTimer = Math.max(0, offRoadTimer - deltaTime);
-  }
-
-  if (upgrades.speedBoost && baseSpeed > player.speed) {
-    speedStress += deltaTime;
-  } else {
-    speedStress = Math.max(0, speedStress - deltaTime * 1.5);
   }
 
   const speed = baseSpeed * deltaTime;
