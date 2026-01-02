@@ -761,9 +761,9 @@ function update(deltaTime = 1) {
   }
 
   if (upgrades.speedBoost && baseSpeed > player.speed) {
-    speedStress++;
+    speedStress += deltaTime;
   } else {
-    speedStress = Math.max(0, speedStress - 1);
+    speedStress = Math.max(0, speedStress - deltaTime * 1.5);
   }
 
   const speed = baseSpeed * deltaTime;
@@ -1205,16 +1205,6 @@ function handleCrash(reason) {
     player.setInvulnerable(INVULNERABLE_DURATION);
     flashTimer = FLASH_DURATION;
     showMessage("🪖 Helmet destroyed!");
-    return;
-  }
-
-  if (upgrades.speedBoost && speedStress > 60) {
-    upgrades.speedBoost = false;
-    speedStress = 0;
-    localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-    player.setInvulnerable(INVULNERABLE_DURATION);
-    flashTimer = FLASH_DURATION;
-    endGame("You crashed!");
     return;
   }
 
