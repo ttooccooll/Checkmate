@@ -20,6 +20,9 @@ export class NPC {
       "/assets/npc4.png",
       "/assets/npc5.png",
       "/assets/npc6.png",
+      "/assets/npc7.png",
+      "/assets/npc8.png",
+      "/assets/npc9.png",
     ];
 
     this.sprite = new Image();
