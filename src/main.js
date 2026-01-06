@@ -1113,26 +1113,11 @@ function draw() {
   // Compute height for background (score + upgrades)
   const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
   const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 185;
+  const bgWidth = 15;
 
   // Draw a light white background
-  ctx.fillStyle = "rgba(255, 255, 255, 0.63)"; // very light, semi-transparent
+  ctx.fillStyle = "rgba(255, 255, 255, 0.44)"; // very light, semi-transparent
   const radius = 10; // corner radius
-  if (ctx.roundRect) {
-    ctx.roundRect(hudX - padding, hudY - padding, bgWidth, bgHeight, radius);
-    ctx.fill();
-  } else {
-    // fallback if roundRect is not supported
-    drawRoundedRect(
-      ctx,
-      hudX - padding,
-      hudY - padding,
-      bgWidth,
-      bgHeight,
-      radius
-    );
-    ctx.fill();
-  }
 
   // Draw text on top
   ctx.font = "16px monospace";
