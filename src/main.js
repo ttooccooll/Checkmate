@@ -1146,7 +1146,7 @@ function draw() {
     helmet: "🪖 Helmet",
     speedBoost: "⚡ Speed Boost",
     offRoadTreads: "🛞 Off-Road Treads",
-    metalDetector: "🧲 Metal Detector",
+    metalDetector: "🔍 Metal Detector",
   };
 
   Object.keys(upgrades).forEach((key) => {
