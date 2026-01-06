@@ -842,8 +842,6 @@ function update(deltaTime = 1) {
         0,
         5000
       );
-
-      questLog.update(npcs, player);
     }
   });
 
@@ -894,7 +892,6 @@ function update(deltaTime = 1) {
       player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
 
       showMessage(`🎉 Collected ${item.id}!`);
-      questLog.update(npcs, player);
     }
   });
 
@@ -1200,7 +1197,7 @@ function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
   deltaTime = Math.min(deltaTime, 3);
   lastTime = timestamp;
-
+  questLog.update(npcs, player);
   update(deltaTime);
   draw();
 
