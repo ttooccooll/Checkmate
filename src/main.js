@@ -1113,10 +1113,10 @@ function draw() {
   // Compute height for background (score + upgrades)
   const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
   const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 175;
+  const bgWidth = 185;
 
   // Draw a light white background
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)"; // very light, semi-transparent
+  ctx.fillStyle = "rgba(255, 255, 255, 0.63)"; // very light, semi-transparent
   const radius = 10; // corner radius
   if (ctx.roundRect) {
     ctx.roundRect(hudX - padding, hudY - padding, bgWidth, bgHeight, radius);
