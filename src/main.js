@@ -1113,7 +1113,7 @@ function draw() {
   // Compute height for background (score + upgrades)
   const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
   const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 165;
+  const bgWidth = 150;
 
   // Draw a light white background
   ctx.save(); // save current state
