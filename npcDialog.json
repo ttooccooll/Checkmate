@@ -11,7 +11,8 @@
     "postQuestDialog": [
       "You found his things?",
       "Then he was still trying to do his job.",
-      "Even after everyone else moved on."
+      "Even after everyone else moved on.",
+      "I've heard that Hlokomela may know more."
     ],
     "quest": {
       "id": "mystery_keeper_clues",
@@ -61,7 +62,8 @@
     "postQuestDialog": [
       "I’m glad someone still listens.",
       "Places don’t forget things.",
-      "People do."
+      "People do.",
+      "I've heard that Thabo may know more."
     ],
     "quest": {
       "id": "mystery_old_routes",
@@ -176,7 +178,8 @@
     "postQuestDialog": [
       "You found something, didn’t you?",
       "That sound… it wasn’t just in my head.",
-      "Maybe the town is trying to remember."
+      "Maybe the town is trying to remember.",
+      "I've heard that Kagiso may know more."
     ],
     "quest": {
       "id": "mystery_bell_fragments",
@@ -235,7 +238,8 @@
     "postQuestDialog": [
       "The path feels open again.",
       "Like it’s breathing.",
-      "Thank you for that."
+      "Thank you for that.",
+      "I've heard that the lighthouse keeper may know more."
     ],
     "quest": {
       "id": "mystery_clear_path",

@@ -839,7 +839,6 @@ function update(deltaTime = 1) {
         `🎉 Quest "${
           completedQuest.description || "Unnamed Quest"
         }" completed! +${reward} score`,
-        0,
         5000
       );
     }
