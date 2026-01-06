@@ -1362,7 +1362,7 @@ bindPointerButton(
 
 bindPointerButton(
   "metal-detector-btn",
-  () => buyUpgrade("metalDetector", 75),
+  () => buyUpgrade("metalDetector", 100),
   () => {}
 );
 
