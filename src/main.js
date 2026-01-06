@@ -1105,8 +1105,8 @@ function draw() {
   ctx.restore();
 
   // --- HUD ---
-  const hudX = 10;
-  let hudY = 10;
+  const hudX = 8;
+  let hudY = 8;
   const padding = 5;
   const lineHeight = 18;
 
