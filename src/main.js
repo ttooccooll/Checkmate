@@ -1105,6 +1105,11 @@ function draw() {
   ctx.restore();
 
   // --- HUD ---
+  const hudWidth = 150; // adjust as needed
+  const hudHeight =
+    30 + Object.keys(upgrades).filter((key) => upgrades[key]).length * 18;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.fillRect(5, 5, hudWidth, hudHeight);
   ctx.font = "16px monospace";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#111";
