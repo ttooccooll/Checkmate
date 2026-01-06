@@ -1113,7 +1113,7 @@ function draw() {
   // Compute height for background (score + upgrades)
   const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
   const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 185;
+  const bgWidth = 165;
 
   // Draw a light white background
   ctx.save(); // save current state
@@ -1133,9 +1133,9 @@ function draw() {
 
   const upgradeLabels = {
     helmet: "🪖 Helmet",
-    speedBoost: "⚡ Speed Boost",
-    offRoadTreads: "🛞 Off-Road Treads",
-    metalDetector: "🧲 Metal Detector",
+    speedBoost: "⚡ Boost",
+    offRoadTreads: "🛞 Treads",
+    metalDetector: "🧲 Detector",
   };
 
   Object.keys(upgrades).forEach((key) => {
