@@ -1118,7 +1118,7 @@ function draw() {
   // Draw a light white background
   ctx.save(); // save current state
   ctx.shadowColor = "rgba(255,255,255,0.5)";
-  ctx.shadowBlur = 30; // increase for stronger blur
+  ctx.shadowBlur = 50; // increase for stronger blur
   ctx.fillStyle = "rgba(255,255,255,0.3)";
   ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
   ctx.restore(); // restore so text isn't blurred
