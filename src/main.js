@@ -871,6 +871,7 @@ function update(deltaTime = 1) {
     ) {
       score++;
       player.coins = (player.coins || 0) + 1;
+      showMessage(`🎉 Collected coin! Plus one point.`);
       return false;
     }
     return true;
