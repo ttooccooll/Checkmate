@@ -51,7 +51,6 @@ export class NPC {
     if (now - this.lastTalkTime < 500) return false;
 
     if (this.hasTalked) return false;
-    this.hasTalked = true;
 
     let lines = [...this.dialogQueue];
 
