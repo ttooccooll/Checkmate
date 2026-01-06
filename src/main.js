@@ -1116,8 +1116,12 @@ function draw() {
   const bgWidth = 190;
 
   // Draw a light white background
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)"; // very light, semi-transparent
+  ctx.save(); // save current state
+  ctx.shadowColor = "rgba(255,255,255,0.5)";
+  ctx.shadowBlur = 10; // increase for stronger blur
+  ctx.fillStyle = "rgba(255,255,255,0.3)";
   ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
+  ctx.restore(); // restore so text isn't blurred
 
   // Draw text on top
   ctx.font = "16px monospace";
