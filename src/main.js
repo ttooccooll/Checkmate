@@ -1104,28 +1104,30 @@ function draw() {
 
   ctx.restore();
 
-  // --- HUD ---
-  const hudX = 10;
-  let hudY = 10;
-  const padding = 8;
-  const lineHeight = 18;
+  // --- HUD background ---
+  const dpr = window.devicePixelRatio || 1;
+  const hudPadding = 8; // space around text
+  const hudLineHeight = 18;
 
-  // Compute height for background (score + upgrades)
-  const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
-  const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 150; // adjust if needed
+  // Calculate HUD height
+  let hudHeight = 10 + hudLineHeight; // start with score
+  Object.keys(upgrades).forEach((key) => {
+    if (upgrades[key]) hudHeight += hudLineHeight;
+  });
 
-  // Draw a light white background
-  ctx.fillStyle = "rgba(255, 255, 255, 0.3)"; // very light, semi-transparent
-  ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
+  // Draw a light white background across the full width
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)"; // very light, semi-transparent
+  ctx.fillRect(0, 0, canvas.width / dpr, hudHeight + hudPadding * 2);
 
-  // Draw text on top
+  // --- Draw HUD text ---
   ctx.font = "16px monospace";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#111";
 
-  ctx.fillText(`Score: ${score}`, hudX, hudY);
-  let textY = hudY + lineHeight;
+  ctx.fillText(`Score: ${score}`, 10, 10);
+
+  const hudX = 10;
+  let hudY = 30;
 
   const upgradeLabels = {
     helmet: "🪖 Helmet",
@@ -1136,8 +1138,8 @@ function draw() {
 
   Object.keys(upgrades).forEach((key) => {
     if (upgrades[key]) {
-      ctx.fillText(upgradeLabels[key], hudX, textY);
-      textY += lineHeight;
+      ctx.fillText(upgradeLabels[key], hudX, hudY);
+      hudY += hudLineHeight; // spacing between upgrades
     }
   });
 }
