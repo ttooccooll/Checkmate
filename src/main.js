@@ -1105,14 +1105,27 @@ function draw() {
   ctx.restore();
 
   // --- HUD ---
+  const hudX = 10;
+  let hudY = 10;
+  const padding = 8;
+  const lineHeight = 18;
+
+  // Compute height for background (score + upgrades)
+  const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
+  const bgHeight = numLines * lineHeight + padding * 2;
+  const bgWidth = 150; // adjust if needed
+
+  // Draw a light white background
+  ctx.fillStyle = "rgba(255, 255, 255, 0.3)"; // very light, semi-transparent
+  ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
+
+  // Draw text on top
   ctx.font = "16px monospace";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#111";
 
-  ctx.fillText(`Score: ${score}`, 10, 10);
-
-  const hudX = 10;
-  let hudY = 30;
+  ctx.fillText(`Score: ${score}`, hudX, hudY);
+  let textY = hudY + lineHeight;
 
   const upgradeLabels = {
     helmet: "🪖 Helmet",
@@ -1123,8 +1136,8 @@ function draw() {
 
   Object.keys(upgrades).forEach((key) => {
     if (upgrades[key]) {
-      ctx.fillText(upgradeLabels[key], hudX, hudY);
-      hudY += 18; // spacing between upgrades
+      ctx.fillText(upgradeLabels[key], hudX, textY);
+      textY += lineHeight;
     }
   });
 }
