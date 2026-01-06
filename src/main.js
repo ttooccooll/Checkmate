@@ -1104,20 +1104,21 @@ function draw() {
 
   ctx.restore();
 
-  // --- HUD ---
-  const hudWidth = 150; // adjust as needed
-  const hudHeight =
-    30 + Object.keys(upgrades).filter((key) => upgrades[key]).length * 18;
-  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-  ctx.fillRect(5, 5, hudWidth, hudHeight);
-  ctx.font = "16px monospace";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = "#111";
+  updateScoreBox();
 
-  ctx.fillText(`Score: ${score}`, 10, 10);
+  Object.keys(upgrades).forEach((key) => {
+    if (upgrades[key]) {
+      ctx.fillText(upgradeLabels[key], hudX, hudY);
+      hudY += 18; // spacing between upgrades
+    }
+  });
+}
 
-  const hudX = 10;
-  let hudY = 30;
+function updateScoreBox() {
+  const scoreBox = document.getElementById("score-box");
+  if (!scoreBox) return;
+
+  let html = `<strong>Score:</strong> ${score}<br>`;
 
   const upgradeLabels = {
     helmet: "🪖 Helmet",
@@ -1126,12 +1127,15 @@ function draw() {
     metalDetector: "🧲 Metal Detector",
   };
 
-  Object.keys(upgrades).forEach((key) => {
-    if (upgrades[key]) {
-      ctx.fillText(upgradeLabels[key], hudX, hudY);
-      hudY += 18; // spacing between upgrades
-    }
-  });
+  const activeUpgrades = Object.keys(upgrades)
+    .filter((key) => upgrades[key])
+    .map((key) => upgradeLabels[key]);
+
+  if (activeUpgrades.length > 0) {
+    html += `<strong>Upgrades:</strong> ${activeUpgrades.join(", ")}`;
+  }
+
+  scoreBox.innerHTML = html;
 }
 
 function spawnDust() {
