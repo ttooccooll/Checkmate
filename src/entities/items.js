@@ -30,17 +30,17 @@ export function spawnQuestItems(npc, itemsArray) {
     let attempts = 0;
     while (attempts < 5000) {
       // Random position in the world
-      const x = Math.random() * (WORLD_WIDTH - 8);
-      const y = Math.random() * (WORLD_HEIGHT - 8);
+      const x = Math.random() * (WORLD_WIDTH - 5);
+      const y = Math.random() * (WORLD_HEIGHT - 5);
 
       // Check collisions: roads, buildings, trees, other items
       const safe =
-        !isCollidingWithObstacles(x, y, 8, 8) &&
+        !isCollidingWithObstacles(x, y, 5, 5) &&
         !itemsArray.some(
           (it) =>
-            it.x < x + 8 &&
+            it.x < x + 5 &&
             it.x + it.size > x &&
-            it.y < y + 8 &&
+            it.y < y + 5 &&
             it.y + it.size > y
         );
 
@@ -49,7 +49,7 @@ export function spawnQuestItems(npc, itemsArray) {
           id: itemId,
           x,
           y,
-          size: 8,
+          size: 5,
           color: visual.color,
           collected: false,
         });
