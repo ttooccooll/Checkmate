@@ -47,6 +47,7 @@ export class QuestLogManager {
   update(npcs, player) {
     const active = this.container.querySelector("#quest-log-active");
     const completed = this.container.querySelector("#quest-log-completed");
+console.log(npc.name, q.id, q.active, q.completed);
 
     if (!active || !completed) return;
 
