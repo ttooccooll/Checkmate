@@ -809,6 +809,9 @@ function update(deltaTime = 1) {
     }
   }
 
+  player.move(dx, dy);
+  player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
+
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
       if (!npc.talking && !dialogManager.activeDialog) {
@@ -819,9 +822,6 @@ function update(deltaTime = 1) {
       endGame("You hit a pedestrian!");
     }
   });
-
-  player.move(dx, dy);
-  player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
