@@ -27,7 +27,7 @@ body {
   
   /* Optional gradient overlay on top of the image */
   background-blend-mode: overlay; /* Blend gradient if you want */
-  background-color: rgba(52, 52, 52, 0.5); /* Example gradient overlay */
+  background-color: rgba(52, 52, 52, 0.5);
 }
 
 h1 {
