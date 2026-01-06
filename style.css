@@ -18,6 +18,16 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+
+    /* Background image */
+  background-image: url('/assets/cover.png');
+  background-size: cover;        /* Make it cover the whole screen */
+  background-position: center;   /* Center the image */
+  background-repeat: no-repeat;  /* Don’t repeat it */
+  
+  /* Optional gradient overlay on top of the image */
+  background-blend-mode: overlay; /* Blend gradient if you want */
+  background-color: rgba(95, 179, 255, 0.5); /* Example gradient overlay */
 }
 
 h1 {
