@@ -343,9 +343,15 @@ async function loadNPCs() {
         })
       : null;
 
-    const spawn = findSafeSpawn([...npcs, player]);
-    return new NPC(n, spawn.x, spawn.y, quest);
+    return new NPC(n, 0, 0, quest);
   });
+
+  npcs.forEach((npc) => {
+    const spawn = findSafeSpawn([...npcs, player]);
+    npc.x = spawn.x;
+    npc.y = spawn.y;
+  });
+
   return npcs;
 }
 
