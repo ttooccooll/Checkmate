@@ -1107,13 +1107,13 @@ function draw() {
   // --- HUD ---
   const hudX = 10;
   let hudY = 10;
-  const padding = 8;
+  const padding = 5;
   const lineHeight = 18;
 
   // Compute height for background (score + upgrades)
   const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
   const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 190;
+  const bgWidth = 185;
 
   // Draw a light white background
   ctx.save(); // save current state
