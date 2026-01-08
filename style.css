@@ -13,18 +13,19 @@ body {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100svh;
   background: linear-gradient(160deg, #5fb3ff, #cfefff);
   font-family: "Segoe UI", Arial, sans-serif;
   display: flex;
   justify-content: center;
   align-items: flex-start;
 
-    /* Background image */
-  background-image: url('/assets/cover.png');
-  background-size: cover;        /* Make it cover the whole screen */
-  background-position: center;   /* Center the image */
-  background-repeat: no-repeat;  /* Don’t repeat it */
-  
+  /* Background image */
+  background-image: url("/assets/cover.png");
+  background-size: cover; /* Make it cover the whole screen */
+  background-position: center; /* Center the image */
+  background-repeat: no-repeat; /* Don’t repeat it */
+
   /* Optional gradient overlay on top of the image */
   background-blend-mode: overlay; /* Blend gradient if you want */
   background-color: rgba(52, 52, 52, 0.5);
