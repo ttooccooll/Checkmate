@@ -962,10 +962,10 @@ function endGame(reason = "Game Over") {
   gameRunning = false;
   flashTimer = FLASH_DURATION;
   const message = `
-💥 Game Over
-${reason}
+<strong>💥 GAME OVER 💥</strong><br><br>
+${reason}<br><br>
 Score: ${score}
-  `.trim();
+`;
 
   showMessage(message, 0, true);
 
