@@ -237,6 +237,7 @@ canvas {
   opacity: 0;
   pointer-events: none;
   animation: messageFadeIn 0.75s ease-in-out forwards;
+  white-space: pre-line;
 }
 
 @keyframes messageFadeIn {
