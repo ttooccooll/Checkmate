@@ -17,14 +17,12 @@ body {
   justify-content: center;
   align-items: flex-start;
 
-  /* Background image */
   background-image: url("/assets/cover.png");
-  background-size: cover; /* Make it cover the whole screen */
-  background-position: center; /* Center the image */
-  background-repeat: no-repeat; /* Don’t repeat it */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
-  /* Optional gradient overlay on top of the image */
-  background-blend-mode: overlay; /* Blend gradient if you want */
+  background-blend-mode: overlay;
   background-color: rgba(52, 52, 52, 0.5);
 }
 
