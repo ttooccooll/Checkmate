@@ -961,15 +961,13 @@ function endGame(reason = "Game Over") {
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
-  const message = [
-  "💥 GAME OVER 💥",
-  "",
-  reason,
-  "",
-  `Score: ${score}`
-].join("\n");
+  const message = `
+💥 Game Over
+${reason}
+Score: ${score}
+  `.trim();
 
-showMessage(message, 0, true);
+  showMessage(message, 0, true);
 
   resetButtonSize();
 }
