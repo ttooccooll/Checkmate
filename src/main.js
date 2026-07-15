@@ -1248,6 +1248,9 @@ function showGameOverMessage(text, shareText) {
   clearTimeout(modal._timer);
   modal.textContent = text;
 
+  const shareRow = document.createElement("div");
+  shareRow.className = "share-row";
+
   const shareBtn = document.createElement("button");
   shareBtn.id = "share-nostr-btn";
   shareBtn.textContent = "⚡ Share on Nostr";
@@ -1255,19 +1258,24 @@ function showGameOverMessage(text, shareText) {
     e.stopPropagation();
     if (shareBtn.disabled) return;
     shareBtn.disabled = true;
-    shareBtn.textContent = "Sharing…";
+    shareBtn.classList.add("busy");
+    shareBtn.textContent = "Signing…";
 
     const result = await shareToNostr(shareText);
+    shareBtn.classList.remove("busy");
 
     if (result.ok) {
+      shareBtn.classList.add("success");
       shareBtn.textContent = "✅ Shared to Nostr!";
       sfx.delivered();
       return;
     }
 
     if (result.reason === "rejected") {
+      shareBtn.classList.add("declined");
       shareBtn.textContent = "Signing declined";
       setTimeout(() => {
+        shareBtn.classList.remove("declined");
         shareBtn.disabled = false;
         shareBtn.textContent = "⚡ Share on Nostr";
       }, 1600);
@@ -1277,6 +1285,7 @@ function showGameOverMessage(text, shareText) {
     // No extension (or no relay reachable): hand them the note to paste
     try {
       await navigator.clipboard.writeText(shareText);
+      shareBtn.classList.add("success");
       shareBtn.textContent =
         result.reason === "no-extension"
           ? "📋 Copied — paste into your Nostr client"
@@ -1285,12 +1294,14 @@ function showGameOverMessage(text, shareText) {
       shareBtn.textContent = "❌ Sharing unavailable";
     }
   });
-  modal.appendChild(shareBtn);
+
+  shareRow.appendChild(shareBtn);
+  modal.appendChild(shareRow);
 
   modal.style.display = "block";
   modal.classList.add("interactive");
   modal.onclick = (e) => {
-    if (e.target === shareBtn) return;
+    if (e.target.closest(".share-row")) return;
     modal.style.display = "none";
     modal.classList.remove("interactive");
     modal.onclick = null;
