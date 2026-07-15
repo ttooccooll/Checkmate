@@ -1,5 +1,9 @@
 import * as payments from "./services/payments.js";
-import { sfx, toggleMute } from "./services/audio.js";
+import { sfx, toggleMute, engine } from "./services/audio.js";
+import { SkidMarks } from "./world/effects.js";
+import { Ambience } from "./world/ambience.js";
+import { TrafficManager } from "./entities/traffic.js";
+import { DeliveryManager } from "./entities/deliveries.js";
 
 import {
   WORLD_WIDTH,
@@ -102,6 +106,28 @@ const playerSprite = new Image();
 playerSprite.src = "/assets/player.png";
 
 const player = new Player(playerSprite);
+
+const taxiSprites = [
+  "/assets/taxi1.png",
+  "/assets/taxi2.png",
+  "/assets/taxi3.png",
+].map((src) => {
+  const img = new Image();
+  img.src = src;
+  return img;
+});
+
+const skidMarks = new SkidMarks();
+const ambience = new Ambience();
+const traffic = new TrafficManager(taxiSprites);
+const deliveries = new DeliveryManager({
+  showMessage: (msg, ms) => showMessage(msg, ms),
+  addScore: (n) => addScore(n),
+  sfx,
+  isFoggy: () => ambience.isFoggy(),
+});
+
+const sessionStats = { distancePx: 0, timeSec: 0, coins: 0, quests: 0 };
 
 player.onCrash = (reason) => {
   handleCrash(reason);
@@ -225,6 +251,7 @@ const camera = {
 };
 let lastTime = 0;
 let roads = [];
+let introMessageTimer = null;
 
 function isTouchDevice() {
   return (
@@ -360,6 +387,7 @@ async function loadNPCs() {
           type: n.quest.type,
           rewardScore: n.quest.rewardScore,
           unlockNPC: n.quest.unlockNPC,
+          unlockText: n.quest.unlockText,
           params: {
             amount: n.quest.params?.amount ?? n.quest.amount,
             item: n.quest.params?.item ?? n.quest.item,
@@ -418,6 +446,13 @@ async function startNewGame() {
   player.y = spawn.y;
   player.setInvulnerable(20);
 
+  traffic.spawn(roads, player);
+  skidMarks.clear();
+  ambience.reset();
+  deliveries.reset();
+  Object.assign(sessionStats, { distancePx: 0, timeSec: 0, coins: 0, quests: 0 });
+  engine.start();
+
   const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
   const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
 
@@ -442,7 +477,7 @@ async function startNewGame() {
     button.classList.add("smaller-buttons");
   });
 
-  setTimeout(() => {
+  introMessageTimer = setTimeout(() => {
     showMessage(
       "🔔 A distant bell echoes through the air… It reminds you of your sister Nandi, who always described mysterious ringing at the lighthouse.",
       4000
@@ -697,6 +732,18 @@ function generateTrees(count) {
   return arr;
 }
 
+function spawnCelebrationCoins(count = 14) {
+  for (let i = 0; i < count; i++) {
+    const ang = (i / count) * Math.PI * 2;
+    const r = 70 + Math.random() * 90;
+    coins.push({
+      x: Math.max(10, Math.min(WORLD_WIDTH - 10, player.x + Math.cos(ang) * r)),
+      y: Math.max(10, Math.min(WORLD_HEIGHT - 10, player.y + Math.sin(ang) * r)),
+      size: 5,
+    });
+  }
+}
+
 function generateCoins(count) {
   const arr = [];
   let attempts = 0;
@@ -795,6 +842,7 @@ function update(deltaTime = 1) {
   }
 
   const speed = baseSpeed * deltaTime;
+  const prevDirection = player.direction;
 
   let dx = 0;
   let dy = 0;
@@ -837,6 +885,40 @@ function update(deltaTime = 1) {
   player.move(dx, dy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
+  const moving = dx !== 0 || dy !== 0;
+  sessionStats.timeSec += deltaTime / 60;
+  if (moving) {
+    sessionStats.distancePx += Math.hypot(dx, dy);
+    // Hard direction change at speed leaves rubber and kicks up dust
+    if (player.direction !== prevDirection) {
+      skidMarks.add(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        prevDirection
+      );
+      spawnDust();
+    }
+  }
+  skidMarks.update(deltaTime);
+
+  engine.update(moving ? baseSpeed / 8 : 0);
+
+  traffic.update(deltaTime, player, {
+    onCrash: () => player.crash("taxi"),
+    horn: () => sfx.horn(),
+  });
+
+  deliveries.update(deltaTime / 60, player, npcs);
+
+  ambience.update(deltaTime / 60, {
+    onFogIn: () =>
+      showMessage(
+        "🌫️ Fog rolls in from the bay… deliveries pay double while it lasts!",
+        5000
+      ),
+    onFogOut: () => showMessage("☀️ The fog lifts.", 2500),
+  });
+
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
       if (!npc.talking && !dialogManager.activeDialog) {
@@ -859,6 +941,7 @@ function update(deltaTime = 1) {
     if (completedQuest) {
       const reward = completedQuest.rewardScore || 0;
       addScore(reward);
+      sessionStats.quests++;
       sfx.quest();
 
       showMessage(
@@ -867,6 +950,19 @@ function update(deltaTime = 1) {
         }" completed! +${reward} score`,
         5000
       );
+
+      // Promenade arc finale: the whole town comes out to celebrate.
+      if (completedQuest.id === "community_notices") {
+        setTimeout(() => {
+          sfx.festival();
+          addScore(75);
+          spawnCelebrationCoins();
+          showMessage(
+            "🎉 Lanterns flicker on along the promenade — music, laughter, the smell of a braai on the wind. The whole town has come out. +75 points!",
+            9000
+          );
+        }, 2500);
+      }
 
       // Story finale: the bell is restored — let the whole bay hear it.
       if (completedQuest.id === "mystery_ring_bell") {
@@ -908,6 +1004,7 @@ function update(deltaTime = 1) {
     ) {
       score++;
       player.coins = (player.coins || 0) + 1;
+      sessionStats.coins++;
       sfx.coin();
       showMessage(`🎉 Collected coin! Plus one point.`);
       return false;
@@ -952,6 +1049,20 @@ function update(deltaTime = 1) {
 function findCompassTarget() {
   const px = player.x + player.width / 2;
   const py = player.y + player.height / 2;
+
+  // Deliveries outrank everything — there's a timer running
+  const deliveryNpc = deliveries.getCompassTarget();
+  if (deliveryNpc) {
+    return {
+      cx: deliveryNpc.x + deliveryNpc.width / 2,
+      cy: deliveryNpc.y + deliveryNpc.height / 2,
+      x: deliveryNpc.x,
+      y: deliveryNpc.y,
+      width: deliveryNpc.width,
+      height: deliveryNpc.height,
+      color: "#FF9F1C",
+    };
+  }
 
   const activeItemIds = new Set();
   npcs.forEach((npc) => {
@@ -1079,7 +1190,10 @@ function endGame(reason = "Game Over") {
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
+  engine.stop();
   sfx.gameover();
+  // A queued intro message must not wipe the game-over screen
+  clearTimeout(introMessageTimer);
 
   const previousBest = Number(localStorage.getItem("checkmateBestScore")) || 0;
   const isNewBest = score > previousBest;
@@ -1087,11 +1201,17 @@ function endGame(reason = "Game Over") {
     localStorage.setItem("checkmateBestScore", String(score));
   }
 
+  const km = (sessionStats.distancePx / 1000).toFixed(1);
+  const t = Math.max(0, Math.round(sessionStats.timeSec));
+  const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+
   const message = `
 💥 Game Over 💥
 ${reason}
 Score: ${score}
 ${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
+🛣️ ${km} km · ⏱️ ${clock}
+🪙 ${sessionStats.coins} coins · 📦 ${deliveries.completed} deliveries · 📜 ${sessionStats.quests} quests
   `.trim();
 
   showMessage(message, 0, true);
@@ -1134,26 +1254,47 @@ function draw() {
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
 
+  const nowMs = performance.now();
+
   // --- Draw world ---
   if (grassCanvas) ctx.drawImage(grassCanvas, 0, 0);
   ctx.drawImage(roadCanvas, 0, 0);
 
+  // --- Skid marks (under everything that moves) ---
+  skidMarks.draw(ctx, isVisible);
+
   // --- Draw NPCs ---
   npcs.forEach((npc) => npc.draw(ctx));
 
-  // --- Draw coins ---
+  // --- Draw coins (spinning: width oscillates like a flipping coin) ---
   coins.forEach((c) => {
+    const r = c.size / 2;
+    const spin = Math.abs(Math.cos(nowMs / 320 + c.x * 0.13));
     ctx.fillStyle = "gold";
     ctx.beginPath();
-    ctx.arc(c.x + c.size / 2, c.y + c.size / 2, c.size / 2, 0, Math.PI * 2);
+    ctx.ellipse(
+      c.x + r,
+      c.y + r,
+      Math.max(0.8, r * spin),
+      r,
+      0,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     ctx.lineWidth = 1;
     ctx.strokeStyle = "black";
     ctx.stroke();
+
+    // glint as the face catches the light edge-on
+    if (spin < 0.35) {
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillRect(c.x + r - 0.75, c.y, 1.5, c.size);
+    }
   });
 
-  const pulseNow = performance.now();
+  const pulseNow = nowMs;
   items.forEach((item) => {
     if (item.collected) return;
 
@@ -1226,6 +1367,12 @@ function draw() {
     ctx.fill();
   });
 
+  // --- Delivery markers (parcel + destination ring) ---
+  deliveries.draw(ctx, nowMs);
+
+  // --- Taxis ---
+  traffic.draw(ctx, isVisible);
+
   // --- Draw player ---
   player.draw(ctx);
 
@@ -1246,6 +1393,18 @@ function draw() {
 
   ctx.restore();
 
+  // --- Atmosphere: dusk tint + fog (screen space) ---
+  {
+    const dpr = window.devicePixelRatio || 1;
+    ambience.drawScreen(
+      ctx,
+      canvas.width / dpr,
+      canvas.height / dpr,
+      player.x + player.width / 2 - camera.x,
+      player.y + player.height / 2 - camera.y
+    );
+  }
+
   // --- Crash flash overlay ---
   if (flashTimer > 0) {
     const dpr = window.devicePixelRatio || 1;
@@ -1264,8 +1423,14 @@ function draw() {
   const padding = 5;
   const lineHeight = 18;
 
-  // Compute height for background (score + upgrades)
-  const numLines = 1 + Object.values(upgrades).filter(Boolean).length;
+  // Compute height for background (score + upgrades + status lines)
+  const deliveryLine = gameRunning ? deliveries.timerText() : null;
+  const fogLine = gameRunning && ambience.isFoggy() ? "🌫️ 2× delivery" : null;
+  const numLines =
+    1 +
+    Object.values(upgrades).filter(Boolean).length +
+    (deliveryLine ? 1 : 0) +
+    (fogLine ? 1 : 0);
   const bgHeight = numLines * lineHeight + padding * 2;
   const bgWidth = 130;
 
@@ -1298,6 +1463,17 @@ function draw() {
       textY += lineHeight;
     }
   });
+
+  if (deliveryLine) {
+    ctx.fillStyle = "#8a4b00";
+    ctx.fillText(deliveryLine, hudX, textY);
+    textY += lineHeight;
+  }
+  if (fogLine) {
+    ctx.fillStyle = "#3a5f8a";
+    ctx.fillText(fogLine, hudX, textY);
+    textY += lineHeight;
+  }
 }
 
 function spawnDust() {
@@ -1307,10 +1483,10 @@ function spawnDust() {
     dustParticles.push({
       x: player.x + player.width / 2 + (Math.random() * 6 - 3),
       y: player.y + player.height / 2 + (Math.random() * 6 - 3),
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      size: 4 + Math.random() * 4,
-      life: 35 + Math.random() * 25,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: 3 + Math.random() * 5,
+      life: 30 + Math.random() * 32,
     });
   }
 
@@ -1395,8 +1571,24 @@ function handleCrash(reason) {
   }
 
   sfx.crash();
-  endGame("You crashed!");
+  const reasons = {
+    building: "You crashed into a building!",
+    tree: "You hit a tree!",
+    taxi: "You were flattened by a taxi!",
+  };
+  endGame(reasons[reason] || "You crashed!");
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    engine.stop();
+  } else if (gameRunning) {
+    engine.start();
+  }
+});
+
+// Dev/test handle for poking live systems from the console
+window.__cm = { ambience, deliveries, traffic, skidMarks, player, getNpcs: () => npcs };
 
 const touchControls = document.getElementById("touch-controls");
 

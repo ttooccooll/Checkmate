@@ -40,6 +40,7 @@ export class NPC {
 
     this.visible = !data.hidden;
     this.wasHidden = !!data.hidden;
+    this.bobPhase = Math.random() * Math.PI * 2;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -155,14 +156,19 @@ export class NPC {
   draw(ctx) {
     if (!this.sprite.complete) return;
     if (!this.visible) return;
-    // --- Fake shadow (VERY cheap) ---
+
+    // Gentle idle bob, phase-offset per NPC so the crowd doesn't sync up
+    const bob = Math.sin(performance.now() / 420 + this.bobPhase) * 1.4;
+
+    // --- Fake shadow (VERY cheap) — shrinks slightly as the NPC "rises" ---
+    const shadowScale = 1 - (bob + 1.4) * 0.06;
     ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     ctx.ellipse(
       this.x + this.width / 2, // center X
       this.y + this.height - 2, // just under feet
-      this.width * 0.35, // shadow width
-      this.height * 0.18, // shadow height
+      this.width * 0.35 * shadowScale,
+      this.height * 0.18 * shadowScale,
       0,
       0,
       Math.PI * 2
@@ -170,18 +176,27 @@ export class NPC {
     ctx.fill();
 
     // --- NPC sprite ---
-    ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
+    ctx.drawImage(this.sprite, this.x, this.y + bob, this.width, this.height);
   }
 }
 
 export class Quest {
-  constructor({ id, description, type, params, rewardScore = 10, unlockNPC = null }) {
+  constructor({
+    id,
+    description,
+    type,
+    params,
+    rewardScore = 10,
+    unlockNPC = null,
+    unlockText = null,
+  }) {
     this.id = id;
     this.description = description;
     this.type = type;
     this.params = params || {};
     this.rewardScore = rewardScore;
     this.unlockId = unlockNPC;
+    this.unlockText = unlockText;
     this.active = false;
     this.completed = false;
   }
@@ -229,7 +244,8 @@ export class Quest {
     npc.visible = true;
     if (showMessage)
       showMessage(
-        `I believe that ${npc.name} may know more about what's going on here.`,
+        this.unlockText ||
+          `I believe that ${npc.name} may know more about what's going on here.`,
         5000
       );
   }

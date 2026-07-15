@@ -270,19 +270,23 @@
     "postQuestDialog": [
       "You picked up the litter?",
       "The park already feels lighter and alive.",
-      "Thank you for caring."
+      "Thank you for caring.",
+      "You know… Bongani has been fussing over that broken street light for weeks. Maybe you're the one to help him."
     ],
     "quest": {
       "id": "clean_park",
       "description": "Collect 5 pieces of litter scattered along the park pathways and cliff edge.",
       "type": "collect",
       "params": { "item": "litter", "amount": 5 },
-      "rewardScore": 8
+      "rewardScore": 8,
+      "unlockNPC": "bongani",
+      "unlockText": "Refilwe mentioned Bongani, still fussing over a broken street light on the promenade."
     }
   },
   {
     "id": "bongani",
     "name": "Bongani",
+    "hidden": true,
     "dialog": [
       "Broken street lights make the town feel shadowed.",
       "This one hasn’t worked for weeks.",
@@ -291,19 +295,23 @@
     "postQuestDialog": [
       "You fixed the street light?",
       "Even one light changes how safe the streets feel.",
-      "The town thanks you."
+      "The town thanks you.",
+      "Now the children will play out later — though Keabetswe says their balls keep vanishing into the tide."
     ],
     "quest": {
       "id": "fix_street_light",
       "description": "Inspect and restore the broken street light along the coastal promenade.",
       "type": "collect",
       "params": { "item": "light", "amount": 1 },
-      "rewardScore": 7
+      "rewardScore": 7,
+      "unlockNPC": "keabetswe",
+      "unlockText": "Bongani says the children near Keabetswe's stall keep losing their play balls."
     }
   },
   {
     "id": "keabetswe",
     "name": "Keabetswe",
+    "hidden": true,
     "dialog": [
       "Children chase seagulls and balls near the promenade.",
       "Balls often roll into the tide or the street.",
@@ -312,14 +320,17 @@
     "postQuestDialog": [
       "You found the missing balls?",
       "The kids are thrilled!",
-      "You’ve made their day."
+      "You’ve made their day.",
+      "If only everyone knew how the promenade is coming back to life… Mpho's community board could tell them, if it weren't bare."
     ],
     "quest": {
       "id": "lost_play_balls",
       "description": "Find 3 lost play balls near the town promenade and pier.",
       "type": "collect",
       "params": { "item": "ball", "amount": 3 },
-      "rewardScore": 3
+      "rewardScore": 3,
+      "unlockNPC": "mpho",
+      "unlockText": "Keabetswe thinks Mpho could spread the good news — if the community board weren't empty."
     }
   },
   {
@@ -346,6 +357,7 @@
   {
     "id": "mpho",
     "name": "Mpho",
+    "hidden": true,
     "dialog": [
       "The community board shares news for the town.",
       "Lately, few check it.",
@@ -354,7 +366,8 @@
     "postQuestDialog": [
       "You put the notices back up?",
       "Everyone can see them again.",
-      "It’s amazing how much that matters."
+      "It’s amazing how much that matters.",
+      "A clean park, a bright light, laughing children, and news worth reading… tonight, the promenade celebrates. You made this happen."
     ],
     "quest": {
       "id": "community_notices",

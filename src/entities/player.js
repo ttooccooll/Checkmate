@@ -8,6 +8,7 @@ export class Player {
     this.height = PLAYER_HEIGHT;
     this.speed = 5;
     this.direction = 0;
+    this.displayAngle = 0; // eases toward direction so turns lean, not snap
 
     this.invulnerableTimer = 0;
     this.onCrash = null;
@@ -72,7 +73,7 @@ export class Player {
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.shadowBlur = 10;
     ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-    ctx.rotate((this.direction * Math.PI) / 180);
+    ctx.rotate((this.displayAngle * Math.PI) / 180);
     ctx.drawImage(
       this.sprite,
       -this.width / 2,
@@ -91,6 +92,10 @@ export class Player {
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer = Math.max(0, this.invulnerableTimer - deltaTime);
     }
+
+    // Ease the sprite toward the travel direction along the shortest arc
+    const diff = ((this.direction - this.displayAngle + 540) % 360) - 180;
+    this.displayAngle += diff * Math.min(1, 0.22 * deltaTime);
   }
 
   canCrash() {
