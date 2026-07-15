@@ -42,19 +42,6 @@ export async function payInvoice(paymentRequest) {
   }
 }
 
-async function renderQR(invoice) {
-    const container = document.getElementById("qr-container");
-    const canvas = document.getElementById("qr-code");
-
-    // Get container width and set canvas size (80% of container)
-    const size = Math.min(container.clientWidth * 0.8, 220);
-    canvas.width = size;
-    canvas.height = size;
-
-    // Draw QR code
-    await QRCode.toCanvas(canvas, invoice, { width: size });
-}
-
 export async function payWithQR(item) {
   try {
     const resp = await fetch("/api/create-invoice", {
@@ -87,23 +74,19 @@ export async function payWithQR(item) {
 
     cancelQRPayment = false;
 
-    const containerStyle = getComputedStyle(container);
-    const containerHeight = container.clientHeight 
-                            - parseFloat(containerStyle.paddingTop)
-                            - parseFloat(containerStyle.paddingBottom);
-
-    const textHeight = invoiceText.offsetHeight;
-    const buttonsHeight = document.querySelector(".qr-buttons").offsetHeight;
-    const availableHeight = containerHeight - textHeight - buttonsHeight - 24;
-
-    const canvasSize = Math.min(container.clientWidth * 0.8, availableHeight);
-    canvas.width = canvasSize;
-    canvas.height = canvasSize;
-
-    await QRCode.toCanvas(canvas, invoice, { width: canvasSize });
-
+    // Show the container first — a display:none element measures as 0
     invoiceText.textContent = invoice;
     container.classList.add("visible");
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    const canvasSize = Math.round(
+      Math.max(160, Math.min(container.clientWidth * 0.8, 220))
+    );
+    await QRCode.toCanvas(canvas, invoice, { width: canvasSize, margin: 2 });
+
+    // Pin the displayed size square so no stylesheet rule can stretch it
+    canvas.style.width = `${canvasSize}px`;
+    canvas.style.height = `${canvasSize}px`;
 
     const paid = await waitForPayment(paymentHash);
 

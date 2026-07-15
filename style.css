@@ -291,9 +291,7 @@ canvas {
 }
 
 #qr-code {
-  width: 80%; /* 80% of container width */
-  max-width: 220px; /* cap on large screens */
-  height: auto; /* maintain aspect ratio */
+  /* size is set inline by payments.js, always square */
   margin: 0 auto 12px auto; /* spacing below QR code */
   display: block;
 }
