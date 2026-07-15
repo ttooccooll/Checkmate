@@ -65,6 +65,10 @@ export class Player {
     }
 
     ctx.save();
+    // Blink while invulnerable so the grace period is visible
+    if (this.invulnerableTimer > 0) {
+      ctx.globalAlpha = 0.55 + 0.35 * Math.sin(performance.now() / 60);
+    }
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.shadowBlur = 10;
     ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
@@ -83,14 +87,14 @@ export class Player {
     this.invulnerableTimer = frames;
   }
 
-  update() {
+  update(deltaTime = 1) {
     if (this.invulnerableTimer > 0) {
-      this.invulnerableTimer--;
+      this.invulnerableTimer = Math.max(0, this.invulnerableTimer - deltaTime);
     }
   }
 
   canCrash() {
-    return this.invulnerableTimer === 0;
+    return this.invulnerableTimer <= 0;
   }
 
   crash(reason = "obstacle") {

@@ -368,7 +368,16 @@
     "id": "lighthouse_keeper",
     "name": "Lighthouse Keeper",
     "hidden": true,
-    "dialog": ["The old bell needs attention..."],
+    "dialog": [
+      "So. Someone finally followed the sound.",
+      "I kept the light long after the town stopped looking up.",
+      "The old bell needs attention… find it, and let them hear it one more time."
+    ],
+    "postQuestDialog": [
+      "You hear that? The whole bay heard it.",
+      "A town that hears its bell again starts to remember itself.",
+      "Thank you, courier. The light is yours now too."
+    ],
     "quest": {
       "id": "mystery_ring_bell",
       "description": "Restore the old warning bell at the lighthouse.",

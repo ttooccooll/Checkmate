@@ -1,4 +1,5 @@
 import * as payments from "./services/payments.js";
+import { sfx, toggleMute } from "./services/audio.js";
 
 import {
   WORLD_WIDTH,
@@ -238,23 +239,37 @@ document.addEventListener("keydown", (e) => {
 
   switch (e.key) {
     case "ArrowUp":
+    case "w":
+    case "W":
     case "8":
       keys["ArrowUp"] = true;
       break;
     case "ArrowDown":
+    case "s":
+    case "S":
     case "2":
       keys["ArrowDown"] = true;
       break;
     case "ArrowLeft":
+    case "a":
+    case "A":
     case "4":
       keys["ArrowLeft"] = true;
       break;
     case "ArrowRight":
+    case "d":
+    case "D":
     case "6":
       keys["ArrowRight"] = true;
       break;
     case "5":
       keys["Enter"] = true;
+      break;
+    case "m":
+    case "M":
+      if (!e.repeat) {
+        showMessage(toggleMute() ? "🔇 Sound off" : "🔊 Sound on", 1200);
+      }
       break;
 
     case "7":
@@ -284,18 +299,26 @@ document.addEventListener("keyup", (e) => {
 
   switch (e.key) {
     case "ArrowUp":
+    case "w":
+    case "W":
     case "8":
       keys["ArrowUp"] = false;
       break;
     case "ArrowDown":
+    case "s":
+    case "S":
     case "2":
       keys["ArrowDown"] = false;
       break;
     case "ArrowLeft":
+    case "a":
+    case "A":
     case "4":
       keys["ArrowLeft"] = false;
       break;
     case "ArrowRight":
+    case "d":
+    case "D":
     case "6":
       keys["ArrowRight"] = false;
       break;
@@ -335,6 +358,8 @@ async function loadNPCs() {
           id: n.quest.id,
           description: n.quest.description,
           type: n.quest.type,
+          rewardScore: n.quest.rewardScore,
+          unlockNPC: n.quest.unlockNPC,
           params: {
             amount: n.quest.params?.amount ?? n.quest.amount,
             item: n.quest.params?.item ?? n.quest.item,
@@ -385,7 +410,7 @@ async function startNewGame() {
   // spawn quest items
   items = []; // reset
   npcs.forEach((npc) => {
-    spawnQuestItems(npc, items);
+    spawnQuestItems(npc, items, { buildings, trees });
   });
 
   const spawn = findSafeSpawn();
@@ -680,7 +705,7 @@ function generateCoins(count) {
     const x = Math.random() * (WORLD_WIDTH - 5);
     const y = Math.random() * (WORLD_HEIGHT - 5);
 
-    if (!isCollidingWithObstacles(x - 2, y - 2, 9, 9)) {
+    if (!isCollidingWithObstacles(x - 2, y - 2, 9, 9, buildings, trees)) {
       arr.push({ x, y, size: 5 });
     }
     attempts++;
@@ -736,7 +761,7 @@ function updateTouchControlsVisibility() {
 
 function update(deltaTime = 1) {
   if (!gameRunning) return;
-  player.update();
+  player.update(deltaTime);
 
   if (touchMove.active) {
     const DEADZONE = 15;
@@ -834,6 +859,7 @@ function update(deltaTime = 1) {
     if (completedQuest) {
       const reward = completedQuest.rewardScore || 0;
       addScore(reward);
+      sfx.quest();
 
       showMessage(
         `🎉 Quest "${
@@ -841,6 +867,17 @@ function update(deltaTime = 1) {
         }" completed! +${reward} score`,
         5000
       );
+
+      // Story finale: the bell is restored — let the whole bay hear it.
+      if (completedQuest.id === "mystery_ring_bell") {
+        setTimeout(() => {
+          sfx.bell();
+          showMessage(
+            "🔔 The old bell rings out across the bay — deep and clear, like it never stopped. Far below, the town goes quiet and looks up. The town remembers.",
+            9000
+          );
+        }, 2500);
+      }
     }
   });
 
@@ -871,6 +908,7 @@ function update(deltaTime = 1) {
     ) {
       score++;
       player.coins = (player.coins || 0) + 1;
+      sfx.coin();
       showMessage(`🎉 Collected coin! Plus one point.`);
       return false;
     }
@@ -891,15 +929,12 @@ function update(deltaTime = 1) {
       player.inventory = player.inventory || {};
       player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
 
+      sfx.item();
       showMessage(`🎉 Collected ${item.id}!`);
     }
   });
 
   updateCamera(deltaTime);
-
-  if (flashTimer > 0) {
-    flashTimer--;
-  }
 
   dustParticles.forEach((p) => {
     p.x += p.vx * deltaTime;
@@ -912,12 +947,95 @@ function update(deltaTime = 1) {
   updateTouchControlsVisibility();
 }
 
-function enableLighthouseBell() {
-  // Example: show a message and maybe activate a visual indicator
-  showMessage("🔔 Go ring the lighthouse bell!");
+// Nearest objective worth pointing at: uncollected items for accepted quests
+// first, then newly revealed story NPCs whose quest hasn't been picked up yet.
+function findCompassTarget() {
+  const px = player.x + player.width / 2;
+  const py = player.y + player.height / 2;
 
-  // Optionally, set a game state for the bell
-  window.lighthouseBellActive = true;
+  const activeItemIds = new Set();
+  npcs.forEach((npc) => {
+    const q = npc.currentQuest;
+    if (q?.active && q.type === "collect" && q.params?.item) {
+      activeItemIds.add(q.params.item);
+    }
+  });
+
+  let best = null;
+  let bestDist = Infinity;
+
+  items.forEach((item) => {
+    if (item.collected || !activeItemIds.has(item.id)) return;
+    const d = Math.hypot(item.x - px, item.y - py);
+    if (d < bestDist) {
+      bestDist = d;
+      best = {
+        cx: item.x + item.size / 2,
+        cy: item.y + item.size / 2,
+        x: item.x,
+        y: item.y,
+        width: item.size,
+        height: item.size,
+        color: item.color,
+      };
+    }
+  });
+
+  if (best) return best;
+
+  npcs.forEach((npc) => {
+    const q = npc.currentQuest;
+    if (!npc.visible || !npc.wasHidden || !q) return;
+    if (q.active || npc.completedQuests.includes(q.id)) return;
+    const d = Math.hypot(npc.x - px, npc.y - py);
+    if (d < bestDist) {
+      bestDist = d;
+      best = {
+        cx: npc.x + npc.width / 2,
+        cy: npc.y + npc.height / 2,
+        x: npc.x,
+        y: npc.y,
+        width: npc.width,
+        height: npc.height,
+        color: "#FFD700",
+      };
+    }
+  });
+
+  return best;
+}
+
+// Small arrow orbiting the player, pointing toward the current objective.
+// Hidden while the objective itself is on screen.
+function drawQuestCompass() {
+  const target = findCompassTarget();
+  if (!target) return;
+  if (isVisible(target.x - 8, target.y - 8, target.width + 16, target.height + 16)) {
+    return;
+  }
+
+  const px = player.x + player.width / 2 - camera.x;
+  const py = player.y + player.height / 2 - camera.y;
+  const ang = Math.atan2(
+    target.cy - (player.y + player.height / 2),
+    target.cx - (player.x + player.width / 2)
+  );
+
+  ctx.save();
+  ctx.translate(px + Math.cos(ang) * 55, py + Math.sin(ang) * 55);
+  ctx.rotate(ang);
+  ctx.globalAlpha = 0.65 + 0.3 * Math.sin(performance.now() / 250);
+  ctx.fillStyle = target.color;
+  ctx.strokeStyle = "rgba(0,0,0,0.6)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(11, 0);
+  ctx.lineTo(-6, 6.5);
+  ctx.lineTo(-6, -6.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 }
 
 function updateCamera(deltaTime) {
@@ -961,10 +1079,19 @@ function endGame(reason = "Game Over") {
   questLog.hide();
   gameRunning = false;
   flashTimer = FLASH_DURATION;
+  sfx.gameover();
+
+  const previousBest = Number(localStorage.getItem("checkmateBestScore")) || 0;
+  const isNewBest = score > previousBest;
+  if (isNewBest) {
+    localStorage.setItem("checkmateBestScore", String(score));
+  }
+
   const message = `
 💥 Game Over 💥
 ${reason}
 Score: ${score}
+${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
   `.trim();
 
   showMessage(message, 0, true);
@@ -1026,15 +1153,30 @@ function draw() {
     ctx.stroke();
   });
 
+  const pulseNow = performance.now();
   items.forEach((item) => {
     if (item.collected) return;
+
+    const itemCx = item.x + item.size / 2;
+    const itemCy = item.y + item.size / 2;
+    // Offset each item's pulse by position so they don't blink in sync
+    const phase = pulseNow / 180 + itemCx * 0.05;
+
+    // Soft glow ring so quest items stand out from coins
+    ctx.strokeStyle = item.color;
+    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(phase);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(itemCx, itemCy, item.size / 2 + 4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
 
     ctx.fillStyle = item.color;
     ctx.beginPath();
     ctx.arc(
-      item.x + item.size / 2,
-      item.y + item.size / 2,
-      item.size / 2,
+      itemCx,
+      itemCy,
+      (item.size / 2) * (1 + 0.35 * Math.sin(phase)),
       0,
       Math.PI * 2
     );
@@ -1103,6 +1245,18 @@ function draw() {
   });
 
   ctx.restore();
+
+  // --- Crash flash overlay ---
+  if (flashTimer > 0) {
+    const dpr = window.devicePixelRatio || 1;
+    ctx.fillStyle = `rgba(255, 40, 40, ${(0.3 * flashTimer) / FLASH_DURATION})`;
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  }
+
+  // --- Quest compass ---
+  if (gameRunning) {
+    drawQuestCompass();
+  }
 
   // --- HUD ---
   const hudX = 8;
@@ -1190,7 +1344,9 @@ function findSafeSpawn(avoid = [], maxAttempts = 5000) {
         hitbox.x,
         hitbox.y,
         hitbox.width,
-        hitbox.height
+        hitbox.height,
+        buildings,
+        trees
       ) ||
       allAvoid.some((e) =>
         rectCollision(hitbox, {
@@ -1214,6 +1370,12 @@ function gameLoop(timestamp) {
   let deltaTime = (timestamp - lastTime) / 16.666;
   deltaTime = Math.min(deltaTime, 3);
   lastTime = timestamp;
+
+  // Runs outside update() so the game-over flash still fades out
+  if (flashTimer > 0) {
+    flashTimer = Math.max(0, flashTimer - deltaTime);
+  }
+
   questLog.update(npcs, player);
   update(deltaTime);
   draw();
@@ -1227,10 +1389,12 @@ function handleCrash(reason) {
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     player.setInvulnerable(INVULNERABLE_DURATION);
     flashTimer = FLASH_DURATION;
+    sfx.helmet();
     showMessage("🪖 Helmet destroyed!");
     return;
   }
 
+  sfx.crash();
   endGame("You crashed!");
 }
 
@@ -1254,6 +1418,7 @@ async function buyUpgrade(upgradeName, costSats) {
   if (success) {
     upgrades[upgradeName] = true;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
+    sfx.purchase();
     const labels = {
       helmet: "Helmet",
       speedBoost: "Speed Boost",
@@ -1354,7 +1519,3 @@ bindPointerButton(
   () => buyUpgrade("metalDetector", 100),
   () => {}
 );
-
-const introScreen = document.getElementById("intro-screen");
-const gameContainer = document.getElementById("game-container");
-const actionButtons = document.getElementById("action-buttons");

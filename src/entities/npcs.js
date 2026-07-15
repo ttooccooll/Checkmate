@@ -1,3 +1,5 @@
+import { sfx } from "../services/audio.js";
+
 export class NPC {
   constructor(data, x, y, quest = null) {
     this.id = data.id;
@@ -37,6 +39,7 @@ export class NPC {
     this.hasReactedToQuest = false;
 
     this.visible = !data.hidden;
+    this.wasHidden = !!data.hidden;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -78,6 +81,7 @@ export class NPC {
           text: "Accept Quest",
           callback: () => {
             this.currentQuest.active = true;
+            sfx.accept();
 
             if (showMessage) {
               showMessage(
@@ -135,23 +139,11 @@ export class NPC {
         this.currentQuest.active = false;
         this.currentQuest.completed = true;
 
-        // 🔹 Automatically unlock NPCs if needed
-        switch (this.currentQuest.id) {
-          case "mystery_bell_fragments":
-            this.currentQuest.unlockNPC("kagiso", npcs, { showMessage });
-            break;
-
-          case "mystery_old_routes":
-            this.currentQuest.unlockNPC("thabo", npcs, { showMessage });
-            break;
-
-          case "mystery_keeper_clues":
-            this.currentQuest.unlockNPC("hlokomela", npcs, { showMessage });
-            break;
-
-          case "mystery_clear_path":
-            enableLighthouseBell();
-            break;
+        // 🔹 Unlock the next NPC in the chain, straight from quest data
+        if (this.currentQuest.unlockId) {
+          this.currentQuest.unlockNPC(this.currentQuest.unlockId, npcs, {
+            showMessage,
+          });
         }
 
         return this.currentQuest;
@@ -183,12 +175,13 @@ export class NPC {
 }
 
 export class Quest {
-  constructor({ id, description, type, params, rewardScore = 10 }) {
+  constructor({ id, description, type, params, rewardScore = 10, unlockNPC = null }) {
     this.id = id;
     this.description = description;
     this.type = type;
     this.params = params || {};
     this.rewardScore = rewardScore;
+    this.unlockId = unlockNPC;
     this.active = false;
     this.completed = false;
   }

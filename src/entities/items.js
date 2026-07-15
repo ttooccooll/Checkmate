@@ -19,7 +19,7 @@ const ITEM_VISUALS = {
   bell: { color: "#FAD7A0" }, // antique brass
 };
 
-export function spawnQuestItems(npc, itemsArray) {
+export function spawnQuestItems(npc, itemsArray, { buildings = [], trees = [] } = {}) {
   if (!npc.quest) return;
 
   const itemId = npc.quest.params?.item || npc.quest.item;
@@ -28,14 +28,16 @@ export function spawnQuestItems(npc, itemsArray) {
 
   for (let i = 0; i < amount; i++) {
     let attempts = 0;
+    let placed = false;
+
     while (attempts < 5000) {
       // Random position in the world
       const x = Math.random() * (WORLD_WIDTH - 5);
       const y = Math.random() * (WORLD_HEIGHT - 5);
 
-      // Check collisions: roads, buildings, trees, other items
+      // Check collisions: buildings, trees, other items
       const safe =
-        !isCollidingWithObstacles(x, y, 5, 5) &&
+        !isCollidingWithObstacles(x, y, 5, 5, buildings, trees) &&
         !itemsArray.some(
           (it) =>
             it.x < x + 5 &&
@@ -53,13 +55,14 @@ export function spawnQuestItems(npc, itemsArray) {
           color: visual.color,
           collected: false,
         });
+        placed = true;
         break;
       }
 
       attempts++;
     }
 
-    if (attempts >= 500) {
+    if (!placed) {
       console.warn(`Could not place item ${itemId} in the world safely.`);
     }
   }
