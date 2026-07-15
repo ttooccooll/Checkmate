@@ -36,6 +36,7 @@ let npcs = [];
 let startingGame = false;
 let usingDragControls = false;
 let offRoadTimer = 0;
+let treadsWarned = false;
 
 let dustParticles = [];
 
@@ -425,6 +426,7 @@ async function startNewGame() {
   dustParticles = [];
 
   offRoadTimer = 0;
+  treadsWarned = false;
 
   generateRoads();
   trees = generateTrees(70);
@@ -823,22 +825,11 @@ function update(deltaTime = 1) {
 
   let baseSpeed = player.speed + (upgrades.speedBoost ? 3 : 0);
 
-  // Reduce speed if off-road
-  if (!isOnRoad(player.x, player.y, player.width, player.height)) {
-    spawnDust();
-    if (upgrades.offRoadTreads) {
-      offRoadTimer += deltaTime;
-      if (offRoadTimer > OFFROAD_MAX) {
-        upgrades.offRoadTreads = false;
-        localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-        showMessage("🛞 Off-Road Treads worn out!");
-        offRoadTimer = 0;
-      }
-    } else {
-      baseSpeed *= 0.5; // slow down off-road without treads
-    }
-  } else {
-    offRoadTimer = Math.max(0, offRoadTimer - deltaTime);
+  // Off-road slows you down without treads; tread wear itself is applied
+  // after movement, so it only accrues while actually riding.
+  const offRoad = !isOnRoad(player.x, player.y, player.width, player.height);
+  if (offRoad && !upgrades.offRoadTreads) {
+    baseSpeed *= 0.5;
   }
 
   const speed = baseSpeed * deltaTime;
@@ -897,6 +888,24 @@ function update(deltaTime = 1) {
         prevDirection
       );
       spawnDust();
+    }
+
+    // Riding off-road grinds down the treads — wear never heals
+    if (offRoad) {
+      spawnDust();
+      if (upgrades.offRoadTreads) {
+        offRoadTimer += deltaTime;
+        if (offRoadTimer >= OFFROAD_MAX) {
+          upgrades.offRoadTreads = false;
+          localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
+          showMessage("🛞 Off-Road Treads worn out!");
+          offRoadTimer = 0;
+          treadsWarned = false;
+        } else if (!treadsWarned && offRoadTimer > OFFROAD_MAX * 0.7) {
+          treadsWarned = true;
+          showMessage("🛞 Your treads are wearing thin…", 3000);
+        }
+      }
     }
   }
   skidMarks.update(deltaTime);
@@ -1459,7 +1468,15 @@ function draw() {
 
   Object.keys(upgrades).forEach((key) => {
     if (upgrades[key]) {
-      ctx.fillText(upgradeLabels[key], hudX, textY);
+      let label = upgradeLabels[key];
+      if (key === "offRoadTreads") {
+        const left = Math.max(
+          0,
+          Math.round(100 - (offRoadTimer / OFFROAD_MAX) * 100)
+        );
+        label = `🛞 Treads ${left}%`;
+      }
+      ctx.fillText(label, hudX, textY);
       textY += lineHeight;
     }
   });
@@ -1607,6 +1624,10 @@ async function buyUpgrade(upgradeName) {
 
   if (success) {
     upgrades[upgradeName] = true;
+    if (upgradeName === "offRoadTreads") {
+      offRoadTimer = 0;
+      treadsWarned = false;
+    }
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     sfx.purchase();
     const labels = {

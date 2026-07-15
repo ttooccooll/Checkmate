@@ -10,4 +10,4 @@ export const PLAYER_HEIGHT = 55;
 export const INVULNERABLE_DURATION = 80;
 export const FLASH_DURATION = 150;
 
-export const OFFROAD_MAX = 1200;
+export const OFFROAD_MAX = 1800; // ~30s of riding off-road wears out treads
