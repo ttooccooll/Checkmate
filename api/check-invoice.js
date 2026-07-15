@@ -1,58 +1,37 @@
-import fetch from "node-fetch";
+import { getNwcClient, withTimeout } from "./_lib/nwc.js";
 
 export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+  res.setHeader("Cache-Control", "no-store");
+
   const paymentHash = req.query.paymentHash;
-  if (!paymentHash) {
-    return res.status(400).json({ error: "Missing paymentHash" });
+  if (!/^[0-9a-f]{64}$/i.test(paymentHash || "")) {
+    return res.status(400).json({ error: "Invalid paymentHash" });
   }
 
+  let client;
   try {
-    const query = `
-      query InvoiceStatusByHash($input: LnInvoicePaymentStatusByHashInput!) {
-        lnInvoicePaymentStatusByHash(input: $input) {
-          paymentHash
-          status
-        }
-      }
-    `;
+    client = getNwcClient();
+    const tx = await withTimeout(
+      client.lookupInvoice({ payment_hash: paymentHash })
+    );
 
-    const variables = {
-      input: { paymentHash }
-    };
-
-    const response = await fetch(process.env.BLINK_SERVER, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": process.env.BLINK_API_KEY
-      },
-      body: JSON.stringify({ query, variables })
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({ error: "Blink API error", details: text });
-    }
-
-    const json = await response.json();
-    if (json.errors) {
-      return res.status(500).json({ error: "GraphQL error", details: json.errors });
-    }
-
-    const invoiceStatus = json.data?.lnInvoicePaymentStatusByHash;
-
-    if (!invoiceStatus) {
-      return res.status(404).json({ error: "Invoice not found", details: json });
-    }
-
-    const status = invoiceStatus.status;
+    const paid = tx.state === "settled" || tx.settled_at > 0;
+    const expired = !paid && tx.expires_at > 0 && tx.expires_at * 1000 < Date.now();
 
     return res.status(200).json({
-      paid: status === "PAID",
-      status
+      paid,
+      status: paid ? "PAID" : expired ? "EXPIRED" : "PENDING",
     });
-
   } catch (err) {
-    return res.status(500).json({ error: "Blink API failed", details: err.message });
+    if (err?.code === "NOT_FOUND") {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+    console.error("check-invoice failed:", err);
+    return res.status(502).json({ error: "Could not check invoice" });
+  } finally {
+    client?.close();
   }
 }

@@ -1,12 +1,12 @@
 let cancelQRPayment = false;
 
-export async function generateInvoice(amountSats, memo = "Motorcycle Game Payment") {
+export async function generateInvoice(item) {
   try {
     const resp = await fetch("/api/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
-      body: JSON.stringify({ amount: amountSats, memo }),
+      body: JSON.stringify({ item }),
     });
     
     const text = await resp.text();
@@ -55,13 +55,13 @@ async function renderQR(invoice) {
     await QRCode.toCanvas(canvas, invoice, { width: size });
 }
 
-export async function payWithQR(amountSats, memo = "Motorcycle Game Payment") {
+export async function payWithQR(item) {
   try {
     const resp = await fetch("/api/create-invoice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       cache: "no-store",
-      body: JSON.stringify({ amount: amountSats, memo }),
+      body: JSON.stringify({ item }),
     });
 
     const text = await resp.text();
@@ -151,11 +151,11 @@ export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
   });
 }
 
-export async function makePayment(amountSats, memo = "Motorcycle Game Payment") {
+export async function makePayment(item) {
   try {
     if (typeof WebLN !== "undefined") {
       try {
-        const invoice = await generateInvoice(amountSats, memo);
+        const invoice = await generateInvoice(item);
         await payInvoice(invoice);
         return true;
       } catch (weblnErr) {
@@ -163,7 +163,7 @@ export async function makePayment(amountSats, memo = "Motorcycle Game Payment") 
       }
     }
 
-    const qrSuccess = await payWithQR(amountSats, memo);
+    const qrSuccess = await payWithQR(item);
     return qrSuccess;
   } catch (err) {
     console.error("Payment failed:", err);

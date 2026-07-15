@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "node-fetch": "^3.3.1"
+    "@getalby/sdk": "^8.0.3",
+    "ws": "^8.21.1"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "python3 -m http.server 8347",
+    "dev": "vercel dev"
   }
 }

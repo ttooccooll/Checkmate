@@ -1404,16 +1404,14 @@ if (!isTouchDevice()) {
   touchControls.style.display = "none";
 }
 
-async function buyUpgrade(upgradeName, costSats) {
+async function buyUpgrade(upgradeName) {
   if (upgrades[upgradeName]) {
     showMessage(`✔ You already own the ${upgradeName}!`);
     return;
   }
 
-  const success = await payments.makePayment(
-    costSats,
-    `${upgradeName} Upgrade`
-  );
+  // The server owns the price list — we only name the item.
+  const success = await payments.makePayment(upgradeName);
 
   if (success) {
     upgrades[upgradeName] = true;
@@ -1498,24 +1496,24 @@ bindPointerButton(
 
 bindPointerButton(
   "helmet-btn",
-  () => buyUpgrade("helmet", 50),
+  () => buyUpgrade("helmet"),
   () => {}
 );
 
 bindPointerButton(
   "speed-boost-btn",
-  () => buyUpgrade("speedBoost", 50),
+  () => buyUpgrade("speedBoost"),
   () => {}
 );
 
 bindPointerButton(
   "off-road-treads-btn",
-  () => buyUpgrade("offRoadTreads", 75),
+  () => buyUpgrade("offRoadTreads"),
   () => {}
 );
 
 bindPointerButton(
   "metal-detector-btn",
-  () => buyUpgrade("metalDetector", 100),
+  () => buyUpgrade("metalDetector"),
   () => {}
 );
