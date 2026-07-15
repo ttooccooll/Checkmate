@@ -249,6 +249,14 @@ canvas {
   }
 }
 
+/* Transient messages let clicks fall through to the game; modals with
+   controls (game over / share) must actually be clickable. */
+#message-modal.interactive {
+  pointer-events: auto;
+  opacity: 1;
+  animation: none;
+}
+
 #message-modal button {
   margin-top: 15px;
   background: linear-gradient(145deg, #48a385, #4fad99);
