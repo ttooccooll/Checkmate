@@ -3,8 +3,8 @@ import { rectCollision } from "../core/collision.js";
 
 // Minibus taxis cruising the roads. South Africa drives on the left, so
 // each direction of travel keeps to its own side of the road.
-const TAXI_W = 34;
-const TAXI_H = 64;
+const TAXI_W = 40;
+const TAXI_H = 75;
 const LANE_FRAC = 0.26; // lane center offset from road center, as road-height fraction
 const WRAP_MARGIN = 90;
 
