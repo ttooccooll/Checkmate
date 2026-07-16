@@ -18,7 +18,10 @@ npm run dev      # game + payment API (requires Vercel CLI and NWC_CONNECTION_ST
 npm run build    # production build to dist/
 npm run preview  # serve the production build locally
 npm run lint     # ESLint
+npm test         # builds, then runs the headless browser suite (needs: npx playwright install chromium)
 ```
+
+CI runs lint, build, and the full test suite on every push via GitHub Actions.
 
 ## Deploy
 
