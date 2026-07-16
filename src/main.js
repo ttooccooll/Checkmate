@@ -1,6 +1,8 @@
+// Checkmate Delivery — game orchestration: state, the update/draw loop,
+// and wiring between the world, entities, UI, and services modules.
+
 import * as payments from "./services/payments.js";
 import { sfx, toggleMute, engine } from "./services/audio.js";
-import { shareToNostr } from "./services/nostr.js";
 import { SkidMarks } from "./world/effects.js";
 import { Ambience } from "./world/ambience.js";
 import { TrafficManager } from "./entities/traffic.js";
@@ -9,105 +11,65 @@ import { DeliveryManager } from "./entities/deliveries.js";
 import {
   WORLD_WIDTH,
   WORLD_HEIGHT,
-  ROAD_HEIGHT,
-  COLLISION_FACTOR,
-  ROAD_BUFFER,
   INVULNERABLE_DURATION,
   FLASH_DURATION,
   OFFROAD_MAX,
 } from "./core/constants.js";
-
+import { rectCollision, circleRectCollision } from "./core/collision.js";
 import {
-  rectCollision,
-  circleRectCollision,
-  isCollidingWithObstacles,
-} from "./core/collision.js";
+  keys,
+  touchMove,
+  pointerState,
+  isTouchDevice,
+  initKeyboard,
+  initCanvasDrag,
+  bindPointerButton,
+} from "./core/input.js";
+
 import { Player } from "./entities/player.js";
 import { NPC, Quest } from "./entities/npcs.js";
 import { DialogManager } from "./entities/dialog.js";
-import { Tree } from "./entities/trees.js";
 import { spawnQuestItems } from "./entities/items.js";
+
+import {
+  generateRoads,
+  generateBuildings,
+  generateTrees,
+  generateCoins,
+  findSafeSpawn,
+  isOnRoad,
+} from "./world/generation.js";
+import {
+  buildingImages,
+  treeImages,
+  grassCanvas,
+  roadCanvas,
+  treeCanvas,
+  texturesReady,
+  renderRoadsOffscreen,
+  renderTreesOffscreen,
+} from "./world/worldRender.js";
+
 import { QuestLogManager } from "./ui/questLog.js";
+import { showMessage, showGameOverMessage } from "./ui/messages.js";
+import { drawHUD, drawQuestCompass } from "./ui/hud.js";
+
+// --- Core objects -----------------------------------------------------------
 
 const dialogManager = new DialogManager();
 const questLog = new QuestLogManager();
-
-let npcs = [];
-
-let startingGame = false;
-let usingDragControls = false;
-let offRoadTimer = 0;
-let treadsWarned = false;
-
-let dustParticles = [];
 
 const canvas = document.getElementById("game-board");
 const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
-const roadCanvas = document.createElement("canvas");
-roadCanvas.width = WORLD_WIDTH;
-roadCanvas.height = WORLD_HEIGHT;
-const roadCtx = roadCanvas.getContext("2d");
-class RoadSegment {
-  constructor(x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-  }
-}
-const roadTexture = new Image();
-roadTexture.src = "/assets/road.jpg";
-
-const grassTexture = new Image();
-grassTexture.src = "/assets/fyn2.jpg";
-const grassCanvas = document.createElement("canvas");
-grassCanvas.width = WORLD_WIDTH;
-grassCanvas.height = WORLD_HEIGHT;
-const grassCtx = grassCanvas.getContext("2d");
-
-const buildingImages = [
-  "/assets/house.png",
-  "/assets/house2.png",
-  "/assets/house3.png",
-  "/assets/house4.png",
-  "/assets/shack.png",
-  "/assets/flat.png",
-].map((src) => {
-  const img = new Image();
-  img.src = src;
-  return img;
-});
-const treeImages = [
-  "/assets/tree.png",
-  "/assets/tree2.png",
-  "/assets/tree3.png",
-  "/assets/tree4.png",
-  "/assets/tree5.png",
-].map((src) => {
-  const img = new Image();
-  img.src = src;
-  return img;
-});
-const treeCanvas = document.createElement("canvas");
-treeCanvas.width = WORLD_WIDTH;
-treeCanvas.height = WORLD_HEIGHT;
-const treeCtx = treeCanvas.getContext("2d");
-treeCtx.imageSmoothingEnabled = false;
-
-const touchMove = {
-  active: false,
-  startX: 0,
-  startY: 0,
-  dx: 0,
-  dy: 0,
-};
-
 const playerSprite = new Image();
 playerSprite.src = "/assets/player.png";
 
 const player = new Player(playerSprite);
+player.onCrash = (reason) => {
+  handleCrash(reason);
+};
 
 const taxiSprites = [
   "/assets/taxi1.png",
@@ -129,40 +91,45 @@ const deliveries = new DeliveryManager({
   isFoggy: () => ambience.isFoggy(),
 });
 
-const sessionStats = { distancePx: 0, timeSec: 0, coins: 0, quests: 0 };
+// --- Game state --------------------------------------------------------------
 
-player.onCrash = (reason) => {
-  handleCrash(reason);
-};
-
+let npcs = [];
 let buildings = [];
 let trees = [];
 let coins = [];
 let items = [];
+let roads = [];
+let dustParticles = [];
+
 let score = 0;
 let gameRunning = false;
+let startingGame = false;
+let offRoadTimer = 0;
+let treadsWarned = false;
+let flashTimer = 0;
+let lastTime = 0;
+let introMessageTimer = null;
 
-window.addScore = (amount) => {
+const camera = { x: 0, y: 0 };
+const sessionStats = { distancePx: 0, timeSec: 0, coins: 0, quests: 0 };
+
+function addScore(amount) {
   score += amount;
-};
+}
+window.addScore = addScore;
 
 const savedUpgrades =
   JSON.parse(localStorage.getItem("motorcycleUpgrades")) || {};
 
-function loadWorldTextures() {
-  if (!grassTexture.complete || !roadTexture.complete) return;
+let upgrades = {
+  speedBoost: false,
+  helmet: true,
+  offRoadTreads: false,
+  metalDetector: false,
+  ...savedUpgrades,
+};
 
-  const pattern = grassCtx.createPattern(grassTexture, "repeat");
-  if (pattern) {
-    grassCtx.fillStyle = pattern;
-    grassCtx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    grassRendered = true;
-  }
-
-  if (roads.length > 0) renderRoadsOffscreen();
-}
-
-roadTexture.onload = loadWorldTextures;
+// --- Canvas & input wiring ----------------------------------------------------
 
 function resizeCanvas() {
   const dpr = window.devicePixelRatio || 1;
@@ -179,203 +146,19 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-canvas.tabIndex = 0;
-
-canvas.addEventListener("pointerdown", (e) => {
-  if (!gameRunning) return;
-
-  usingDragControls = true;
-  touchMove.active = true;
-  touchMove.startX = e.clientX;
-  touchMove.startY = e.clientY;
-  touchMove.dx = 0;
-  touchMove.dy = 0;
-
-  resetTouchKeys();
-  canvas.setPointerCapture(e.pointerId);
+initCanvasDrag(canvas, { isGameRunning: () => gameRunning });
+initKeyboard({
+  onMuteToggle: () =>
+    showMessage(toggleMute() ? "🔇 Sound off" : "🔊 Sound on", 1200),
 });
 
-canvas.addEventListener("pointermove", (e) => {
-  if (!touchMove.active) return;
+const touchControls = document.getElementById("touch-controls");
 
-  touchMove.dx = e.clientX - touchMove.startX;
-  touchMove.dy = e.clientY - touchMove.startY;
-});
-
-canvas.addEventListener("pointerup", (e) => {
-  touchMove.active = false;
-  usingDragControls = false;
-  resetTouchKeys();
-  canvas.releasePointerCapture(e.pointerId);
-});
-
-canvas.addEventListener("pointercancel", () => {
-  touchMove.active = false;
-  usingDragControls = false;
-  resetTouchKeys();
-});
-
-function resetTouchKeys() {
-  if (!touchMove.active) {
-    keys.ArrowUp = false;
-    keys.ArrowDown = false;
-    keys.ArrowLeft = false;
-    keys.ArrowRight = false;
-  }
+if (!isTouchDevice()) {
+  touchControls.style.display = "none";
 }
 
-let grassRendered = false;
-
-grassTexture.onload = () => {
-  const tempPattern = grassCtx.createPattern(grassTexture, "repeat");
-  if (tempPattern) {
-    grassCtx.fillStyle = tempPattern;
-    grassCtx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-    grassRendered = true;
-  }
-  if (roadTexture.complete) renderRoadsOffscreen();
-};
-
-let upgrades = {
-  speedBoost: false,
-  helmet: true,
-  offRoadTreads: false,
-  metalDetector: false,
-  ...savedUpgrades,
-};
-
-const keys = {};
-let flashTimer = 0;
-
-const camera = {
-  x: 0,
-  y: 0,
-};
-let lastTime = 0;
-let roads = [];
-let introMessageTimer = null;
-
-function isTouchDevice() {
-  return (
-    "ontouchstart" in window ||
-    navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0
-  );
-}
-
-document.addEventListener("keydown", (e) => {
-  keys[e.key] = true;
-
-  switch (e.key) {
-    case "ArrowUp":
-    case "w":
-    case "W":
-    case "8":
-      keys["ArrowUp"] = true;
-      break;
-    case "ArrowDown":
-    case "s":
-    case "S":
-    case "2":
-      keys["ArrowDown"] = true;
-      break;
-    case "ArrowLeft":
-    case "a":
-    case "A":
-    case "4":
-      keys["ArrowLeft"] = true;
-      break;
-    case "ArrowRight":
-    case "d":
-    case "D":
-    case "6":
-      keys["ArrowRight"] = true;
-      break;
-    case "5":
-      keys["Enter"] = true;
-      break;
-    case "m":
-    case "M":
-      if (!e.repeat) {
-        showMessage(toggleMute() ? "🔇 Sound off" : "🔊 Sound on", 1200);
-      }
-      break;
-
-    case "7":
-      keys["ArrowUp"] = true;
-      keys["ArrowLeft"] = true;
-      break;
-    case "9":
-      keys["ArrowUp"] = true;
-      keys["ArrowRight"] = true;
-      break;
-    case "1":
-      keys["ArrowDown"] = true;
-      keys["ArrowLeft"] = true;
-      break;
-    case "3":
-      keys["ArrowDown"] = true;
-      keys["ArrowRight"] = true;
-      break;
-
-    default:
-      break;
-  }
-});
-
-document.addEventListener("keyup", (e) => {
-  keys[e.key] = false;
-
-  switch (e.key) {
-    case "ArrowUp":
-    case "w":
-    case "W":
-    case "8":
-      keys["ArrowUp"] = false;
-      break;
-    case "ArrowDown":
-    case "s":
-    case "S":
-    case "2":
-      keys["ArrowDown"] = false;
-      break;
-    case "ArrowLeft":
-    case "a":
-    case "A":
-    case "4":
-      keys["ArrowLeft"] = false;
-      break;
-    case "ArrowRight":
-    case "d":
-    case "D":
-    case "6":
-      keys["ArrowRight"] = false;
-      break;
-    case "5":
-      keys["Enter"] = false;
-      break;
-
-    case "7":
-      keys["ArrowUp"] = false;
-      keys["ArrowLeft"] = false;
-      break;
-    case "9":
-      keys["ArrowUp"] = false;
-      keys["ArrowRight"] = false;
-      break;
-    case "1":
-      keys["ArrowDown"] = false;
-      keys["ArrowLeft"] = false;
-      break;
-    case "3":
-      keys["ArrowDown"] = false;
-      keys["ArrowRight"] = false;
-      break;
-
-    default:
-      break;
-  }
-});
+// --- World setup ---------------------------------------------------------------
 
 async function loadNPCs() {
   const response = await fetch("./npcDialog.json");
@@ -402,7 +185,12 @@ async function loadNPCs() {
   });
 
   npcs.forEach((npc) => {
-    const spawn = findSafeSpawn([...npcs, player]);
+    const spawn = findSafeSpawn({
+      avoid: [...npcs, player],
+      npcs,
+      buildings,
+      trees,
+    });
     npc.x = spawn.x;
     npc.y = spawn.y;
   });
@@ -412,7 +200,7 @@ async function loadNPCs() {
 
 async function startNewGame() {
   if (startingGame || gameRunning) return;
-  if (!grassRendered || !roadTexture.complete) {
+  if (!texturesReady()) {
     showMessage("Loading textures…", 1000);
     return;
   }
@@ -429,11 +217,12 @@ async function startNewGame() {
   offRoadTimer = 0;
   treadsWarned = false;
 
-  generateRoads();
-  trees = generateTrees(70);
-  renderTreesOffscreen();
-  buildings = generateBuildings(50);
-  coins = generateCoins(15);
+  roads = generateRoads();
+  renderRoadsOffscreen(roads);
+  trees = generateTrees(70, roads, treeImages);
+  renderTreesOffscreen(trees);
+  buildings = generateBuildings(50, roads, buildingImages);
+  coins = generateCoins(15, buildings, trees);
 
   // Load NPCs
   await loadNPCs();
@@ -444,7 +233,7 @@ async function startNewGame() {
     spawnQuestItems(npc, items, { buildings, trees });
   });
 
-  const spawn = findSafeSpawn();
+  const spawn = findSafeSpawn({ npcs, buildings, trees });
   player.x = spawn.x;
   player.y = spawn.y;
   player.setInvulnerable(20);
@@ -453,7 +242,12 @@ async function startNewGame() {
   skidMarks.clear();
   ambience.reset();
   deliveries.reset();
-  Object.assign(sessionStats, { distancePx: 0, timeSec: 0, coins: 0, quests: 0 });
+  Object.assign(sessionStats, {
+    distancePx: 0,
+    timeSec: 0,
+    coins: 0,
+    quests: 0,
+  });
   engine.start();
 
   const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
@@ -494,247 +288,6 @@ async function startNewGame() {
   });
 }
 
-function renderRoadsOffscreen() {
-  roadCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-  roads.forEach((road) => {
-    for (let x = road.x; x < road.x + road.width; x += roadTexture.width) {
-      for (let y = road.y; y < road.y + road.height; y += roadTexture.height) {
-        const tileWidth = Math.min(roadTexture.width, road.x + road.width - x);
-        const tileHeight = Math.min(
-          roadTexture.height,
-          road.y + road.height - y
-        );
-        roadCtx.drawImage(
-          roadTexture,
-          0,
-          0,
-          tileWidth,
-          tileHeight,
-          x,
-          y,
-          tileWidth,
-          tileHeight
-        );
-      }
-    }
-  });
-
-  // --- Draw intersections ---
-  roads.forEach((r1, i) => {
-    for (let j = i + 1; j < roads.length; j++) {
-      const r2 = roads[j];
-      const intersectX = Math.max(r1.x, r2.x);
-      const intersectY = Math.max(r1.y, r2.y);
-      const intersectWidth =
-        Math.min(r1.x + r1.width, r2.x + r2.width) - intersectX;
-      const intersectHeight =
-        Math.min(r1.y + r1.height, r2.y + r2.height) - intersectY;
-      if (intersectWidth > 0 && intersectHeight > 0) {
-        const grad = roadCtx.createLinearGradient(
-          intersectX,
-          intersectY,
-          intersectX + intersectWidth,
-          intersectY + intersectHeight
-        );
-        if (intersectWidth > 0 && intersectHeight > 0) {
-          for (
-            let x = intersectX;
-            x < intersectX + intersectWidth;
-            x += roadTexture.width
-          ) {
-            for (
-              let y = intersectY;
-              y < intersectY + intersectHeight;
-              y += roadTexture.height
-            ) {
-              const tileWidth = Math.min(
-                roadTexture.width,
-                intersectX + intersectWidth - x
-              );
-              const tileHeight = Math.min(
-                roadTexture.height,
-                intersectY + intersectHeight - y
-              );
-              roadCtx.drawImage(
-                roadTexture,
-                0,
-                0,
-                tileWidth,
-                tileHeight,
-                x,
-                y,
-                tileWidth,
-                tileHeight
-              );
-            }
-          }
-        }
-      }
-    }
-  });
-
-  // --- Draw borders without intersections ---
-  roadCtx.strokeStyle = "#5c5c5c";
-  roadCtx.lineWidth = 4;
-
-  roads.forEach((road) => {
-    roadCtx.save();
-    roadCtx.beginPath();
-    roadCtx.rect(road.x, road.y, road.width, road.height);
-
-    roads.forEach((other) => {
-      if (road === other) return;
-      const intersectX = Math.max(road.x, other.x);
-      const intersectY = Math.max(road.y, other.y);
-      const intersectWidth =
-        Math.min(road.x + road.width, other.x + other.width) - intersectX;
-      const intersectHeight =
-        Math.min(road.y + road.height, other.y + other.height) - intersectY;
-      if (intersectWidth > 0 && intersectHeight > 0) {
-        roadCtx.rect(intersectX, intersectY, intersectWidth, intersectHeight);
-      }
-    });
-
-    roadCtx.clip("evenodd");
-    roadCtx.strokeRect(road.x, road.y, road.width, road.height);
-    roadCtx.restore();
-  });
-
-  // --- Draw dashed center lines ---
-  roadCtx.strokeStyle = "#fff";
-  roadCtx.lineWidth = 2;
-  roadCtx.setLineDash([20, 20]);
-
-  roads
-    .filter((r) => r.width > r.height)
-    .forEach((r) => {
-      const y = r.y + r.height / 2;
-      roadCtx.beginPath();
-      roadCtx.moveTo(0, y);
-      roadCtx.lineTo(WORLD_WIDTH, y);
-      roadCtx.stroke();
-    });
-
-  roads
-    .filter((r) => r.height > r.width)
-    .forEach((r) => {
-      const x = r.x + r.width / 2;
-      roadCtx.beginPath();
-      roadCtx.moveTo(x, 0);
-      roadCtx.lineTo(x, WORLD_HEIGHT);
-      roadCtx.stroke();
-    });
-
-  roadCtx.setLineDash([]);
-}
-
-function isOnRoad(x, y, width, height) {
-  return roads.some(
-    (road) =>
-      x + width > road.x - ROAD_BUFFER &&
-      x < road.x + road.width + ROAD_BUFFER &&
-      y + height > road.y - ROAD_BUFFER &&
-      y < road.y + road.height + ROAD_BUFFER
-  );
-}
-
-function generateBuildings(count) {
-  let arr = [];
-  let attempts = 0;
-
-  while (arr.length < count && attempts < count * 30) {
-    let img = buildingImages[Math.floor(Math.random() * buildingImages.length)];
-
-    let width, height;
-
-    if (img.src.includes("shack.png")) {
-      // Shacks: smaller
-      width = 40 + Math.random() * 40; // smaller max
-      const aspect = 0.6 + Math.random() * 0.8;
-      height = width * aspect;
-    } else if (img.src.includes("house") && !img.src.includes("flat.png")) {
-      // Houses: medium size
-      width = 100 + Math.random() * 100; // between shack and flat
-      const aspect = 0.6 + Math.random() * 0.8;
-      height = width * aspect;
-    } else {
-      // Flats: keep original larger size
-      width = 200 + Math.random() * 100;
-      const aspect = 0.5 + Math.random() * 1.0;
-      height = width * aspect;
-    }
-
-    // Randomly rotate 50% of buildings
-    const rotate90 = Math.random() < 0.5;
-    if (rotate90) [width, height] = [height, width];
-
-    const x = Math.random() * (WORLD_WIDTH - width);
-    const y = Math.random() * (WORLD_HEIGHT - height);
-
-    if (isOnRoad(x, y, width, height)) {
-      attempts++;
-      continue;
-    }
-
-    const overlapping = arr.some((b) =>
-      rectCollision({ x, y, width, height }, b)
-    );
-    if (!overlapping) {
-      arr.push({
-        x,
-        y,
-        width,
-        height,
-        img,
-        rotated: rotate90,
-      });
-    }
-
-    attempts++;
-  }
-
-  return arr;
-}
-
-function renderTreesOffscreen() {
-  treeCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-
-  trees.forEach((t) => {
-    if (!t.img || !t.img.complete) return;
-
-    treeCtx.save();
-
-    // --- Soft shadow behind tree for depth ---
-    treeCtx.shadowColor = "rgba(0,0,0,0.5)";
-    treeCtx.shadowBlur = 25;
-
-    treeCtx.drawImage(t.img, t.x, t.y, t.size * 2, t.size * 2);
-
-    treeCtx.restore();
-  });
-}
-
-function generateTrees(count) {
-  const arr = [];
-  let attempts = 0;
-
-  while (arr.length < count && attempts < count * 20) {
-    const img = treeImages[Math.floor(Math.random() * treeImages.length)];
-    const size = 30 + Math.random() * 30;
-    const x = Math.random() * (WORLD_WIDTH - size * 2);
-    const y = Math.random() * (WORLD_HEIGHT - size * 2);
-
-    if (!isOnRoad(x, y, size * 2, size * 2)) {
-      arr.push(new Tree(x, y, size, img));
-    }
-
-    attempts++;
-  }
-
-  return arr;
-}
-
 function spawnCelebrationCoins(count = 14) {
   for (let i = 0; i < count; i++) {
     const ang = (i / count) * Math.PI * 2;
@@ -747,21 +300,25 @@ function spawnCelebrationCoins(count = 14) {
   }
 }
 
-function generateCoins(count) {
-  const arr = [];
-  let attempts = 0;
+function spawnDust() {
+  const count = 2 + Math.random() * 2;
 
-  while (arr.length < count && attempts < count * 500) {
-    const x = Math.random() * (WORLD_WIDTH - 5);
-    const y = Math.random() * (WORLD_HEIGHT - 5);
-
-    if (!isCollidingWithObstacles(x - 2, y - 2, 9, 9, buildings, trees)) {
-      arr.push({ x, y, size: 5 });
-    }
-    attempts++;
+  for (let i = 0; i < count; i++) {
+    dustParticles.push({
+      x: player.x + player.width / 2 + (Math.random() * 6 - 3),
+      y: player.y + player.height / 2 + (Math.random() * 6 - 3),
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      size: 3 + Math.random() * 5,
+      life: 30 + Math.random() * 32,
+    });
   }
 
-  return arr;
+  // --- Cap the array length ---
+  const MAX_DUST = 80;
+  if (dustParticles.length > MAX_DUST) {
+    dustParticles.splice(0, dustParticles.length - MAX_DUST);
+  }
 }
 
 function isVisible(x, y, w, h) {
@@ -777,30 +334,8 @@ function isVisible(x, y, w, h) {
   );
 }
 
-function showMessage(text, duration = 5000, closable = false) {
-  const modal = document.getElementById("message-modal");
-  modal.textContent = text;
-  modal.style.display = "block";
-  modal.classList.toggle("interactive", closable);
-
-  clearTimeout(modal._timer);
-
-  if (closable) {
-    modal.onclick = () => {
-      modal.style.display = "none";
-      modal.classList.remove("interactive");
-      modal.onclick = null;
-    };
-  } else {
-    modal.onclick = null;
-    modal._timer = setTimeout(() => {
-      modal.style.display = "none";
-    }, duration);
-  }
-}
-
 function updateTouchControlsVisibility() {
-  if (usingDragControls) {
+  if (pointerState.usingDragControls) {
     // Player is using drag → hide touch buttons
     touchControls.style.opacity = 0;
     touchControls.style.pointerEvents = "none";
@@ -810,6 +345,8 @@ function updateTouchControlsVisibility() {
     touchControls.style.pointerEvents = "auto";
   }
 }
+
+// --- Update ---------------------------------------------------------------------
 
 function update(deltaTime = 1) {
   if (!gameRunning) return;
@@ -830,7 +367,7 @@ function update(deltaTime = 1) {
 
   // Off-road slows you down without treads; tread wear itself is applied
   // after movement, so it only accrues while actually riding.
-  const offRoad = !isOnRoad(player.x, player.y, player.width, player.height);
+  const offRoad = !isOnRoad(roads, player.x, player.y, player.width, player.height);
   if (offRoad && !upgrades.offRoadTreads) {
     baseSpeed *= 0.5;
   }
@@ -1056,111 +593,6 @@ function update(deltaTime = 1) {
   updateTouchControlsVisibility();
 }
 
-// Nearest objective worth pointing at: uncollected items for accepted quests
-// first, then newly revealed story NPCs whose quest hasn't been picked up yet.
-function findCompassTarget() {
-  const px = player.x + player.width / 2;
-  const py = player.y + player.height / 2;
-
-  // Deliveries outrank everything — there's a timer running
-  const deliveryNpc = deliveries.getCompassTarget();
-  if (deliveryNpc) {
-    return {
-      cx: deliveryNpc.x + deliveryNpc.width / 2,
-      cy: deliveryNpc.y + deliveryNpc.height / 2,
-      x: deliveryNpc.x,
-      y: deliveryNpc.y,
-      width: deliveryNpc.width,
-      height: deliveryNpc.height,
-      color: "#FF9F1C",
-    };
-  }
-
-  const activeItemIds = new Set();
-  npcs.forEach((npc) => {
-    const q = npc.currentQuest;
-    if (q?.active && q.type === "collect" && q.params?.item) {
-      activeItemIds.add(q.params.item);
-    }
-  });
-
-  let best = null;
-  let bestDist = Infinity;
-
-  items.forEach((item) => {
-    if (item.collected || !activeItemIds.has(item.id)) return;
-    const d = Math.hypot(item.x - px, item.y - py);
-    if (d < bestDist) {
-      bestDist = d;
-      best = {
-        cx: item.x + item.size / 2,
-        cy: item.y + item.size / 2,
-        x: item.x,
-        y: item.y,
-        width: item.size,
-        height: item.size,
-        color: item.color,
-      };
-    }
-  });
-
-  if (best) return best;
-
-  npcs.forEach((npc) => {
-    const q = npc.currentQuest;
-    if (!npc.visible || !npc.wasHidden || !q) return;
-    if (q.active || npc.completedQuests.includes(q.id)) return;
-    const d = Math.hypot(npc.x - px, npc.y - py);
-    if (d < bestDist) {
-      bestDist = d;
-      best = {
-        cx: npc.x + npc.width / 2,
-        cy: npc.y + npc.height / 2,
-        x: npc.x,
-        y: npc.y,
-        width: npc.width,
-        height: npc.height,
-        color: "#FFD700",
-      };
-    }
-  });
-
-  return best;
-}
-
-// Small arrow orbiting the player, pointing toward the current objective.
-// Hidden while the objective itself is on screen.
-function drawQuestCompass() {
-  const target = findCompassTarget();
-  if (!target) return;
-  if (isVisible(target.x - 8, target.y - 8, target.width + 16, target.height + 16)) {
-    return;
-  }
-
-  const px = player.x + player.width / 2 - camera.x;
-  const py = player.y + player.height / 2 - camera.y;
-  const ang = Math.atan2(
-    target.cy - (player.y + player.height / 2),
-    target.cx - (player.x + player.width / 2)
-  );
-
-  ctx.save();
-  ctx.translate(px + Math.cos(ang) * 55, py + Math.sin(ang) * 55);
-  ctx.rotate(ang);
-  ctx.globalAlpha = 0.65 + 0.3 * Math.sin(performance.now() / 250);
-  ctx.fillStyle = target.color;
-  ctx.strokeStyle = "rgba(0,0,0,0.6)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(11, 0);
-  ctx.lineTo(-6, 6.5);
-  ctx.lineTo(-6, -6.5);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-}
-
 function updateCamera(deltaTime) {
   const targetX =
     player.x +
@@ -1183,161 +615,7 @@ function updateCamera(deltaTime) {
   camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
 }
 
-function endGame(reason = "Game Over") {
-  if (!gameRunning) return;
-  upgrades.metalDetector = false;
-  upgrades.speedBoost = false;
-  upgrades.offRoadTreads = false;
-  offRoadTimer = 0;
-  treadsWarned = false;
-  localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
-
-  const newGameBtn = document.getElementById("new-game-btn");
-  newGameBtn.textContent = "New Game";
-  newGameBtn.onclick = () => {
-    document.getElementById("intro-screen").style.display = "none";
-    document.getElementById("game-container").style.display = "block";
-    document.getElementById("touch-controls").style.display = "grid";
-    document.getElementById("action-buttons").style.display = "flex";
-    startNewGame();
-  };
-  dialogManager.endDialog();
-  questLog.hide();
-  gameRunning = false;
-  flashTimer = FLASH_DURATION;
-  engine.stop();
-  sfx.gameover();
-  // A queued intro message must not wipe the game-over screen
-  clearTimeout(introMessageTimer);
-
-  const previousBest = Number(localStorage.getItem("checkmateBestScore")) || 0;
-  const isNewBest = score > previousBest;
-  if (isNewBest) {
-    localStorage.setItem("checkmateBestScore", String(score));
-  }
-
-  const km = (sessionStats.distancePx / 1000).toFixed(1);
-  const t = Math.max(0, Math.round(sessionStats.timeSec));
-  const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
-
-  const message = `
-💥 Game Over 💥
-${reason}
-Score: ${score}
-${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
-🛣️ ${km} km · ⏱️ ${clock}
-🪙 ${sessionStats.coins} coins · 📦 ${deliveries.completed} deliveries · 📜 ${sessionStats.quests} quests
-  `.trim();
-
-  const shareText = [
-    "🏍️ Checkmate Delivery",
-    reason,
-    `Score: ${score}${isNewBest ? " — new personal best 🏆" : ""}`,
-    `🛣️ ${km} km · ⏱️ ${clock} · 🪙 ${sessionStats.coins} · 📦 ${deliveries.completed} · 📜 ${sessionStats.quests}`,
-    "",
-    `Ride the coast, run deliveries, pay in sats ⚡ ${location.origin}`,
-    "#gamestr",
-  ].join("\n");
-
-  showGameOverMessage(message, shareText);
-
-  resetButtonSize();
-}
-
-// Game-over modal with a "Share on Nostr" button; clicking anywhere else
-// closes it, the button itself never does.
-function showGameOverMessage(text, shareText) {
-  const modal = document.getElementById("message-modal");
-  clearTimeout(modal._timer);
-  modal.textContent = text;
-
-  const shareRow = document.createElement("div");
-  shareRow.className = "share-row";
-
-  const shareBtn = document.createElement("button");
-  shareBtn.id = "share-nostr-btn";
-  shareBtn.textContent = "⚡ Share on Nostr";
-  shareBtn.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    if (shareBtn.disabled) return;
-    shareBtn.disabled = true;
-    shareBtn.classList.add("busy");
-    shareBtn.textContent = "Signing…";
-
-    const result = await shareToNostr(shareText);
-    shareBtn.classList.remove("busy");
-
-    if (result.ok) {
-      shareBtn.classList.add("success");
-      shareBtn.textContent = "✅ Shared to Nostr!";
-      sfx.delivered();
-      return;
-    }
-
-    if (result.reason === "rejected") {
-      shareBtn.classList.add("declined");
-      shareBtn.textContent = "Signing declined";
-      setTimeout(() => {
-        shareBtn.classList.remove("declined");
-        shareBtn.disabled = false;
-        shareBtn.textContent = "⚡ Share on Nostr";
-      }, 1600);
-      return;
-    }
-
-    // No extension (or no relay reachable): hand them the note to paste
-    try {
-      await navigator.clipboard.writeText(shareText);
-      shareBtn.classList.add("success");
-      shareBtn.textContent =
-        result.reason === "no-extension"
-          ? "📋 Copied — paste into your Nostr client"
-          : "📋 Couldn't publish — copied instead";
-    } catch {
-      shareBtn.textContent = "❌ Sharing unavailable";
-    }
-  });
-
-  shareRow.appendChild(shareBtn);
-  modal.appendChild(shareRow);
-
-  modal.style.display = "block";
-  modal.classList.add("interactive");
-  modal.onclick = (e) => {
-    if (e.target.closest(".share-row")) return;
-    modal.style.display = "none";
-    modal.classList.remove("interactive");
-    modal.onclick = null;
-  };
-}
-
-function resetButtonSize() {
-  const actionButtons = document.querySelectorAll("#action-buttons");
-  actionButtons.forEach((button) => {
-    button.classList.remove("smaller-buttons");
-  });
-}
-
-function generateRoads() {
-  roads = [];
-
-  const H_ROADS = 4;
-  const V_ROADS = 5;
-  const hSpacing = WORLD_HEIGHT / (H_ROADS + 1);
-  const vSpacing = WORLD_WIDTH / (V_ROADS + 1);
-
-  for (let i = 1; i <= H_ROADS; i++) {
-    const y = i * hSpacing - ROAD_HEIGHT / 2 + (Math.random() * 100 - 10);
-    roads.push(new RoadSegment(0, y, WORLD_WIDTH, ROAD_HEIGHT));
-  }
-
-  for (let i = 1; i <= V_ROADS; i++) {
-    const x = i * vSpacing - ROAD_HEIGHT / 2 + (Math.random() * 100 - 10);
-    roads.push(new RoadSegment(x, 0, ROAD_HEIGHT, WORLD_HEIGHT));
-  }
-
-  renderRoadsOffscreen();
-}
+// --- Draw -----------------------------------------------------------------------
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1349,7 +627,7 @@ function draw() {
   const nowMs = performance.now();
 
   // --- Draw world ---
-  if (grassCanvas) ctx.drawImage(grassCanvas, 0, 0);
+  ctx.drawImage(grassCanvas, 0, 0);
   ctx.drawImage(roadCanvas, 0, 0);
 
   // --- Skid marks (under everything that moves) ---
@@ -1364,15 +642,7 @@ function draw() {
     const spin = Math.abs(Math.cos(nowMs / 320 + c.x * 0.13));
     ctx.fillStyle = "gold";
     ctx.beginPath();
-    ctx.ellipse(
-      c.x + r,
-      c.y + r,
-      Math.max(0.8, r * spin),
-      r,
-      0,
-      0,
-      Math.PI * 2
-    );
+    ctx.ellipse(c.x + r, c.y + r, Math.max(0.8, r * spin), r, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.lineWidth = 1;
@@ -1506,140 +776,94 @@ function draw() {
 
   // --- Quest compass ---
   if (gameRunning) {
-    drawQuestCompass();
-  }
-
-  // --- HUD ---
-  const hudX = 8;
-  let hudY = 8;
-  const padding = 5;
-  const lineHeight = 18;
-
-  // Compute height for background (score + upgrades + status lines)
-  const deliveryLine = gameRunning ? deliveries.timerText() : null;
-  const fogLine = gameRunning && ambience.isFoggy() ? "🌫️ 2× delivery" : null;
-  const numLines =
-    1 +
-    Object.values(upgrades).filter(Boolean).length +
-    (deliveryLine ? 1 : 0) +
-    (fogLine ? 1 : 0);
-  const bgHeight = numLines * lineHeight + padding * 2;
-  const bgWidth = 130;
-
-  // Draw a light white background
-  ctx.save(); // save current state
-  ctx.shadowColor = "rgba(255,255,255,0.5)";
-  ctx.shadowBlur = 50; // increase for stronger blur
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
-  ctx.restore(); // restore so text isn't blurred
-
-  // Draw text on top
-  ctx.font = "16px monospace";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = "#111";
-
-  ctx.fillText(`Score: ${score}`, hudX, hudY);
-  let textY = hudY + lineHeight;
-
-  const upgradeLabels = {
-    helmet: "🪖 Helmet",
-    speedBoost: "⚡ Boost",
-    offRoadTreads: "🛞 Treads",
-    metalDetector: "🧲 Detector",
-  };
-
-  Object.keys(upgrades).forEach((key) => {
-    if (upgrades[key]) {
-      let label = upgradeLabels[key];
-      if (key === "offRoadTreads") {
-        const left = Math.max(
-          0,
-          Math.round(100 - (offRoadTimer / OFFROAD_MAX) * 100)
-        );
-        label = `🛞 Treads ${left}%`;
-      }
-      ctx.fillText(label, hudX, textY);
-      textY += lineHeight;
-    }
-  });
-
-  if (deliveryLine) {
-    ctx.fillStyle = "#8a4b00";
-    ctx.fillText(deliveryLine, hudX, textY);
-    textY += lineHeight;
-  }
-  if (fogLine) {
-    ctx.fillStyle = "#3a5f8a";
-    ctx.fillText(fogLine, hudX, textY);
-    textY += lineHeight;
-  }
-}
-
-function spawnDust() {
-  const count = 2 + Math.random() * 2;
-
-  for (let i = 0; i < count; i++) {
-    dustParticles.push({
-      x: player.x + player.width / 2 + (Math.random() * 6 - 3),
-      y: player.y + player.height / 2 + (Math.random() * 6 - 3),
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: (Math.random() - 0.5) * 0.5,
-      size: 3 + Math.random() * 5,
-      life: 30 + Math.random() * 32,
+    drawQuestCompass(ctx, {
+      player,
+      camera,
+      npcs,
+      items,
+      deliveryNpc: deliveries.getCompassTarget(),
+      isVisible,
     });
   }
 
-  // --- Cap the array length ---
-  const MAX_DUST = 80;
-  if (dustParticles.length > MAX_DUST) {
-    dustParticles.splice(0, dustParticles.length - MAX_DUST);
-  }
+  // --- HUD ---
+  drawHUD(ctx, {
+    score,
+    upgrades,
+    offRoadTimer,
+    deliveryLine: gameRunning ? deliveries.timerText() : null,
+    fogLine: gameRunning && ambience.isFoggy() ? "🌫️ 2× delivery" : null,
+  });
 }
 
-function findSafeSpawn(avoid = [], maxAttempts = 5000) {
-  const allAvoid = [...avoid, ...npcs, ...buildings, ...trees];
+// --- Game over & loop -------------------------------------------------------------
 
-  const SPAWN_SIZE = 40;
-  const PADDING = 15;
+function endGame(reason = "Game Over") {
+  if (!gameRunning) return;
+  upgrades.metalDetector = false;
+  upgrades.speedBoost = false;
+  upgrades.offRoadTreads = false;
+  offRoadTimer = 0;
+  treadsWarned = false;
+  localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
 
-  for (let i = 0; i < maxAttempts; i++) {
-    const x = Math.random() * (WORLD_WIDTH - SPAWN_SIZE);
-    const y = Math.random() * (WORLD_HEIGHT - SPAWN_SIZE);
+  const newGameBtn = document.getElementById("new-game-btn");
+  newGameBtn.textContent = "New Game";
+  newGameBtn.onclick = () => {
+    document.getElementById("intro-screen").style.display = "none";
+    document.getElementById("game-container").style.display = "block";
+    document.getElementById("touch-controls").style.display = "grid";
+    document.getElementById("action-buttons").style.display = "flex";
+    startNewGame();
+  };
+  dialogManager.endDialog();
+  questLog.hide();
+  gameRunning = false;
+  flashTimer = FLASH_DURATION;
+  engine.stop();
+  sfx.gameover();
+  // A queued intro message must not wipe the game-over screen
+  clearTimeout(introMessageTimer);
 
-    const hitbox = {
-      x: x - PADDING,
-      y: y - PADDING,
-      width: SPAWN_SIZE + PADDING * 2,
-      height: SPAWN_SIZE + PADDING * 2,
-    };
-
-    // Check against all obstacles (trees, buildings, coins, roads)
-    const collides =
-      isCollidingWithObstacles(
-        hitbox.x,
-        hitbox.y,
-        hitbox.width,
-        hitbox.height,
-        buildings,
-        trees
-      ) ||
-      allAvoid.some((e) =>
-        rectCollision(hitbox, {
-          x: e.x,
-          y: e.y,
-          width: e.width || SPAWN_SIZE,
-          height: e.height || SPAWN_SIZE,
-        })
-      );
-
-    if (!collides) {
-      return { x, y };
-    }
+  const previousBest = Number(localStorage.getItem("checkmateBestScore")) || 0;
+  const isNewBest = score > previousBest;
+  if (isNewBest) {
+    localStorage.setItem("checkmateBestScore", String(score));
   }
 
-  console.warn("No free spawn points! Using default.");
-  return { x: 50, y: 300 };
+  const km = (sessionStats.distancePx / 1000).toFixed(1);
+  const t = Math.max(0, Math.round(sessionStats.timeSec));
+  const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+
+  const message = `
+💥 Game Over 💥
+${reason}
+Score: ${score}
+${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
+🛣️ ${km} km · ⏱️ ${clock}
+🪙 ${sessionStats.coins} coins · 📦 ${deliveries.completed} deliveries · 📜 ${sessionStats.quests} quests
+  `.trim();
+
+  const shareText = [
+    "🏍️ Checkmate Delivery",
+    reason,
+    `Score: ${score}${isNewBest ? " — new personal best 🏆" : ""}`,
+    `🛣️ ${km} km · ⏱️ ${clock} · 🪙 ${sessionStats.coins} · 📦 ${deliveries.completed} · 📜 ${sessionStats.quests}`,
+    "",
+    `Ride the coast, run deliveries, pay in sats ⚡ ${location.origin}`,
+    "#gamestr",
+  ].join("\n");
+
+  showGameOverMessage(message, shareText);
+
+  resetButtonSize();
+}
+
+function resetButtonSize() {
+  const actionButtons = document.querySelectorAll("#action-buttons");
+  actionButtons.forEach((button) => {
+    button.classList.remove("smaller-buttons");
+  });
 }
 
 function gameLoop(timestamp) {
@@ -1688,13 +912,16 @@ document.addEventListener("visibilitychange", () => {
 });
 
 // Dev/test handle for poking live systems from the console
-window.__cm = { ambience, deliveries, traffic, skidMarks, player, getNpcs: () => npcs };
+window.__cm = {
+  ambience,
+  deliveries,
+  traffic,
+  skidMarks,
+  player,
+  getNpcs: () => npcs,
+};
 
-const touchControls = document.getElementById("touch-controls");
-
-if (!isTouchDevice()) {
-  touchControls.style.display = "none";
-}
+// --- Shop & buttons -----------------------------------------------------------------
 
 async function buyUpgrade(upgradeName) {
   if (upgrades[upgradeName]) {
@@ -1726,26 +953,6 @@ async function buyUpgrade(upgradeName) {
   }
 }
 
-function bindPointerButton(id, onDown, onUp = onDown) {
-  const el = document.getElementById(id);
-  if (!el) return;
-
-  el.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    el.setPointerCapture(e.pointerId);
-    onDown();
-  });
-
-  el.addEventListener("pointerup", (e) => {
-    e.preventDefault();
-    onUp();
-    el.releasePointerCapture(e.pointerId);
-  });
-
-  el.addEventListener("pointercancel", onUp);
-  el.addEventListener("pointerleave", onUp);
-}
-
 document.getElementById("new-game-btn").addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -1761,7 +968,7 @@ document.getElementById("new-game-btn").addEventListener("click", (e) => {
 bindPointerButton(
   "up-btn",
   () => {
-    if (!usingDragControls) keys.ArrowUp = true;
+    if (!pointerState.usingDragControls) keys.ArrowUp = true;
   },
   () => (keys.ArrowUp = false)
 );
@@ -1769,7 +976,7 @@ bindPointerButton(
 bindPointerButton(
   "down-btn",
   () => {
-    if (!usingDragControls) keys.ArrowDown = true;
+    if (!pointerState.usingDragControls) keys.ArrowDown = true;
   },
   () => (keys.ArrowDown = false)
 );
@@ -1777,7 +984,7 @@ bindPointerButton(
 bindPointerButton(
   "left-btn",
   () => {
-    if (!usingDragControls) keys.ArrowLeft = true;
+    if (!pointerState.usingDragControls) keys.ArrowLeft = true;
   },
   () => (keys.ArrowLeft = false)
 );
@@ -1785,7 +992,7 @@ bindPointerButton(
 bindPointerButton(
   "right-btn",
   () => {
-    if (!usingDragControls) keys.ArrowRight = true;
+    if (!pointerState.usingDragControls) keys.ArrowRight = true;
   },
   () => (keys.ArrowRight = false)
 );

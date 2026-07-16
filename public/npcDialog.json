@@ -1,0 +1,402 @@
+[
+  {
+    "id": "thabo",
+    "name": "Thabo",
+    "hidden": true,
+    "dialog": [
+      "The lighthouse keeper?",
+      "He didn’t leave town.",
+      "He just… stopped being seen."
+    ],
+    "postQuestDialog": [
+      "You found his things?",
+      "Then he was still trying to do his job.",
+      "Even after everyone else moved on.",
+      "I've heard that Hlokomela may know more."
+    ],
+    "quest": {
+      "id": "mystery_keeper_clues",
+      "description": "Recover belongings left behind by the lighthouse keeper.",
+      "type": "collect",
+      "params": { "item": "clue", "amount": 3 },
+      "rewardScore": 25,
+      "unlockNPC": "hlokomela"
+    }
+  },
+  {
+    "id": "lerato",
+    "name": "Lerato",
+    "dialog": [
+      "I miss the smell of rain along the cliffs.",
+      "Storms come fast, then disappear into the bay.",
+      "The coast really shows its moods here."
+    ]
+  },
+  {
+    "id": "sipho",
+    "name": "Sipho",
+    "dialog": [
+      "Nothing beats a braai by the seaside.",
+      "Everyone debates which boerewors brand is best.",
+      "As long as the fire is hot, the day’s a win."
+    ]
+  },
+  {
+    "id": "nomsa",
+    "name": "Nomsa",
+    "dialog": [
+      "The wind off the ocean is fierce.",
+      "One second calm, next your hat sails away.",
+      "Still, the view over the cliffs makes it worth it."
+    ]
+  },
+  {
+    "id": "kagiso",
+    "name": "Kagiso",
+    "hidden": true,
+    "dialog": [
+      "You’re asking about the bell?",
+      "It wasn’t for ships. It was for people.",
+      "When someone didn’t come home… it rang."
+    ],
+    "postQuestDialog": [
+      "I’m glad someone still listens.",
+      "Places don’t forget things.",
+      "People do.",
+      "I've heard that Thabo may know more."
+    ],
+    "quest": {
+      "id": "mystery_old_routes",
+      "description": "Find remnants of the town’s old emergency paths.",
+      "type": "collect",
+      "params": { "item": "marker", "amount": 2 },
+      "rewardScore": 20,
+      "unlockNPC": "thabo"
+    }
+  },
+  {
+    "id": "zanele",
+    "name": "Zanele",
+    "dialog": [
+      "Local music by the waves lifts the spirit.",
+      "The rhythm makes your feet chase the shoreline.",
+      "You can’t help but move with it."
+    ]
+  },
+  {
+    "id": "musa",
+    "name": "Musa",
+    "dialog": [
+      "The beaches here are peaceful, with warm water and warmer smiles.",
+      "Just don’t forget sun protection.",
+      "The tide and the people are what make it magical."
+    ]
+  },
+  {
+    "id": "anele",
+    "name": "Anele",
+    "dialog": [
+      "Hiking the coastal cliffs clears the mind.",
+      "The cliffs make you feel small, yet part of something larger.",
+      "Adventure is all around here if you look."
+    ]
+  },
+  {
+    "id": "vusi",
+    "name": "Vusi",
+    "dialog": [
+      "Even small power outages reveal our patience.",
+      "Cooking on gas becomes an art.",
+      "You have to laugh and enjoy the moment."
+    ]
+  },
+  {
+    "id": "busisiwe",
+    "name": "Busisiwe",
+    "dialog": [
+      "Hearing different languages on the wind is beautiful.",
+      "They connect people, even strangers.",
+      "Our town has many voices waiting to be heard."
+    ]
+  },
+  {
+    "id": "sibusiso",
+    "name": "Sibusiso",
+    "dialog": [
+      "The taxis are the heartbeat of our town.",
+      "Without them, the coast is silent.",
+      "Finding lost signs keeps life moving smoothly."
+    ],
+    "postQuestDialog": [
+      "You recovered the missing route sign?",
+      "Drivers won’t argue at the harbor anymore.",
+      "You’ve kept the rhythm of the town alive."
+    ],
+    "quest": {
+      "id": "taxi_route_help",
+      "description": "Locate the missing taxi route sign to help the early commuters navigate the coastal roads.",
+      "type": "collect",
+      "params": { "item": "sign", "amount": 1 },
+      "rewardScore": 5
+    }
+  },
+  {
+    "id": "palesa",
+    "name": "Palesa",
+    "dialog": [
+      "Spring here paints the cliffs in gold and violet.",
+      "The wildflowers sway with the breeze.",
+      "It’s like walking through a living painting."
+    ]
+  },
+  {
+    "id": "andile",
+    "name": "Andile",
+    "dialog": [
+      "Soccer brings the town together.",
+      "Even the seagulls pause when the ball rolls by.",
+      "It’s chaos, laughter, and cheers in one field."
+    ]
+  },
+  {
+    "id": "kgotso",
+    "name": "Kgotso",
+    "dialog": [
+      "Evenings on the cliffs are calm.",
+      "Watching the sun set over the waves is enough for reflection.",
+      "Peace lives here if you stop and look."
+    ]
+  },
+  {
+    "id": "nandi",
+    "name": "Nandi",
+    "dialog": [
+      "Some nights, when the fog rolls in, I hear a bell.",
+      "Not from the harbor — from somewhere deeper.",
+      "People say it’s just the sea, but it feels… intentional."
+    ],
+    "postQuestDialog": [
+      "You found something, didn’t you?",
+      "That sound… it wasn’t just in my head.",
+      "Maybe the town is trying to remember.",
+      "I've heard that Kagiso may know more."
+    ],
+    "quest": {
+      "id": "mystery_bell_fragments",
+      "description": "Search the shoreline and forest edge for traces of the bell.",
+      "type": "collect",
+      "params": { "item": "fragment", "amount": 2 },
+      "rewardScore": 15,
+      "unlockNPC": "kagiso"
+    }
+  },
+  {
+    "id": "themba",
+    "name": "Themba",
+    "dialog": [
+      "Driving along winding coastal roads teaches focus.",
+      "Every turn matters, every view is a reward.",
+      "City driving feels easy after this."
+    ]
+  },
+  {
+    "id": "ayanda",
+    "name": "Ayanda",
+    "dialog": [
+      "Elder stories whisper lessons without lectures.",
+      "Along the cliffs, the wind carries them far.",
+      "You remember them long after you hear them."
+    ]
+  },
+  {
+    "id": "mandla",
+    "name": "Mandla",
+    "dialog": [
+      "Strength is more than muscle.",
+      "Enduring challenges along the coast builds resilience.",
+      "Our town teaches it quietly to everyone."
+    ]
+  },
+  {
+    "id": "noluthando",
+    "name": "Noluthando",
+    "dialog": [
+      "Kindness travels further than the tides.",
+      "A smile or greeting brightens the busiest street.",
+      "Ubuntu is alive here, if you care to see it."
+    ]
+  },
+  {
+    "id": "hlokomela",
+    "name": "Hlokomela",
+    "hidden": true,
+    "dialog": [
+      "No one walks up there anymore.",
+      "Paths don’t vanish on their own.",
+      "They disappear when people stop caring."
+    ],
+    "postQuestDialog": [
+      "The path feels open again.",
+      "Like it’s breathing.",
+      "Thank you for that.",
+      "I've heard that the lighthouse keeper may know more."
+    ],
+    "quest": {
+      "id": "mystery_clear_path",
+      "description": "Restore the forgotten markers leading to the lighthouse.",
+      "type": "collect",
+      "params": { "item": "marker", "amount": 3 },
+      "rewardScore": 30,
+      "unlockNPC": "lighthouse_keeper"
+    }
+  },
+  {
+    "id": "thandi",
+    "name": "Thandi",
+    "dialog": [
+      "Early mornings along the coast are quiet.",
+      "The town wakes with the sunrise and the waves.",
+      "Notice the little details others miss."
+    ]
+  },
+  {
+    "id": "refilwe",
+    "name": "Refilwe",
+    "dialog": [
+      "The park along the cliffs is forgotten lately.",
+      "Litter dulls its beauty.",
+      "Even small actions can bring life back."
+    ],
+    "postQuestDialog": [
+      "You picked up the litter?",
+      "The park already feels lighter and alive.",
+      "Thank you for caring.",
+      "You know… Bongani has been fussing over that broken street light for weeks. Maybe you're the one to help him."
+    ],
+    "quest": {
+      "id": "clean_park",
+      "description": "Collect 5 pieces of litter scattered along the park pathways and cliff edge.",
+      "type": "collect",
+      "params": { "item": "litter", "amount": 5 },
+      "rewardScore": 8,
+      "unlockNPC": "bongani",
+      "unlockText": "Refilwe mentioned Bongani, still fussing over a broken street light on the promenade."
+    }
+  },
+  {
+    "id": "bongani",
+    "name": "Bongani",
+    "hidden": true,
+    "dialog": [
+      "Broken street lights make the town feel shadowed.",
+      "This one hasn’t worked for weeks.",
+      "Someone needs to restore it for night safety."
+    ],
+    "postQuestDialog": [
+      "You fixed the street light?",
+      "Even one light changes how safe the streets feel.",
+      "The town thanks you.",
+      "Now the children will play out later — though Keabetswe says their balls keep vanishing into the tide."
+    ],
+    "quest": {
+      "id": "fix_street_light",
+      "description": "Inspect and restore the broken street light along the coastal promenade.",
+      "type": "collect",
+      "params": { "item": "light", "amount": 1 },
+      "rewardScore": 7,
+      "unlockNPC": "keabetswe",
+      "unlockText": "Bongani says the children near Keabetswe's stall keep losing their play balls."
+    }
+  },
+  {
+    "id": "keabetswe",
+    "name": "Keabetswe",
+    "hidden": true,
+    "dialog": [
+      "Children chase seagulls and balls near the promenade.",
+      "Balls often roll into the tide or the street.",
+      "Someone needs to gather them before they’re lost."
+    ],
+    "postQuestDialog": [
+      "You found the missing balls?",
+      "The kids are thrilled!",
+      "You’ve made their day.",
+      "If only everyone knew how the promenade is coming back to life… Mpho's community board could tell them, if it weren't bare."
+    ],
+    "quest": {
+      "id": "lost_play_balls",
+      "description": "Find 3 lost play balls near the town promenade and pier.",
+      "type": "collect",
+      "params": { "item": "ball", "amount": 3 },
+      "rewardScore": 3,
+      "unlockNPC": "mpho",
+      "unlockText": "Keabetswe thinks Mpho could spread the good news — if the community board weren't empty."
+    }
+  },
+  {
+    "id": "samkelo",
+    "name": "Samkelo",
+    "dialog": [
+      "Vendors along the coast rely on foot traffic.",
+      "Signs guide visitors, but mine blew away last night.",
+      "Without it, customers get lost."
+    ],
+    "postQuestDialog": [
+      "Your sign is back!",
+      "People can find your stall again.",
+      "The morning feels busy and happy once more."
+    ],
+    "quest": {
+      "id": "vendor_sign",
+      "description": "Recover the missing vendor sign along the coastal market street.",
+      "type": "collect",
+      "params": { "item": "sign", "amount": 1 },
+      "rewardScore": 3
+    }
+  },
+  {
+    "id": "mpho",
+    "name": "Mpho",
+    "hidden": true,
+    "dialog": [
+      "The community board shares news for the town.",
+      "Lately, few check it.",
+      "Missing notices mean missed opportunities."
+    ],
+    "postQuestDialog": [
+      "You put the notices back up?",
+      "Everyone can see them again.",
+      "It’s amazing how much that matters.",
+      "A clean park, a bright light, laughing children, and news worth reading… tonight, the promenade celebrates. You made this happen."
+    ],
+    "quest": {
+      "id": "community_notices",
+      "description": "Post 3 missing community notices along the promenade and market square.",
+      "type": "collect",
+      "params": { "item": "notice", "amount": 3 },
+      "rewardScore": 5
+    }
+  },
+  {
+    "id": "lighthouse_keeper",
+    "name": "Lighthouse Keeper",
+    "hidden": true,
+    "dialog": [
+      "So. Someone finally followed the sound.",
+      "I kept the light long after the town stopped looking up.",
+      "The old bell needs attention… find it, and let them hear it one more time."
+    ],
+    "postQuestDialog": [
+      "You hear that? The whole bay heard it.",
+      "A town that hears its bell again starts to remember itself.",
+      "Thank you, courier. The light is yours now too."
+    ],
+    "quest": {
+      "id": "mystery_ring_bell",
+      "description": "Restore the old warning bell at the lighthouse.",
+      "type": "collect",
+      "params": { "item": "bell", "amount": 1 },
+      "rewardScore": 50
+    }
+  }
+]

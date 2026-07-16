@@ -1,3 +1,6 @@
+import QRCode from "qrcode";
+import { requestProvider } from "webln";
+
 let cancelQRPayment = false;
 
 export async function generateInvoice(item) {
@@ -31,10 +34,8 @@ export async function generateInvoice(item) {
 }
 
 export async function payInvoice(paymentRequest) {
-  if (typeof WebLN === "undefined") throw new Error("WebLN not available");
-
   try {
-    const webln = await WebLN.requestProvider();
+    const webln = await requestProvider();
     await webln.enable();
     await webln.sendPayment(paymentRequest);
   } catch (err) {
@@ -136,14 +137,17 @@ export async function waitForPayment(paymentHash, timeout = 5 * 60 * 1000) {
 
 export async function makePayment(item) {
   try {
-    if (typeof WebLN !== "undefined") {
-      try {
-        const invoice = await generateInvoice(item);
-        await payInvoice(invoice);
-        return true;
-      } catch (weblnErr) {
-        console.warn("WebLN failed, falling back to QR:", weblnErr);
-      }
+    // Try the WebLN extension first. requestProvider rejects fast when no
+    // provider is installed — checked before creating any invoice so the
+    // no-extension path doesn't waste one.
+    try {
+      const webln = await requestProvider();
+      await webln.enable();
+      const invoice = await generateInvoice(item);
+      await webln.sendPayment(invoice);
+      return true;
+    } catch (weblnErr) {
+      console.warn("WebLN failed, falling back to QR:", weblnErr);
     }
 
     const qrSuccess = await payWithQR(item);
