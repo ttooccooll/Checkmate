@@ -20,7 +20,8 @@
       "type": "collect",
       "params": { "item": "clue", "amount": 3 },
       "rewardScore": 25,
-      "unlockNPC": "hlokomela"
+      "unlockNPC": "hlokomela",
+      "unlockText": "The keeper never left town. Hlokomela tends what's left of the paths going up to the light."
     }
   },
   {
@@ -71,7 +72,8 @@
       "type": "collect",
       "params": { "item": "marker", "amount": 2 },
       "rewardScore": 20,
-      "unlockNPC": "thabo"
+      "unlockNPC": "thabo",
+      "unlockText": "The old routes all lead toward the point. Thabo knew the keeper — back when there was a keeper."
     }
   },
   {
@@ -181,13 +183,20 @@
       "Maybe the town is trying to remember.",
       "I've heard that Kagiso may know more."
     ],
+    "epilogueDialog": [
+      "You heard it too, right? The whole town did.",
+      "They rang it for the ones who didn’t come home.",
+      "This time it rang for one who did.",
+      "Welcome home."
+    ],
     "quest": {
       "id": "mystery_bell_fragments",
       "description": "Search the shoreline and forest edge for traces of the bell.",
       "type": "collect",
       "params": { "item": "fragment", "amount": 2 },
       "rewardScore": 15,
-      "unlockNPC": "kagiso"
+      "unlockNPC": "kagiso",
+      "unlockText": "The fragments are real. Nandi wasn't imagining it. Kagiso, they say, remembers what the bell was for."
     }
   },
   {
@@ -247,7 +256,8 @@
       "type": "collect",
       "params": { "item": "marker", "amount": 3 },
       "rewardScore": 30,
-      "unlockNPC": "lighthouse_keeper"
+      "unlockNPC": "lighthouse_keeper",
+      "unlockText": "The path to the lighthouse is open. Someone is still up there."
     }
   },
   {

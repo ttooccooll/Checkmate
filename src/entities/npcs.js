@@ -36,6 +36,7 @@ export class NPC {
     this.talking = false;
     this.hasTalked = false;
     this.postQuestDialog = data.postQuestDialog || [];
+    this.epilogueDialog = data.epilogueDialog || null;
     this.hasReactedToQuest = false;
 
     this.visible = !data.hidden;

@@ -4,7 +4,7 @@
 import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 
-const BROWSER_TESTS = ["smoke", "gameplay", "nostr", "qr", "treads"];
+const BROWSER_TESTS = ["smoke", "gameplay", "story", "nostr", "qr", "treads"];
 const PORT = 8347;
 
 function runNode(script) {

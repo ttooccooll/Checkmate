@@ -22,6 +22,22 @@ export class Ambience {
     this.fogTarget = 0;
     this.fogEndsAt = 0;
     this.nextFogAt = 65 + Math.random() * 45;
+    this.glowDuration = 0;
+    this.glowElapsed = 0;
+  }
+
+  // A warm, slow golden wash over the whole screen — used for the story
+  // finale. Ramps in over 2s, fades out over the last 5s.
+  triggerGlow(durationSec) {
+    this.glowDuration = durationSec;
+    this.glowElapsed = 0;
+  }
+
+  glowAlpha() {
+    if (this.glowDuration <= 0) return 0;
+    const remain = this.glowDuration - this.glowElapsed;
+    const k = Math.min(1, this.glowElapsed / 2, Math.max(0, remain / 5));
+    return 0.13 * Math.max(0, k);
   }
 
   update(dtSec, { onFogIn, onFogOut } = {}) {
@@ -41,6 +57,13 @@ export class Ambience {
     const step = dtSec / 3;
     const diff = this.fogTarget - this.fogIntensity;
     this.fogIntensity += Math.max(-step, Math.min(step, diff));
+
+    if (this.glowDuration > 0) {
+      this.glowElapsed += dtSec;
+      if (this.glowElapsed >= this.glowDuration) {
+        this.glowDuration = 0;
+      }
+    }
   }
 
   isFoggy() {
@@ -63,6 +86,12 @@ export class Ambience {
     }
     if (cool > 0.015) {
       ctx.fillStyle = `rgba(35, 48, 100, ${cool})`;
+      ctx.fillRect(0, 0, vw, vh);
+    }
+
+    const glow = this.glowAlpha();
+    if (glow > 0.005) {
+      ctx.fillStyle = `rgba(255, 186, 80, ${glow})`;
       ctx.fillRect(0, 0, vw, vh);
     }
 

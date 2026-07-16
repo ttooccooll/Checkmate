@@ -170,6 +170,18 @@ if (!isTouchDevice()) {
   touchControls.style.display = "none";
 }
 
+// A small permanent mark on the title screen for finishing the story
+try {
+  if (localStorage.getItem("checkmateStoryComplete") === "true") {
+    const badge = document.createElement("p");
+    badge.id = "intro-badge";
+    badge.textContent = "🔔 You've heard the bell.";
+    document.getElementById("intro-hint")?.after(badge);
+  }
+} catch {
+  /* ignore */
+}
+
 // --- World setup ---------------------------------------------------------------
 
 async function loadNPCs() {
@@ -306,6 +318,87 @@ async function startNewGame() {
     lastTime = t;
     startingGame = false;
     gameLoop(t);
+  });
+}
+
+// --- Story finale -----------------------------------------------------------
+// The main arc ends here: a staged sequence — glow, the bell, the town
+// stepping outside — closing on a story-complete card the player can share.
+
+let storyFinaleTimers = [];
+
+function finaleBeat(delayMs, fn) {
+  storyFinaleTimers.push(setTimeout(fn, delayMs));
+}
+
+function cancelStoryFinale() {
+  storyFinaleTimers.forEach(clearTimeout);
+  storyFinaleTimers = [];
+}
+
+function runStoryFinale() {
+  cancelStoryFinale();
+
+  // The town watches out for its rider during this moment
+  player.setInvulnerable(1500);
+  deliveries.cooldown = Math.max(deliveries.cooldown, 30);
+  if (deliveries.state === "enroute") deliveries.timer += 25;
+
+  finaleBeat(1200, () => {
+    ambience.triggerGlow(26);
+  });
+
+  finaleBeat(2000, () => {
+    sfx.bell();
+    showMessage("🔔 The bell. Deep and clear, rolling out over the bay.", 4200);
+  });
+
+  finaleBeat(6500, () => {
+    showMessage(
+      "Doors open along the promenade. The whole town steps outside, looking up at the point.",
+      3800
+    );
+  });
+
+  finaleBeat(10500, () => {
+    showMessage(
+      "Kagiso said the bell rang for the ones who didn't come home. Let it ring for the ones who did.",
+      3400
+    );
+  });
+
+  finaleBeat(14000, () => {
+    addScore(200);
+    sfx.quest();
+    try {
+      localStorage.setItem("checkmateStoryComplete", "true");
+    } catch {
+      /* ignore */
+    }
+
+    // Nandi has one more thing to say, if you go find her
+    const nandi = npcs.find((n) => n.id === "nandi");
+    if (nandi?.epilogueDialog) {
+      nandi.dialogQueue = [...nandi.epilogueDialog];
+      nandi.hasTalked = false;
+    }
+
+    const card = `
+🔔 The Bell of the Bay 🔔
+The keeper's watch is over. The town remembers its own.
+Story complete · +200 points
+Nandi will want a word.
+    `.trim();
+
+    const shareText = [
+      "🔔 Followed the mystery to the end and rang the bell above the bay.",
+      "Checkmate Delivery — story complete.",
+      "",
+      `Ride the coast, run deliveries, pay in sats ⚡ ${location.origin}`,
+      "#gamestr",
+    ].join("\n");
+
+    showGameOverMessage(card, shareText);
   });
 }
 
@@ -537,13 +630,7 @@ function update(deltaTime = 1) {
 
       // Story finale: the bell is restored — let the whole bay hear it.
       if (completedQuest.id === "mystery_ring_bell") {
-        setTimeout(() => {
-          sfx.bell();
-          showMessage(
-            "🔔 The old bell rings out across the bay — deep and clear, like it never stopped. Far below, the town goes quiet and looks up. The town remembers.",
-            9000
-          );
-        }, 2500);
+        runStoryFinale();
       }
     }
   });
@@ -864,8 +951,9 @@ function endGame(reason = "Game Over") {
   flashTimer = FLASH_DURATION;
   engine.stop();
   sfx.gameover();
-  // A queued intro message must not wipe the game-over screen
+  // Queued messages must not wipe the game-over screen
   clearTimeout(introMessageTimer);
+  cancelStoryFinale();
 
   const previousBest = Number(localStorage.getItem("checkmateBestScore")) || 0;
   const isNewBest = score > previousBest;
