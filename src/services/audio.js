@@ -3,6 +3,10 @@
 // toggle and volume balance apply globally, including the engine loop.
 // Every public call is safe: if audio is unavailable, it silently does nothing.
 
+// One knob for overall loudness. Individual effects are balanced relative
+// to each other below; turn this to taste.
+const MASTER_VOLUME = 0.85;
+
 let audioCtx = null;
 let masterGain = null;
 let muted = false;
@@ -20,15 +24,16 @@ function getCtx() {
   if (!audioCtx) {
     audioCtx = new AC();
 
+    // Gentle glue only — most level control happens per-effect
     const compressor = audioCtx.createDynamicsCompressor();
-    compressor.threshold.value = -18;
-    compressor.knee.value = 12;
-    compressor.ratio.value = 6;
-    compressor.attack.value = 0.003;
-    compressor.release.value = 0.25;
+    compressor.threshold.value = -16;
+    compressor.knee.value = 14;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.004;
+    compressor.release.value = 0.3;
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = muted ? 0 : 1;
+    masterGain.gain.value = muted ? 0 : MASTER_VOLUME;
     masterGain.connect(compressor);
     compressor.connect(audioCtx.destination);
   }
@@ -46,7 +51,11 @@ export function toggleMute() {
   try {
     const ctx = getCtx();
     if (ctx && masterGain) {
-      masterGain.gain.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, 0.03);
+      masterGain.gain.setTargetAtTime(
+        muted ? 0 : MASTER_VOLUME,
+        ctx.currentTime,
+        0.03
+      );
     }
   } catch {
     /* ignore */
@@ -59,9 +68,10 @@ function tone({
   endFreq = null,
   type = "sine",
   duration = 0.15,
-  volume = 0.12,
+  volume = 0.1,
   delay = 0,
   attack = 0.008,
+  lowpass = 0,
 }) {
   try {
     const ctx = getCtx();
@@ -80,7 +90,18 @@ function tone({
     gain.gain.linearRampToValueAtTime(volume, t0 + attack);
     gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
 
-    osc.connect(gain).connect(masterGain);
+    // Rich waveforms (square/saw) go through a lowpass so they read as
+    // "instrument", not "alarm"
+    let head = osc;
+    if (lowpass) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = lowpass;
+      osc.connect(filter);
+      head = filter;
+    }
+
+    head.connect(gain).connect(masterGain);
     osc.start(t0);
     osc.stop(t0 + duration + 0.05);
   } catch {
@@ -88,7 +109,7 @@ function tone({
   }
 }
 
-function noise({ duration = 0.25, volume = 0.18, delay = 0, lowpass = 0 }) {
+function noise({ duration = 0.25, volume = 0.15, delay = 0, lowpass = 0 }) {
   try {
     const ctx = getCtx();
     if (!ctx) return;
@@ -123,7 +144,7 @@ function noise({ duration = 0.25, volume = 0.18, delay = 0, lowpass = 0 }) {
 }
 
 // One strike of a church-style bell: inharmonic partials with a long decay.
-function bellStrike(baseFreq, delay = 0, volume = 0.2) {
+function bellStrike(baseFreq, delay = 0, volume = 0.16) {
   const partials = [
     { ratio: 0.5, vol: 1.0 }, // hum
     { ratio: 1.0, vol: 0.8 }, // prime
@@ -144,9 +165,13 @@ function bellStrike(baseFreq, delay = 0, volume = 0.2) {
 
 // ---------------------------------------------------------------------------
 // Engine loop: two detuned saws through a lowpass, pitch/brightness/volume
-// follow the bike's speed. Runs continuously between start() and stop().
+// follow the bike's speed. Deliberately quiet and dull — it should sit
+// underneath the game as texture, never on top of it.
 // ---------------------------------------------------------------------------
 let engineNodes = null;
+
+const ENGINE_IDLE_GAIN = 0.011;
+const ENGINE_THROTTLE_GAIN = 0.015; // added at full throttle
 
 export const engine = {
   start() {
@@ -158,25 +183,25 @@ export const engine = {
       const osc2 = ctx.createOscillator();
       osc1.type = "sawtooth";
       osc2.type = "sawtooth";
-      osc1.frequency.value = 52;
-      osc2.frequency.value = 52 * 1.013; // slight detune = growl
+      osc1.frequency.value = 48;
+      osc2.frequency.value = 48 * 1.011; // slight detune = growl
 
       // Slow wobble so idling doesn't sound like a pure synth drone
       const lfo = ctx.createOscillator();
-      lfo.frequency.value = 9;
+      lfo.frequency.value = 8;
       const lfoGain = ctx.createGain();
-      lfoGain.gain.value = 2.5;
+      lfoGain.gain.value = 1.8;
       lfo.connect(lfoGain);
       lfoGain.connect(osc1.frequency);
 
       const filter = ctx.createBiquadFilter();
       filter.type = "lowpass";
-      filter.frequency.value = 260;
-      filter.Q.value = 1.2;
+      filter.frequency.value = 190;
+      filter.Q.value = 0.8;
 
       const gain = ctx.createGain();
       gain.gain.value = 0.0001;
-      gain.gain.setTargetAtTime(0.028, ctx.currentTime, 0.4);
+      gain.gain.setTargetAtTime(ENGINE_IDLE_GAIN, ctx.currentTime, 0.5);
 
       osc1.connect(filter);
       osc2.connect(filter);
@@ -197,11 +222,15 @@ export const engine = {
       if (!engineNodes || !audioCtx) return;
       const t = audioCtx.currentTime;
       const r = Math.max(0, Math.min(1, speedRatio));
-      const freq = 52 + 88 * r;
+      const freq = 48 + 62 * r;
       engineNodes.osc1.frequency.setTargetAtTime(freq, t, 0.12);
-      engineNodes.osc2.frequency.setTargetAtTime(freq * 1.013, t, 0.12);
-      engineNodes.filter.frequency.setTargetAtTime(260 + 620 * r, t, 0.15);
-      engineNodes.gain.gain.setTargetAtTime(0.028 + 0.03 * r, t, 0.15);
+      engineNodes.osc2.frequency.setTargetAtTime(freq * 1.011, t, 0.12);
+      engineNodes.filter.frequency.setTargetAtTime(190 + 360 * r, t, 0.18);
+      engineNodes.gain.gain.setTargetAtTime(
+        ENGINE_IDLE_GAIN + ENGINE_THROTTLE_GAIN * r,
+        t,
+        0.18
+      );
     } catch {
       /* ignore */
     }
@@ -225,86 +254,114 @@ export const engine = {
 
 export const sfx = {
   coin() {
-    tone({ freq: 1047, type: "triangle", duration: 0.07, volume: 0.08 });
-    tone({ freq: 1568, type: "triangle", duration: 0.11, volume: 0.08, delay: 0.055 });
-    tone({ freq: 3136, type: "sine", duration: 0.06, volume: 0.025, delay: 0.055 });
+    tone({ freq: 1175, type: "triangle", duration: 0.06, volume: 0.055 });
+    tone({ freq: 1760, type: "triangle", duration: 0.1, volume: 0.05, delay: 0.05 });
+    tone({ freq: 3520, type: "sine", duration: 0.05, volume: 0.012, delay: 0.05 });
   },
 
   item() {
-    tone({ freq: 523, type: "triangle", duration: 0.09, volume: 0.1 });
-    tone({ freq: 784, type: "triangle", duration: 0.14, volume: 0.1, delay: 0.08 });
-    tone({ freq: 1568, type: "sine", duration: 0.1, volume: 0.03, delay: 0.16 });
+    tone({ freq: 523, type: "triangle", duration: 0.09, volume: 0.07 });
+    tone({ freq: 784, type: "triangle", duration: 0.13, volume: 0.07, delay: 0.08 });
+    tone({ freq: 1568, type: "sine", duration: 0.1, volume: 0.02, delay: 0.16 });
   },
 
   accept() {
-    tone({ freq: 440, type: "square", duration: 0.08, volume: 0.05 });
-    tone({ freq: 660, type: "square", duration: 0.12, volume: 0.05, delay: 0.08 });
+    tone({ freq: 523, type: "triangle", duration: 0.08, volume: 0.06 });
+    tone({ freq: 784, type: "triangle", duration: 0.12, volume: 0.06, delay: 0.08 });
   },
 
   quest() {
-    tone({ freq: 523, type: "triangle", duration: 0.12, volume: 0.1 });
-    tone({ freq: 659, type: "triangle", duration: 0.12, volume: 0.1, delay: 0.1 });
-    tone({ freq: 784, type: "triangle", duration: 0.14, volume: 0.1, delay: 0.2 });
-    tone({ freq: 1047, type: "triangle", duration: 0.28, volume: 0.11, delay: 0.3 });
+    tone({ freq: 523, type: "triangle", duration: 0.12, volume: 0.07 });
+    tone({ freq: 659, type: "triangle", duration: 0.12, volume: 0.07, delay: 0.1 });
+    tone({ freq: 784, type: "triangle", duration: 0.14, volume: 0.07, delay: 0.2 });
+    tone({ freq: 1047, type: "triangle", duration: 0.32, volume: 0.08, delay: 0.3 });
   },
 
   purchase() {
-    tone({ freq: 587, type: "triangle", duration: 0.1, volume: 0.1 });
-    tone({ freq: 880, type: "triangle", duration: 0.18, volume: 0.1, delay: 0.09 });
+    tone({ freq: 587, type: "triangle", duration: 0.1, volume: 0.07 });
+    tone({ freq: 880, type: "triangle", duration: 0.18, volume: 0.07, delay: 0.09 });
   },
 
   helmet() {
-    noise({ duration: 0.12, volume: 0.12, lowpass: 3000 });
-    tone({ freq: 320, endFreq: 180, type: "square", duration: 0.18, volume: 0.07 });
+    noise({ duration: 0.1, volume: 0.09, lowpass: 2200 });
+    tone({
+      freq: 300,
+      endFreq: 170,
+      type: "square",
+      duration: 0.16,
+      volume: 0.05,
+      lowpass: 700,
+    });
   },
 
   crash() {
-    noise({ duration: 0.4, volume: 0.22, lowpass: 1800 });
-    tone({ freq: 150, endFreq: 48, type: "sawtooth", duration: 0.45, volume: 0.13 });
-    tone({ freq: 70, endFreq: 40, type: "sine", duration: 0.5, volume: 0.15 });
+    noise({ duration: 0.35, volume: 0.16, lowpass: 1200 });
+    tone({
+      freq: 140,
+      endFreq: 50,
+      type: "sawtooth",
+      duration: 0.4,
+      volume: 0.09,
+      lowpass: 800,
+    });
+    tone({ freq: 65, endFreq: 38, type: "sine", duration: 0.5, volume: 0.13 });
   },
 
   gameover() {
-    tone({ freq: 392, type: "triangle", duration: 0.25, volume: 0.1 });
-    tone({ freq: 311, type: "triangle", duration: 0.25, volume: 0.1, delay: 0.22 });
-    tone({ freq: 233, type: "triangle", duration: 0.5, volume: 0.1, delay: 0.44 });
+    tone({ freq: 392, type: "triangle", duration: 0.26, volume: 0.07 });
+    tone({ freq: 311, type: "triangle", duration: 0.26, volume: 0.07, delay: 0.24 });
+    tone({ freq: 233, type: "triangle", duration: 0.55, volume: 0.07, delay: 0.48 });
   },
 
-  // Minibus hooter: a short dissonant dual-tone blast
+  // Minibus hooter: a short dual-tone hoot, rounded off with a lowpass
   horn() {
-    tone({ freq: 415, type: "square", duration: 0.22, volume: 0.05, attack: 0.004 });
-    tone({ freq: 512, type: "sawtooth", duration: 0.22, volume: 0.045, attack: 0.004 });
+    tone({
+      freq: 420,
+      type: "square",
+      duration: 0.16,
+      volume: 0.028,
+      attack: 0.006,
+      lowpass: 950,
+    });
+    tone({
+      freq: 505,
+      type: "square",
+      duration: 0.16,
+      volume: 0.026,
+      attack: 0.006,
+      lowpass: 950,
+    });
   },
 
   pickup() {
-    tone({ freq: 392, endFreq: 660, type: "triangle", duration: 0.14, volume: 0.1 });
-    tone({ freq: 1319, type: "sine", duration: 0.08, volume: 0.04, delay: 0.12 });
+    tone({ freq: 392, endFreq: 660, type: "triangle", duration: 0.13, volume: 0.07 });
+    tone({ freq: 1319, type: "sine", duration: 0.08, volume: 0.025, delay: 0.11 });
   },
 
   delivered() {
-    tone({ freq: 587, type: "triangle", duration: 0.1, volume: 0.1 });
-    tone({ freq: 740, type: "triangle", duration: 0.1, volume: 0.1, delay: 0.09 });
-    tone({ freq: 880, type: "triangle", duration: 0.2, volume: 0.11, delay: 0.18 });
-    tone({ freq: 1760, type: "sine", duration: 0.14, volume: 0.035, delay: 0.24 });
+    tone({ freq: 587, type: "triangle", duration: 0.1, volume: 0.07 });
+    tone({ freq: 740, type: "triangle", duration: 0.1, volume: 0.07, delay: 0.09 });
+    tone({ freq: 880, type: "triangle", duration: 0.22, volume: 0.08, delay: 0.18 });
+    tone({ freq: 1760, type: "sine", duration: 0.14, volume: 0.022, delay: 0.24 });
   },
 
   deliveryFailed() {
-    tone({ freq: 330, endFreq: 262, type: "sine", duration: 0.22, volume: 0.08 });
-    tone({ freq: 262, endFreq: 208, type: "sine", duration: 0.3, volume: 0.07, delay: 0.2 });
+    tone({ freq: 330, endFreq: 262, type: "sine", duration: 0.22, volume: 0.06 });
+    tone({ freq: 262, endFreq: 208, type: "sine", duration: 0.3, volume: 0.05, delay: 0.2 });
   },
 
   festival() {
     const notes = [523, 659, 784, 1047, 1319, 1568];
     notes.forEach((f, i) => {
-      tone({ freq: f, type: "triangle", duration: 0.22, volume: 0.09, delay: i * 0.09 });
-      tone({ freq: f * 2, type: "sine", duration: 0.14, volume: 0.025, delay: i * 0.09 + 0.03 });
+      tone({ freq: f, type: "triangle", duration: 0.24, volume: 0.06, delay: i * 0.1 });
+      tone({ freq: f * 2, type: "sine", duration: 0.14, volume: 0.016, delay: i * 0.1 + 0.03 });
     });
-    tone({ freq: 2093, type: "sine", duration: 0.5, volume: 0.05, delay: 0.62 });
+    tone({ freq: 2093, type: "sine", duration: 0.55, volume: 0.035, delay: 0.68 });
   },
 
   bell() {
     bellStrike(220, 0);
     bellStrike(220, 1.4);
-    bellStrike(220, 2.8, 0.16);
+    bellStrike(220, 2.8, 0.13);
   },
 };
