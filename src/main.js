@@ -1187,6 +1187,9 @@ function endGame(reason = "Game Over") {
   if (!gameRunning) return;
   upgrades.metalDetector = false;
   upgrades.speedBoost = false;
+  upgrades.offRoadTreads = false;
+  offRoadTimer = 0;
+  treadsWarned = false;
   localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
 
   const newGameBtn = document.getElementById("new-game-btn");
