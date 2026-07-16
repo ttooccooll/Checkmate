@@ -2,7 +2,7 @@
 // and wiring between the world, entities, UI, and services modules.
 
 import * as payments from "./services/payments.js";
-import { sfx, toggleMute, engine } from "./services/audio.js";
+import { sfx, cycleVolume, engine, ambient } from "./services/audio.js";
 import { SkidMarks } from "./world/effects.js";
 import { Ambience } from "./world/ambience.js";
 import { TrafficManager } from "./entities/traffic.js";
@@ -46,6 +46,7 @@ import {
   roadCanvas,
   treeCanvas,
   texturesReady,
+  whenReady,
   renderRoadsOffscreen,
   renderTreesOffscreen,
 } from "./world/worldRender.js";
@@ -64,7 +65,7 @@ const ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 
 const playerSprite = new Image();
-playerSprite.src = "/assets/player.png";
+playerSprite.src = "/assets/player.webp";
 
 const player = new Player(playerSprite);
 player.onCrash = (reason) => {
@@ -72,9 +73,9 @@ player.onCrash = (reason) => {
 };
 
 const taxiSprites = [
-  "/assets/taxi1.png",
-  "/assets/taxi2.png",
-  "/assets/taxi3.png",
+  "/assets/taxi1.webp",
+  "/assets/taxi2.webp",
+  "/assets/taxi3.webp",
 ].map((src) => {
   const img = new Image();
   img.src = src;
@@ -104,6 +105,7 @@ let dustParticles = [];
 let score = 0;
 let gameRunning = false;
 let startingGame = false;
+let paused = false;
 let offRoadTimer = 0;
 let treadsWarned = false;
 let flashTimer = 0;
@@ -146,10 +148,20 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-initCanvasDrag(canvas, { isGameRunning: () => gameRunning });
+function togglePause() {
+  if (!gameRunning) return;
+  paused = !paused;
+  if (paused) {
+    engine.stop();
+  } else {
+    engine.start();
+  }
+}
+
+initCanvasDrag(canvas, { isGameRunning: () => gameRunning && !paused });
 initKeyboard({
-  onMuteToggle: () =>
-    showMessage(toggleMute() ? "🔇 Sound off" : "🔊 Sound on", 1200),
+  onMuteToggle: () => showMessage(cycleVolume(), 1200),
+  onPauseToggle: togglePause,
 });
 
 const touchControls = document.getElementById("touch-controls");
@@ -200,15 +212,22 @@ async function loadNPCs() {
 
 async function startNewGame() {
   if (startingGame || gameRunning) return;
+  startingGame = true;
+
+  // If textures are still downloading, wait them out instead of making
+  // the player click again
   if (!texturesReady()) {
-    showMessage("Loading textures…", 1000);
-    return;
+    const newGameBtn = document.getElementById("new-game-btn");
+    const prevLabel = newGameBtn.textContent;
+    newGameBtn.textContent = "Loading…";
+    showMessage("Loading the coast…", 1500);
+    await whenReady();
+    newGameBtn.textContent = prevLabel;
   }
+
   showMessage("New Game!", 2000);
 
   resizeCanvas();
-
-  startingGame = true;
 
   score = 0;
   flashTimer = 0;
@@ -248,7 +267,9 @@ async function startNewGame() {
     coins: 0,
     quests: 0,
   });
+  paused = false;
   engine.start();
+  ambient.start();
 
   const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
   const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
@@ -467,6 +488,7 @@ function update(deltaTime = 1) {
       ),
     onFogOut: () => showMessage("☀️ The fog lifts.", 2500),
   });
+  ambient.setFog(ambience.fogIntensity);
 
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
@@ -794,6 +816,25 @@ function draw() {
     deliveryLine: gameRunning ? deliveries.timerText() : null,
     fogLine: gameRunning && ambience.isFoggy() ? "🌫️ 2× delivery" : null,
   });
+
+  // --- Pause overlay ---
+  if (paused) {
+    const dpr = window.devicePixelRatio || 1;
+    const vw = canvas.width / dpr;
+    const vh = canvas.height / dpr;
+    ctx.save();
+    ctx.fillStyle = "rgba(8, 16, 22, 0.55)";
+    ctx.fillRect(0, 0, vw, vh);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#f2ecdf";
+    ctx.font = "bold 34px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("⏸ Paused", vw / 2, vh / 2 - 16);
+    ctx.fillStyle = "rgba(242, 236, 223, 0.8)";
+    ctx.font = "16px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("Press P to ride on", vw / 2, vh / 2 + 22);
+    ctx.restore();
+  }
 }
 
 // --- Game over & loop -------------------------------------------------------------
@@ -819,6 +860,7 @@ function endGame(reason = "Game Over") {
   dialogManager.endDialog();
   questLog.hide();
   gameRunning = false;
+  paused = false;
   flashTimer = FLASH_DURATION;
   engine.stop();
   sfx.gameover();
@@ -877,13 +919,16 @@ function gameLoop(timestamp) {
   }
 
   questLog.update(npcs, player);
-  update(deltaTime);
+  if (!paused) update(deltaTime);
   draw();
 
   if (gameRunning || flashTimer > 0) requestAnimationFrame(gameLoop);
 }
 
 function handleCrash(reason) {
+  // A crash ruins a fragile package even if the helmet saves the rider
+  deliveries.onPlayerCrash();
+
   if (upgrades.helmet) {
     upgrades.helmet = false;
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
@@ -906,8 +951,11 @@ function handleCrash(reason) {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     engine.stop();
+    ambient.stop();
+    if (gameRunning) paused = true; // resume deliberately with P
   } else if (gameRunning) {
-    engine.start();
+    ambient.start();
+    if (!paused) engine.start();
   }
 });
 
@@ -919,6 +967,7 @@ window.__cm = {
   skidMarks,
   player,
   getNpcs: () => npcs,
+  isPaused: () => paused,
 };
 
 // --- Shop & buttons -----------------------------------------------------------------

@@ -9,12 +9,14 @@ const LANE_FRAC = 0.26; // lane center offset from road center, as road-height f
 const WRAP_MARGIN = 90;
 
 class Taxi {
-  constructor(sprite, road, forward) {
+  constructor(sprite, road, forward, slowZones) {
     this.sprite = sprite;
     this.road = road;
     this.horizontal = road.width > road.height;
     this.forward = forward; // +1 = east/south, -1 = west/north
     this.speed = 2.1 + Math.random() * 1.1;
+    this.currentSpeed = this.speed;
+    this.slowZones = slowZones; // intersection centers along this road's axis
     this.honkCooldown = Math.random() * 4;
 
     const laneSize = this.horizontal ? road.height : road.width;
@@ -39,8 +41,36 @@ class Taxi {
     return { x: this.x - w / 2, y: this.y - h / 2, width: w, height: h };
   }
 
-  update(deltaTime) {
-    const v = this.speed * this.forward * deltaTime;
+  update(deltaTime, player) {
+    // A well-behaved driver: ease off near intersections, brake hard when
+    // someone is in the lane ahead.
+    let targetSpeed = this.speed;
+
+    const alongPos = this.horizontal ? this.x : this.y;
+    for (const zone of this.slowZones) {
+      const ahead = (zone - alongPos) * this.forward;
+      if (ahead > -30 && ahead < 140) {
+        targetSpeed = Math.min(targetSpeed, this.speed * 0.55);
+        break;
+      }
+    }
+
+    if (player) {
+      const px = player.x + player.width / 2;
+      const py = player.y + player.height / 2;
+      const along = this.horizontal
+        ? (px - this.x) * this.forward
+        : (py - this.y) * this.forward;
+      const lateral = this.horizontal ? py - this.y : px - this.x;
+      if (along > 0 && along < 150 && Math.abs(lateral) < 55) {
+        targetSpeed = Math.min(targetSpeed, this.speed * 0.12);
+      }
+    }
+
+    this.currentSpeed +=
+      (targetSpeed - this.currentSpeed) * Math.min(1, 0.06 * deltaTime);
+
+    const v = this.currentSpeed * this.forward * deltaTime;
     if (this.horizontal) {
       this.x += v;
       if (this.x > WORLD_WIDTH + WRAP_MARGIN) this.x = -WRAP_MARGIN;
@@ -63,11 +93,29 @@ export class TrafficManager {
     this.taxis = [];
     if (!roads.length) return;
 
+    // Intersection centers along each road's travel axis, for slow zones
+    const zonesByRoad = new Map();
+    roads.forEach((road) => {
+      const horizontal = road.width > road.height;
+      const zones = [];
+      roads.forEach((other) => {
+        if (other === road) return;
+        const ix = Math.max(road.x, other.x);
+        const iw = Math.min(road.x + road.width, other.x + other.width) - ix;
+        const iy = Math.max(road.y, other.y);
+        const ih = Math.min(road.y + road.height, other.y + other.height) - iy;
+        if (iw > 0 && ih > 0) {
+          zones.push(horizontal ? ix + iw / 2 : iy + ih / 2);
+        }
+      });
+      zonesByRoad.set(road, zones);
+    });
+
     for (let i = 0; i < count; i++) {
       const road = roads[Math.floor(Math.random() * roads.length)];
       const forward = Math.random() < 0.5 ? 1 : -1;
       const sprite = this.sprites[i % this.sprites.length];
-      const taxi = new Taxi(sprite, road, forward);
+      const taxi = new Taxi(sprite, road, forward, zonesByRoad.get(road) || []);
 
       // Never materialize a taxi on top of the freshly spawned player
       if (player && Math.hypot(taxi.x - player.x, taxi.y - player.y) < 400) {
@@ -87,7 +135,7 @@ export class TrafficManager {
     const playerBox = player.getHitbox();
 
     for (const taxi of this.taxis) {
-      taxi.update(deltaTime);
+      taxi.update(deltaTime, player);
       taxi.honkCooldown = Math.max(0, taxi.honkCooldown - deltaTime / 60);
 
       const dx = px - taxi.x;

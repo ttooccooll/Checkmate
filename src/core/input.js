@@ -32,7 +32,7 @@ export function resetTouchKeys() {
   }
 }
 
-export function initKeyboard({ onMuteToggle }) {
+export function initKeyboard({ onMuteToggle, onPauseToggle }) {
   document.addEventListener("keydown", (e) => {
     keys[e.key] = true;
 
@@ -67,6 +67,10 @@ export function initKeyboard({ onMuteToggle }) {
       case "m":
       case "M":
         if (!e.repeat && onMuteToggle) onMuteToggle();
+        break;
+      case "p":
+      case "P":
+        if (!e.repeat && onPauseToggle) onPauseToggle();
         break;
 
       case "7":

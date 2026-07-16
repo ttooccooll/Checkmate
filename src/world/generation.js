@@ -62,12 +62,12 @@ export function generateBuildings(count, roads, buildingImages) {
 
     let width, height;
 
-    if (img.src.includes("shack.png")) {
+    if (img.src.includes("shack")) {
       // Shacks: smaller
       width = 40 + Math.random() * 40;
       const aspect = 0.6 + Math.random() * 0.8;
       height = width * aspect;
-    } else if (img.src.includes("house") && !img.src.includes("flat.png")) {
+    } else if (img.src.includes("house") && !img.src.includes("flat")) {
       // Houses: medium size
       width = 100 + Math.random() * 100;
       const aspect = 0.6 + Math.random() * 0.8;

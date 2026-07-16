@@ -5,18 +5,18 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
 
 export const roadTexture = new Image();
-roadTexture.src = "/assets/road.jpg";
+roadTexture.src = "/assets/road.webp";
 
 const grassTexture = new Image();
-grassTexture.src = "/assets/fyn2.jpg";
+grassTexture.src = "/assets/fyn2.webp";
 
 export const buildingImages = [
-  "/assets/house.png",
-  "/assets/house2.png",
-  "/assets/house3.png",
-  "/assets/house4.png",
-  "/assets/shack.png",
-  "/assets/flat.png",
+  "/assets/house.webp",
+  "/assets/house2.webp",
+  "/assets/house3.webp",
+  "/assets/house4.webp",
+  "/assets/shack.webp",
+  "/assets/flat.webp",
 ].map((src) => {
   const img = new Image();
   img.src = src;
@@ -24,11 +24,11 @@ export const buildingImages = [
 });
 
 export const treeImages = [
-  "/assets/tree.png",
-  "/assets/tree2.png",
-  "/assets/tree3.png",
-  "/assets/tree4.png",
-  "/assets/tree5.png",
+  "/assets/tree.webp",
+  "/assets/tree2.webp",
+  "/assets/tree3.webp",
+  "/assets/tree4.webp",
+  "/assets/tree5.webp",
 ].map((src) => {
   const img = new Image();
   img.src = src;
@@ -68,6 +68,14 @@ roadTexture.onload = tryRenderGrass;
 
 export function texturesReady() {
   return grassRendered && roadTexture.complete;
+}
+
+// Resolves once the critical world textures are usable
+export function whenReady() {
+  return new Promise((resolve) => {
+    const check = () => (texturesReady() ? resolve() : setTimeout(check, 100));
+    check();
+  });
 }
 
 export function renderRoadsOffscreen(roads) {

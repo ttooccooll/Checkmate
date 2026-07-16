@@ -7,14 +7,32 @@
 // to each other below; turn this to taste.
 const MASTER_VOLUME = 0.85;
 
+// M cycles through these; the label is what the player sees.
+const VOLUME_LEVELS = [1, 0.6, 0.3, 0];
+const VOLUME_LABELS = [
+  "🔊 Sound: 100%",
+  "🔊 Sound: 60%",
+  "🔉 Sound: 30%",
+  "🔇 Sound: off",
+];
+
 let audioCtx = null;
 let masterGain = null;
-let muted = false;
+let volumeIndex = 0;
 
 try {
-  muted = localStorage.getItem("checkmateMuted") === "true";
+  const stored = localStorage.getItem("checkmateVolume");
+  if (stored !== null) {
+    volumeIndex = Math.min(3, Math.max(0, Number(stored) || 0));
+  } else if (localStorage.getItem("checkmateMuted") === "true") {
+    volumeIndex = 3; // migrate the old mute toggle
+  }
 } catch {
-  /* localStorage unavailable — default to sound on */
+  /* localStorage unavailable — default to full volume */
+}
+
+function currentVolume() {
+  return MASTER_VOLUME * VOLUME_LEVELS[volumeIndex];
 }
 
 function getCtx() {
@@ -33,7 +51,7 @@ function getCtx() {
     compressor.release.value = 0.3;
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = muted ? 0 : MASTER_VOLUME;
+    masterGain.gain.value = currentVolume();
     masterGain.connect(compressor);
     compressor.connect(audioCtx.destination);
   }
@@ -41,26 +59,23 @@ function getCtx() {
   return audioCtx;
 }
 
-export function toggleMute() {
-  muted = !muted;
+// Steps 100% -> 60% -> 30% -> off -> 100%; returns the label to display.
+export function cycleVolume() {
+  volumeIndex = (volumeIndex + 1) % VOLUME_LEVELS.length;
   try {
-    localStorage.setItem("checkmateMuted", String(muted));
+    localStorage.setItem("checkmateVolume", String(volumeIndex));
   } catch {
     /* ignore */
   }
   try {
     const ctx = getCtx();
     if (ctx && masterGain) {
-      masterGain.gain.setTargetAtTime(
-        muted ? 0 : MASTER_VOLUME,
-        ctx.currentTime,
-        0.03
-      );
+      masterGain.gain.setTargetAtTime(currentVolume(), ctx.currentTime, 0.03);
     }
   } catch {
     /* ignore */
   }
-  return muted;
+  return VOLUME_LABELS[volumeIndex];
 }
 
 function tone({
@@ -248,6 +263,132 @@ export const engine = {
       engineNodes = null;
     } catch {
       engineNodes = null;
+    }
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Ambient bed: slow wave swells always, wind that rises with the fog, and
+// the occasional gull. All noise-based, all very quiet — coastal wallpaper.
+// ---------------------------------------------------------------------------
+let ambientNodes = null;
+let gullTimer = null;
+
+function makeNoiseLoop(ctx, seconds = 4) {
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+  return src;
+}
+
+function gullCry() {
+  const vol = 0.014 + Math.random() * 0.01;
+  const base = 950 + Math.random() * 350;
+  tone({
+    freq: base * 1.25,
+    endFreq: base * 0.72,
+    type: "sawtooth",
+    duration: 0.22,
+    volume: vol,
+    lowpass: 2600,
+    attack: 0.03,
+  });
+  if (Math.random() < 0.7) {
+    tone({
+      freq: base * 1.12,
+      endFreq: base * 0.68,
+      type: "sawtooth",
+      duration: 0.18,
+      volume: vol * 0.75,
+      delay: 0.3,
+      lowpass: 2600,
+      attack: 0.03,
+    });
+  }
+}
+
+function scheduleGull() {
+  gullTimer = setTimeout(() => {
+    try {
+      gullCry();
+    } catch {
+      /* ignore */
+    }
+    scheduleGull();
+  }, 14000 + Math.random() * 26000);
+}
+
+export const ambient = {
+  start() {
+    try {
+      const ctx = getCtx();
+      if (!ctx || ambientNodes) return;
+
+      // Waves: low filtered noise with a slow swell
+      const waves = makeNoiseLoop(ctx, 4);
+      const waveFilter = ctx.createBiquadFilter();
+      waveFilter.type = "lowpass";
+      waveFilter.frequency.value = 420;
+      const waveGain = ctx.createGain();
+      waveGain.gain.value = 0.007;
+      const swell = ctx.createOscillator();
+      swell.frequency.value = 0.07;
+      const swellGain = ctx.createGain();
+      swellGain.gain.value = 0.0035;
+      swell.connect(swellGain);
+      swellGain.connect(waveGain.gain);
+      waves.connect(waveFilter);
+      waveFilter.connect(waveGain).connect(masterGain);
+      waves.start();
+      swell.start();
+
+      // Wind: silent until the fog brings it up
+      const wind = makeNoiseLoop(ctx, 3);
+      const windFilter = ctx.createBiquadFilter();
+      windFilter.type = "bandpass";
+      windFilter.frequency.value = 480;
+      windFilter.Q.value = 0.7;
+      const windGain = ctx.createGain();
+      windGain.gain.value = 0.0001;
+      wind.connect(windFilter);
+      windFilter.connect(windGain).connect(masterGain);
+      wind.start();
+
+      ambientNodes = { waves, swell, wind, windGain };
+      scheduleGull();
+    } catch {
+      /* ignore */
+    }
+  },
+
+  // intensity: 0..1, from the fog system
+  setFog(intensity) {
+    try {
+      if (!ambientNodes || !audioCtx) return;
+      ambientNodes.windGain.gain.setTargetAtTime(
+        0.0001 + 0.011 * intensity,
+        audioCtx.currentTime,
+        0.5
+      );
+    } catch {
+      /* ignore */
+    }
+  },
+
+  stop() {
+    try {
+      clearTimeout(gullTimer);
+      if (!ambientNodes || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      ambientNodes.waves.stop(t + 0.1);
+      ambientNodes.swell.stop(t + 0.1);
+      ambientNodes.wind.stop(t + 0.1);
+      ambientNodes = null;
+    } catch {
+      ambientNodes = null;
     }
   },
 };

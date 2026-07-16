@@ -16,15 +16,15 @@ export class NPC {
     this.lastTalkTime = 0;
 
     const npcImages = [
-      "/assets/npc1.png",
-      "/assets/npc2.png",
-      "/assets/npc3.png",
-      "/assets/npc4.png",
-      "/assets/npc5.png",
-      "/assets/npc6.png",
-      "/assets/npc7.png",
-      "/assets/npc8.png",
-      "/assets/npc9.png",
+      "/assets/npc1.webp",
+      "/assets/npc2.webp",
+      "/assets/npc3.webp",
+      "/assets/npc4.webp",
+      "/assets/npc5.webp",
+      "/assets/npc6.webp",
+      "/assets/npc7.webp",
+      "/assets/npc8.webp",
+      "/assets/npc9.webp",
     ];
 
     this.sprite = new Image();
