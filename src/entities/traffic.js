@@ -41,10 +41,10 @@ class Taxi {
     return { x: this.x - w / 2, y: this.y - h / 2, width: w, height: h };
   }
 
-  update(deltaTime, player) {
+  update(deltaTime, player, speedFactor = 1) {
     // A well-behaved driver: ease off near intersections, brake hard when
-    // someone is in the lane ahead.
-    let targetSpeed = this.speed;
+    // someone is in the lane ahead, take it slow in the wet.
+    let targetSpeed = this.speed * speedFactor;
 
     const alongPos = this.horizontal ? this.x : this.y;
     for (const zone of this.slowZones) {
@@ -129,13 +129,13 @@ export class TrafficManager {
     }
   }
 
-  update(deltaTime, player, { onCrash, horn } = {}) {
+  update(deltaTime, player, { onCrash, horn, speedFactor = 1 } = {}) {
     const px = player.x + player.width / 2;
     const py = player.y + player.height / 2;
     const playerBox = player.getHitbox();
 
     for (const taxi of this.taxis) {
-      taxi.update(deltaTime, player);
+      taxi.update(deltaTime, player, speedFactor);
       taxi.honkCooldown = Math.max(0, taxi.honkCooldown - deltaTime / 60);
 
       const dx = px - taxi.x;

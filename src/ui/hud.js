@@ -10,7 +10,10 @@ const upgradeLabels = {
   metalDetector: "🧲 Detector",
 };
 
-export function drawHUD(ctx, { score, upgrades, offRoadTimer, deliveryLine, fogLine }) {
+export function drawHUD(
+  ctx,
+  { score, upgrades, offRoadTimer, deliveryLine, fogLine, rainLine }
+) {
   const hudX = 8;
   let hudY = 8;
   const padding = 5;
@@ -21,7 +24,8 @@ export function drawHUD(ctx, { score, upgrades, offRoadTimer, deliveryLine, fogL
     1 +
     Object.values(upgrades).filter(Boolean).length +
     (deliveryLine ? 1 : 0) +
-    (fogLine ? 1 : 0);
+    (fogLine ? 1 : 0) +
+    (rainLine ? 1 : 0);
   const bgHeight = numLines * lineHeight + padding * 2;
   const bgWidth = 130;
 
@@ -64,6 +68,11 @@ export function drawHUD(ctx, { score, upgrades, offRoadTimer, deliveryLine, fogL
   if (fogLine) {
     ctx.fillStyle = "#3a5f8a";
     ctx.fillText(fogLine, hudX, textY);
+    textY += lineHeight;
+  }
+  if (rainLine) {
+    ctx.fillStyle = "#33607e";
+    ctx.fillText(rainLine, hudX, textY);
     textY += lineHeight;
   }
 }

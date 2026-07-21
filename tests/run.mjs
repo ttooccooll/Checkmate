@@ -9,6 +9,7 @@ const BROWSER_TESTS = [
   "gameplay",
   "story",
   "continue",
+  "rain",
   "nostr",
   "qr",
   "treads",

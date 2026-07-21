@@ -109,6 +109,12 @@ let paused = false;
 let continuesUsed = false;
 let rafScheduled = false;
 
+// Wet-weather momentum: the velocity the bike actually carries. When dry
+// this equals the input velocity exactly (see the grip math in update).
+let carriedVx = 0;
+let carriedVy = 0;
+let slideSkidTimer = 0;
+
 const CONTINUE_PRICE_LABEL = "⚡ Continue · 21,000 sats";
 let offRoadTimer = 0;
 let treadsWarned = false;
@@ -285,6 +291,9 @@ async function startNewGame() {
   });
   paused = false;
   continuesUsed = false;
+  carriedVx = 0;
+  carriedVy = 0;
+  slideSkidTimer = 0;
   engine.start();
   ambient.start();
 
@@ -532,13 +541,53 @@ function update(deltaTime = 1) {
     }
   }
 
-  player.move(dx, dy);
+  // Wet grip: in rain, carried velocity chases the input instead of
+  // snapping to it. At rainIntensity 0 the retain factor is 0, so this is
+  // exactly the old instant handling — bit-identical when dry.
+  const retain = 0.84 * ambience.rainIntensity;
+  const grip = 1 - Math.pow(retain, deltaTime);
+  carriedVx += (dx - carriedVx) * grip;
+  carriedVy += (dy - carriedVy) * grip;
+  if (Math.abs(carriedVx) < 0.01) carriedVx = 0;
+  if (Math.abs(carriedVy) < 0.01) carriedVy = 0;
+
+  player.move(carriedVx, carriedVy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
 
-  const moving = dx !== 0 || dy !== 0;
+  const moving = Math.abs(carriedVx) > 0.05 || Math.abs(carriedVy) > 0.05;
   sessionStats.timeSec += deltaTime / 60;
+
+  // Sliding in the wet leaves rubber: skid when the bike's travel departs
+  // from where the rider is pointing (or keeps rolling with no input)
+  if (moving && ambience.rainIntensity > 0.4) {
+    slideSkidTimer -= deltaTime;
+    const speedMag = Math.hypot(carriedVx, carriedVy);
+    const inputMag = Math.hypot(dx, dy);
+    let sliding = false;
+    if (inputMag < 0.1) {
+      sliding = speedMag > 1.4;
+    } else if (speedMag > 1.8) {
+      const diff = Math.abs(
+        ((Math.atan2(carriedVy, carriedVx) -
+          Math.atan2(dy, dx) +
+          Math.PI * 3) %
+          (Math.PI * 2)) -
+          Math.PI
+      );
+      sliding = diff > 0.45;
+    }
+    if (sliding && slideSkidTimer <= 0) {
+      skidMarks.add(
+        player.x + player.width / 2,
+        player.y + player.height / 2,
+        player.direction
+      );
+      slideSkidTimer = 5;
+    }
+  }
+
   if (moving) {
-    sessionStats.distancePx += Math.hypot(dx, dy);
+    sessionStats.distancePx += Math.hypot(carriedVx, carriedVy);
     // Hard direction change at speed leaves rubber and kicks up dust
     if (player.direction !== prevDirection) {
       skidMarks.add(
@@ -574,6 +623,8 @@ function update(deltaTime = 1) {
   traffic.update(deltaTime, player, {
     onCrash: () => player.crash("taxi"),
     horn: () => sfx.horn(),
+    // Taxi drivers ease off in the wet
+    speedFactor: 1 - 0.15 * ambience.rainIntensity,
   });
 
   deliveries.update(deltaTime / 60, player, npcs);
@@ -585,8 +636,17 @@ function update(deltaTime = 1) {
         5000
       ),
     onFogOut: () => showMessage("☀️ The fog lifts.", 2500),
+    onRainIn: () => {
+      showMessage(
+        "🌧️ A squall blows in off the water — the roads are slick!",
+        5000
+      );
+      sfx.thunder();
+    },
+    onRainOut: () => showMessage("🌦️ The squall passes.", 2500),
   });
   ambient.setFog(ambience.fogIntensity);
+  ambient.setRain(ambience.rainIntensity);
 
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
@@ -909,6 +969,7 @@ function draw() {
     offRoadTimer,
     deliveryLine: gameRunning ? deliveries.timerText() : null,
     fogLine: gameRunning && ambience.isFoggy() ? "🌫️ 2× delivery" : null,
+    rainLine: gameRunning && ambience.isRaining() ? "🌧️ Slick roads" : null,
   });
 
   // --- Pause overlay ---
@@ -1040,6 +1101,8 @@ async function continueRun() {
 
   continuesUsed = true;
   player.setInvulnerable(180); // ~3s to ride clear of whatever ended the run
+  carriedVx = 0;
+  carriedVy = 0;
   flashTimer = 0;
   gameRunning = true;
   paused = false;

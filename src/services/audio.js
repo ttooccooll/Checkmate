@@ -357,7 +357,19 @@ export const ambient = {
       windFilter.connect(windGain).connect(masterGain);
       wind.start();
 
-      ambientNodes = { waves, swell, wind, windGain };
+      // Rain: a brighter hiss, silent until a squall brings it up
+      const rain = makeNoiseLoop(ctx, 3);
+      const rainFilter = ctx.createBiquadFilter();
+      rainFilter.type = "bandpass";
+      rainFilter.frequency.value = 2800;
+      rainFilter.Q.value = 0.4;
+      const rainGain = ctx.createGain();
+      rainGain.gain.value = 0.0001;
+      rain.connect(rainFilter);
+      rainFilter.connect(rainGain).connect(masterGain);
+      rain.start();
+
+      ambientNodes = { waves, swell, wind, windGain, rain, rainGain };
       scheduleGull();
     } catch {
       /* ignore */
@@ -378,6 +390,20 @@ export const ambient = {
     }
   },
 
+  // intensity: 0..1, from the rain system
+  setRain(intensity) {
+    try {
+      if (!ambientNodes || !audioCtx) return;
+      ambientNodes.rainGain.gain.setTargetAtTime(
+        0.0001 + 0.012 * intensity,
+        audioCtx.currentTime,
+        0.5
+      );
+    } catch {
+      /* ignore */
+    }
+  },
+
   stop() {
     try {
       clearTimeout(gullTimer);
@@ -386,6 +412,7 @@ export const ambient = {
       ambientNodes.waves.stop(t + 0.1);
       ambientNodes.swell.stop(t + 0.1);
       ambientNodes.wind.stop(t + 0.1);
+      ambientNodes.rain.stop(t + 0.1);
       ambientNodes = null;
     } catch {
       ambientNodes = null;
@@ -498,6 +525,20 @@ export const sfx = {
       tone({ freq: f * 2, type: "sine", duration: 0.14, volume: 0.016, delay: i * 0.1 + 0.03 });
     });
     tone({ freq: 2093, type: "sine", duration: 0.55, volume: 0.035, delay: 0.68 });
+  },
+
+  // A distant thunder roll for the start of a squall
+  thunder() {
+    noise({ duration: 1.4, volume: 0.13, lowpass: 140 });
+    tone({
+      freq: 52,
+      endFreq: 30,
+      type: "sine",
+      duration: 1.6,
+      volume: 0.09,
+      attack: 0.15,
+    });
+    noise({ duration: 0.9, volume: 0.06, delay: 0.55, lowpass: 110 });
   },
 
   bell() {
