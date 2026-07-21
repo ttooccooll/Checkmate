@@ -26,15 +26,41 @@ export function showMessage(text, duration = 5000, closable = false) {
   }
 }
 
-// Game-over modal with a "Share on Nostr" button; clicking anywhere else
-// closes it, the button itself never does.
-export function showGameOverMessage(text, shareText) {
+// Game-over modal with a "Share on Nostr" button — and, when offered, a
+// pay-to-continue button above it. Clicking anywhere else closes the
+// modal; the buttons themselves never do.
+export function showGameOverMessage(text, shareText, options = {}) {
   const modal = document.getElementById("message-modal");
   clearTimeout(modal._timer);
   modal.textContent = text;
 
   const shareRow = document.createElement("div");
   shareRow.className = "share-row";
+
+  if (options.continueLabel && options.onContinue) {
+    const contBtn = document.createElement("button");
+    contBtn.id = "continue-run-btn";
+    contBtn.textContent = options.continueLabel;
+    contBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (contBtn.disabled) return;
+      contBtn.disabled = true;
+      contBtn.classList.add("busy");
+      contBtn.textContent = "Waiting for payment…";
+
+      const paid = await options.onContinue();
+      if (paid) {
+        modal.style.display = "none";
+        modal.classList.remove("interactive");
+        modal.onclick = null;
+      } else {
+        contBtn.classList.remove("busy");
+        contBtn.disabled = false;
+        contBtn.textContent = options.continueLabel;
+      }
+    });
+    shareRow.appendChild(contBtn);
+  }
 
   const shareBtn = document.createElement("button");
   shareBtn.id = "share-nostr-btn";

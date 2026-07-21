@@ -50,6 +50,12 @@ await run(
   { method: "POST", body: { item: "helmet" } },
   502
 );
+await run(
+  "create: continueRun is a priced item",
+  createInvoice,
+  { method: "POST", body: { item: "continueRun" } },
+  502
+);
 await run("check: wrong method", checkInvoice, { method: "POST", query: {} }, 405);
 await run("check: bad hash", checkInvoice, { method: "GET", query: { paymentHash: "zzz" } }, 400);
 await run("check: missing hash", checkInvoice, { method: "GET", query: {} }, 400);

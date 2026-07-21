@@ -8,11 +8,14 @@ if (!globalThis.WebSocket) {
 
 // The single source of truth for prices. The client only ever names an
 // item — it can never choose an amount.
+// continueRun is deliberately priced magnitudes above the upgrades:
+// reviving a run must never be cheaper than playing well.
 export const PRICES_SATS = {
   helmet: 50,
   speedBoost: 50,
   offRoadTreads: 75,
   metalDetector: 100,
+  continueRun: 21000,
 };
 
 const REQUEST_TIMEOUT_MS = 15000;

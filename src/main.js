@@ -106,6 +106,10 @@ let score = 0;
 let gameRunning = false;
 let startingGame = false;
 let paused = false;
+let continuesUsed = false;
+let rafScheduled = false;
+
+const CONTINUE_PRICE_LABEL = "⚡ Continue · 21,000 sats";
 let offRoadTimer = 0;
 let treadsWarned = false;
 let flashTimer = 0;
@@ -280,6 +284,7 @@ async function startNewGame() {
     quests: 0,
   });
   paused = false;
+  continuesUsed = false;
   engine.start();
   ambient.start();
 
@@ -589,7 +594,9 @@ function update(deltaTime = 1) {
         npc.interact(player, dialogManager, { showMessage });
       }
     }
-    if (npc.checkDangerCollision(player)) {
+    // Invulnerability frames protect here too, so a continued run isn't
+    // instantly ended by the pedestrian you fell on
+    if (player.canCrash() && npc.checkDangerCollision(player)) {
       endGame("You hit a pedestrian!");
     }
   });
@@ -984,7 +991,13 @@ ${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
     "#gamestr",
   ].join("\n");
 
-  showGameOverMessage(message, shareText);
+  showGameOverMessage(
+    message,
+    shareText,
+    continuesUsed
+      ? {}
+      : { continueLabel: CONTINUE_PRICE_LABEL, onContinue: continueRun }
+  );
 
   resetButtonSize();
 }
@@ -1010,7 +1023,43 @@ function gameLoop(timestamp) {
   if (!paused) update(deltaTime);
   draw();
 
-  if (gameRunning || flashTimer > 0) requestAnimationFrame(gameLoop);
+  if (gameRunning || flashTimer > 0) {
+    requestAnimationFrame(gameLoop);
+    rafScheduled = true;
+  } else {
+    rafScheduled = false;
+  }
+}
+
+// Zap-to-continue: pay (dearly) to pick the run back up where it ended.
+// Score, stats, and delivery state survive; the wiped run-upgrades don't —
+// the payment revives the rider, not the gear. Once per run.
+async function continueRun() {
+  const success = await payments.makePayment("continueRun");
+  if (!success) return false;
+
+  continuesUsed = true;
+  player.setInvulnerable(180); // ~3s to ride clear of whatever ended the run
+  flashTimer = 0;
+  gameRunning = true;
+  paused = false;
+  engine.start();
+
+  const newGameBtn = document.getElementById("new-game-btn");
+  newGameBtn.textContent = "Quest Log";
+  newGameBtn.onclick = () => questLog.toggle();
+
+  const actionButtons = document.querySelectorAll("#action-buttons");
+  actionButtons.forEach((button) => button.classList.add("smaller-buttons"));
+
+  if (!rafScheduled) {
+    lastTime = performance.now();
+    rafScheduled = true;
+    requestAnimationFrame(gameLoop);
+  }
+
+  showMessage("⚡ Back on the bike. The run continues!", 3000);
+  return true;
 }
 
 function handleCrash(reason) {
@@ -1056,6 +1105,8 @@ window.__cm = {
   player,
   getNpcs: () => npcs,
   isPaused: () => paused,
+  isRunning: () => gameRunning,
+  getScore: () => score,
 };
 
 // --- Shop & buttons -----------------------------------------------------------------
