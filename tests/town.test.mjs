@@ -152,10 +152,10 @@ const ok =
   world.allOnRoad &&
   world.photoCount === 4 &&
   world.photosOnPotholes &&
-  world.fleet.length === 9 &&
-  world.fleet.filter((t) => t === "taxi").length === 5 &&
-  world.fleet.filter((t) => t === "bakkie").length === 2 &&
-  world.fleet.filter((t) => t === "hatch").length === 2 &&
+  world.fleet.length === 14 &&
+  world.fleet.filter((t) => t === "taxi").length === 6 &&
+  world.fleet.filter((t) => t === "bakkie").length === 4 &&
+  world.fleet.filter((t) => t === "hatch").length === 4 &&
   jolt.hitRegistered &&
   (offer.promptText || "").includes("Search the shoreline") &&
   (offer.promptText || "").includes("+15 points") &&

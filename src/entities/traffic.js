@@ -134,7 +134,7 @@ export class TrafficManager {
     this.taxis = [];
     if (!roads.length) return;
 
-    // 5 taxis first (tests and helpers rely on early indices being taxis),
+    // Taxis first (tests and helpers rely on early indices being taxis),
     // then the rest of the town's traffic
     const fleet = [
       "taxi",
@@ -142,8 +142,13 @@ export class TrafficManager {
       "taxi",
       "taxi",
       "taxi",
+      "taxi",
       "bakkie",
       "bakkie",
+      "bakkie",
+      "bakkie",
+      "hatch",
+      "hatch",
       "hatch",
       "hatch",
     ];
@@ -166,11 +171,13 @@ export class TrafficManager {
       zonesByRoad.set(road, zones);
     });
 
-    fleet.forEach((type, i) => {
+    const typeCounts = {};
+    fleet.forEach((type) => {
       const road = roads[Math.floor(Math.random() * roads.length)];
       const forward = Math.random() < 0.5 ? 1 : -1;
       const pool = this.sprites[type] || this.sprites.taxi;
-      const sprite = pool[i % pool.length];
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+      const sprite = pool[(typeCounts[type] - 1) % pool.length];
       const taxi = new Taxi(
         sprite,
         road,

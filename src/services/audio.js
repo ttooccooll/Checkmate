@@ -527,6 +527,12 @@ export const sfx = {
     tone({ freq: 2093, type: "sine", duration: 0.55, volume: 0.035, delay: 0.68 });
   },
 
+  // A camera shutter: two tiny mechanical ticks
+  shutter() {
+    noise({ duration: 0.03, volume: 0.09, lowpass: 5200 });
+    noise({ duration: 0.045, volume: 0.07, delay: 0.055, lowpass: 3600 });
+  },
+
   // A dull thunk-and-rattle for hitting a pothole
   pothole() {
     noise({ duration: 0.09, volume: 0.1, lowpass: 500 });

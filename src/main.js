@@ -87,8 +87,17 @@ const vehicleSprites = {
     "/assets/taxi2.webp",
     "/assets/taxi3.webp",
   ]),
-  bakkie: loadSprites(["/assets/bakkie.webp"]),
-  hatch: loadSprites(["/assets/hatch1.webp", "/assets/hatch2.webp"]),
+  bakkie: loadSprites([
+    "/assets/bakkie.webp",
+    "/assets/bakkie2.webp",
+    "/assets/bakkie3.webp",
+  ]),
+  hatch: loadSprites([
+    "/assets/hatch1.webp",
+    "/assets/hatch2.webp",
+    "/assets/hatch3.webp",
+    "/assets/hatch4.webp",
+  ]),
 };
 
 const skidMarks = new SkidMarks();
@@ -125,6 +134,7 @@ let carriedVx = 0;
 let carriedVy = 0;
 let slideSkidTimer = 0;
 let potholeSlowTimer = 0;
+let photoFlashTimer = 0;
 
 const CONTINUE_PRICE_LABEL = "⚡ Continue · 21,000 sats";
 let offRoadTimer = 0;
@@ -802,8 +812,15 @@ function update(deltaTime = 1) {
       player.inventory = player.inventory || {};
       player.inventory[item.id] = (player.inventory[item.id] || 0) + 1;
 
-      sfx.item();
-      showMessage(`🎉 Collected ${item.id}!`);
+      if (item.id === "photo") {
+        // Photos are shot, not collected
+        sfx.shutter();
+        photoFlashTimer = 8;
+        showMessage("📸 Pothole photographed!");
+      } else {
+        sfx.item();
+        showMessage(`🎉 Collected ${item.id}!`);
+      }
     }
   });
 
@@ -998,6 +1015,14 @@ function draw() {
   if (flashTimer > 0) {
     const dpr = window.devicePixelRatio || 1;
     ctx.fillStyle = `rgba(255, 40, 40, ${(0.3 * flashTimer) / FLASH_DURATION})`;
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  }
+
+  // --- Camera flash (photographing a pothole) ---
+  if (photoFlashTimer > 0) {
+    photoFlashTimer -= 1;
+    const dpr = window.devicePixelRatio || 1;
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * (photoFlashTimer / 8)})`;
     ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   }
 

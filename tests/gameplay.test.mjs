@@ -121,7 +121,7 @@ await browser.close();
 const ok =
   started &&
   world.skids > 0 &&
-  world.taxis === 9 &&
+  world.taxis === 14 &&
   pausedOn === true &&
   pausedOff === false &&
   delivery.offered === "pickup" &&
