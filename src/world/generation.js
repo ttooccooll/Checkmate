@@ -338,8 +338,8 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   let attempts = 0;
   while (placed < 6 && attempts++ < 900) {
     const horiz = Math.random() < 0.5;
-    const w = horiz ? 118 : 48;
-    const h = horiz ? 48 : 118;
+    const w = horiz ? 140 : 57;
+    const h = horiz ? 57 : 140;
     const x = 30 + Math.random() * (WORLD_WIDTH - w - 60);
     const y = 30 + Math.random() * (WORLD_HEIGHT - h - 60);
     const rect = { x, y, width: w, height: h };
@@ -350,8 +350,8 @@ export function placeProps(roads, buildings, trees, reserved = []) {
         y,
         w,
         h,
-        bw: 118,
-        bh: 48,
+        bw: 140,
+        bh: 57,
         rot: horiz ? 0 : Math.PI / 2,
         variant: placed % 3,
       });
@@ -438,12 +438,14 @@ export function buildClusters(roads, reserved, shackImg, count = 3) {
       }
     }
 
-    // One or two containers along the cluster edge
+    // One or two containers along the cluster edge — their footprints are
+    // checked against everything placed so far AND returned so later
+    // building placement can avoid them too
     const nCont = 1 + (Math.random() < 0.5 ? 1 : 0);
     for (let i = 0; i < nCont; i++) {
       const horiz = Math.random() < 0.5;
-      const w = horiz ? 118 : 48;
-      const h = horiz ? 48 : 118;
+      const w = horiz ? 140 : 57;
+      const h = horiz ? 57 : 140;
       const side = Math.floor(Math.random() * 4);
       let px = x;
       let py = y;
@@ -460,16 +462,25 @@ export function buildClusters(roads, reserved, shackImg, count = 3) {
         px = x + cw + 8;
         py = y + Math.random() * Math.max(1, ch - h);
       }
+      const rect = { x: px, y: py, width: w, height: h };
       if (px < 24 || py < 24 || px + w > WORLD_WIDTH - 24 || py + h > WORLD_HEIGHT - 24) continue;
       if (isOnRoad(roads, px - 8, py - 8, w + 16, h + 16)) continue;
+      if (reserved.some((r) => rectCollision(rect, r))) continue;
+      if (shacks.some((s) => rectCollision(rect, s))) continue;
+      if (
+        containers.some((c) =>
+          rectCollision(rect, { x: c.x - 10, y: c.y - 10, width: c.w + 20, height: c.h + 20 })
+        )
+      )
+        continue;
       containers.push({
         type: "container",
         x: px,
         y: py,
         w,
         h,
-        bw: 118,
-        bh: 48,
+        bw: 140,
+        bh: 57,
         rot: horiz ? 0 : Math.PI / 2,
         variant: Math.floor(Math.random() * 3),
       });

@@ -134,12 +134,12 @@ let solidRects = []; // buildings + props + lighthouse, for spawn avoidance
 let dustParticles = [];
 
 // The lighthouse stands on the point — the south-west corner of the map
-const LIGHTHOUSE = { x: 160, y: 2840, hitR: 62, drawSize: 210 };
+const LIGHTHOUSE = { x: 175, y: 2820, hitR: 78, drawSize: 270 };
 const LIGHTHOUSE_RESERVE = {
-  x: LIGHTHOUSE.x - 130,
-  y: LIGHTHOUSE.y - 130,
-  width: 260,
-  height: 260,
+  x: LIGHTHOUSE.x - 160,
+  y: LIGHTHOUSE.y - 160,
+  width: 320,
+  height: 320,
 };
 
 let score = 0;
@@ -359,6 +359,16 @@ async function startNewGame() {
     buildingImages.find((i) => i.src.includes("shack")) || buildingImages[0];
   const clusters = buildClusters(roads, reserved, shackImg, 3);
   reserved.push(...clusters.clusterRects);
+  // Cluster containers stick out past the cluster margin — reserve their
+  // footprints so loose houses can't be placed on top of them
+  reserved.push(
+    ...clusters.containers.map((c) => ({
+      x: c.x - 6,
+      y: c.y - 6,
+      width: c.w + 12,
+      height: c.h + 12,
+    }))
+  );
 
   trees = generateTrees(70, roads, treeImages, reserved);
   renderTreesOffscreen(trees);
@@ -383,8 +393,8 @@ async function startNewGame() {
   // The keeper lives where the story says he does
   const keeper = npcs.find((n) => n.id === "lighthouse_keeper");
   if (keeper) {
-    keeper.x = LIGHTHOUSE.x + 82;
-    keeper.y = LIGHTHOUSE.y - 34;
+    keeper.x = LIGHTHOUSE.x + 104;
+    keeper.y = LIGHTHOUSE.y - 42;
   }
 
   // spawn quest items

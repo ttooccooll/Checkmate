@@ -101,6 +101,32 @@ export function renderPitchOffscreen(pitch) {
   const cx = x + w / 2;
   const cy = y + h / 2;
 
+  // The playing surface itself: hard-packed dusty ground that fades out
+  // into the veld at the edges — a field, not lines on wild grass
+  g.save();
+  g.filter = "blur(24px)";
+  g.fillStyle = "rgba(174, 154, 116, 0.4)";
+  g.fillRect(x - 16, y - 16, w + 32, h + 32);
+  g.filter = "blur(9px)";
+  g.fillStyle = "rgba(181, 161, 122, 0.38)";
+  g.fillRect(x + 6, y + 6, w - 12, h - 12);
+  g.filter = "blur(6px)";
+  // patchy surface: surviving grass tufts and extra-worn dust
+  for (let i = 0; i < 30; i++) {
+    const px = x + 12 + Math.random() * (w - 24);
+    const py = y + 12 + Math.random() * (h - 24);
+    const pr = 9 + Math.random() * 22;
+    g.fillStyle =
+      Math.random() < 0.42
+        ? "rgba(118, 126, 80, 0.22)" // grass that survived
+        : "rgba(166, 144, 102, 0.26)"; // dust worn harder
+    g.beginPath();
+    g.ellipse(px, py, pr, pr * 0.7, Math.random() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.filter = "none";
+  g.restore();
+
   // Bare, kicked-to-death earth at the goalmouths and centre
   const wear = (wx, wy, rx, ry, alpha) => {
     g.save();

@@ -174,14 +174,37 @@ function lighthouseSvg() {
   boulders.sort((a, b) => a.by - b.by);
   const boulderSvg = boulders
     .map((b) => {
-      const base = `rgb(${b.tone + b.warm}, ${b.tone + Math.floor(b.warm * 0.7)}, ${b.tone - 4})`;
-      const dark = `rgba(30, 27, 24, 0.35)`;
+      // Mix cool granite grays with warm weathered browns
+      const cool = rnd() < 0.5;
+      const t = 88 + Math.floor(rnd() * 58);
+      const base = cool
+        ? `rgb(${t}, ${t + 3}, ${t + 7})`
+        : `rgb(${t + 14}, ${t + 6}, ${t - 6})`;
+      const lumpDx = (rnd() - 0.5) * b.br * 0.7;
+      const lumpDy = (rnd() - 0.5) * b.ry * 0.7;
+      // mottling: darker mineral patches
+      const mottles = [];
+      const nm = 2 + Math.floor(rnd() * 2);
+      for (let m = 0; m < nm; m++) {
+        mottles.push(
+          `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry).toFixed(1)}" rx="${(b.br * (0.15 + rnd() * 0.2)).toFixed(1)}" ry="${(b.ry * (0.12 + rnd() * 0.18)).toFixed(1)}" fill="rgba(24, 22, 20, ${(0.1 + rnd() * 0.1).toFixed(2)})"/>`
+        );
+      }
+      // coastal lichen on about a third of the stones
+      const lichen =
+        rnd() < 0.34
+          ? `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br * 0.8).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry * 0.8).toFixed(1)}" rx="${(b.br * 0.32).toFixed(1)}" ry="${(b.ry * 0.26).toFixed(1)}" fill="rgba(126, 128, 74, ${(0.16 + rnd() * 0.12).toFixed(2)})"/>`
+          : "";
+      const hi = 0.18 + rnd() * 0.18;
       return `
   <g transform="rotate(${b.rotDeg} ${b.bx.toFixed(1)} ${b.by.toFixed(1)})">
-    <ellipse cx="${(b.bx + 3).toFixed(1)}" cy="${(b.by + 4.5).toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="rgba(0,0,0,0.3)"/>
-    <ellipse cx="${b.bx.toFixed(1)}" cy="${b.by.toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="${base}" stroke="rgba(42,38,34,0.5)" stroke-width="1.4"/>
-    <ellipse cx="${(b.bx + b.br * 0.22).toFixed(1)}" cy="${(b.by + b.ry * 0.28).toFixed(1)}" rx="${(b.br * 0.72).toFixed(1)}" ry="${(b.ry * 0.6).toFixed(1)}" fill="${dark}"/>
-    <ellipse cx="${(b.bx - b.br * 0.3).toFixed(1)}" cy="${(b.by - b.ry * 0.35).toFixed(1)}" rx="${(b.br * 0.42).toFixed(1)}" ry="${(b.ry * 0.32).toFixed(1)}" fill="rgba(255,252,244,0.28)"/>
+    <ellipse cx="${(b.bx + 3).toFixed(1)}" cy="${(b.by + 4.5).toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="rgba(0,0,0,0.32)"/>
+    <ellipse cx="${b.bx.toFixed(1)}" cy="${b.by.toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="${base}" stroke="rgba(38,34,30,0.55)" stroke-width="1.3"/>
+    <ellipse cx="${(b.bx + lumpDx).toFixed(1)}" cy="${(b.by + lumpDy).toFixed(1)}" rx="${(b.br * 0.72).toFixed(1)}" ry="${(b.ry * 0.75).toFixed(1)}" fill="${base}" stroke="rgba(38,34,30,0.3)" stroke-width="1"/>
+    <ellipse cx="${(b.bx + b.br * 0.24).toFixed(1)}" cy="${(b.by + b.ry * 0.3).toFixed(1)}" rx="${(b.br * 0.74).toFixed(1)}" ry="${(b.ry * 0.6).toFixed(1)}" fill="rgba(28, 25, 22, 0.32)"/>
+    ${mottles.join("\n    ")}
+    ${lichen}
+    <ellipse cx="${(b.bx - b.br * 0.32).toFixed(1)}" cy="${(b.by - b.ry * 0.38).toFixed(1)}" rx="${(b.br * 0.4).toFixed(1)}" ry="${(b.ry * 0.3).toFixed(1)}" fill="rgba(255,250,240,${hi.toFixed(2)})"/>
   </g>`;
     })
     .join("");
