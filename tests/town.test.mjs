@@ -175,6 +175,39 @@ const crossing = await page.evaluate(async () => {
   return { everOverlapped, bSpeed: B.currentSpeed };
 });
 
+// --- The "stopped on the tracks" case: a vertical already mid-crossing
+// must commit and clear while the arriving horizontal stops for it ---
+const crossing2 = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const A = cm.traffic.taxis.filter((t) => t.horizontal)[1] ||
+    cm.traffic.taxis.find((t) => t.horizontal);
+  const B = cm.traffic.taxis.filter((t) => !t.horizontal)[1] ||
+    cm.traffic.taxis.find((t) => !t.horizontal);
+  const cx = B.road.x + B.road.width / 2;
+
+  // B is straddling A's lane right now; A bears down from 130px away
+  B.y = A.y; // dead center of A's lane
+  B.currentSpeed = B.speed;
+  A.x = cx - A.forward * 130;
+  A.speed = 3.2;
+  A.currentSpeed = 3.2;
+
+  const hit = (r1, r2) =>
+    r1.x < r2.x + r2.width &&
+    r1.x + r1.width > r2.x &&
+    r1.y < r2.y + r2.height &&
+    r1.y + r1.height > r2.y;
+
+  let everOverlapped = false;
+  for (let i = 0; i < 10; i++) {
+    await new Promise((r) => setTimeout(r, 300));
+    if (hit(A.hitbox(), B.hitbox())) everOverlapped = true;
+  }
+  // B must have cleared the lane, not parked on it
+  const bCleared = Math.abs(B.y - A.y) > 60;
+  return { everOverlapped, bCleared };
+});
+
 await browser.close();
 
 const ok =
@@ -198,6 +231,8 @@ const ok =
   queue.followerSpeed > 0.1 && // following, not frozen
   queue.movingCount >= 10 && // a couple may be waiting at crossings, most roll
   crossing.everOverlapped === false && // crossing traffic never overlaps
+  crossing2.everOverlapped === false && // even when caught mid-box
+  crossing2.bCleared && // the mid-box crosser commits and clears
   problems.length === 0;
 
 finish("town", ok, {
@@ -208,5 +243,6 @@ finish("town", ok, {
   offer,
   queue,
   crossing,
+  crossing2,
   problems,
 });

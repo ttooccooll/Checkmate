@@ -108,14 +108,27 @@ class Taxi {
       const occupyDepth = this.h / 2 + o.w / 2;
       if (lateral < corridorHalf && ahead > -occupyDepth && ahead < 150) {
         if (!this.horizontal) {
-          if (ahead < occupyDepth + 30) {
-            hardYield = true; // stop dead — they're in (or at) the box
+          // Vertical yields — but never stops ON the crossing. Past the
+          // commit point it clears the box instead of blocking it.
+          const commitPoint = occupyDepth - 8;
+          if (ahead <= commitPoint) {
+            // committed: keep rolling and get out of the box
+          } else if (ahead < occupyDepth + 30) {
+            hardYield = true; // stop short of the box and wait
             targetSpeed = 0;
           } else {
             targetSpeed = Math.min(targetSpeed, this.speed * 0.18);
           }
-        } else if (ahead < occupyDepth + 20) {
-          targetSpeed = Math.min(targetSpeed, this.speed * 0.25);
+        } else {
+          // Horizontal has priority, but stops for a body physically in
+          // its lane just ahead. That body is always a committed crosser
+          // (waiting verticals stand clear of the lane), so it will move.
+          if (ahead < occupyDepth + 12) {
+            hardYield = true;
+            targetSpeed = 0;
+          } else if (ahead < occupyDepth + 45) {
+            targetSpeed = Math.min(targetSpeed, this.speed * 0.3);
+          }
         }
       }
     }
