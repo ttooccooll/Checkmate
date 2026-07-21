@@ -1091,11 +1091,12 @@ function draw() {
   // --- Delivery markers (parcel + destination ring) ---
   deliveries.draw(ctx, nowMs);
 
+  // --- Draw player (under vehicles: a collision reads as going under
+  // the van, same as trees and buildings) ---
+  player.draw(ctx);
+
   // --- Taxis ---
   traffic.draw(ctx, isVisible);
-
-  // --- Draw player ---
-  player.draw(ctx);
 
   // --- Draw trees ---
   blitWorld(treeCanvas);
