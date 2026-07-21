@@ -93,9 +93,13 @@ const fragile = await page.evaluate(async () => {
   await frame(); await frame(); await frame();
   const carrying = cm.deliveries.state;
 
-  // crash into a taxi — helmet saves the rider, not the package
+  // crash into a taxi — helmet saves the rider, not the package.
+  // Avoid taxis mid-wrap at the world edge (teleport would clamp and miss).
   cm.player.invulnerableTimer = 0; // this crash is supposed to count
-  const t = cm.traffic.taxis[0];
+  const t =
+    cm.traffic.taxis.find(
+      (x) => x.x > 150 && x.x < 2850 && x.y > 150 && x.y < 2850
+    ) || cm.traffic.taxis[0];
   cm.player.x = t.x - 15;
   cm.player.y = t.y - 15;
   await frame(); await frame(); await frame();

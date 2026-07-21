@@ -31,13 +31,20 @@ export function parkNpcs(page) {
   });
 }
 
-// Crash into a taxi twice: once for the helmet, once fatal
+// Crash into a taxi twice: once for the helmet, once fatal.
+// Taxis wrap through a ±90px margin outside the world — a mid-wrap taxi
+// would make the teleport clamp back in-bounds and miss, so pick one
+// that's safely inside.
 export async function dieByTaxi(page) {
   await page.evaluate(async () => {
     const cm = window.__cm;
     const frame = () => new Promise((r) => requestAnimationFrame(r));
+    const safeTaxi = () =>
+      cm.traffic.taxis.find(
+        (t) => t.x > 150 && t.x < 2850 && t.y > 150 && t.y < 2850
+      ) || cm.traffic.taxis[0];
     const jump = async () => {
-      const t = cm.traffic.taxis[0];
+      const t = safeTaxi();
       cm.player.x = t.x - 15;
       cm.player.y = t.y - 15;
       await frame();
