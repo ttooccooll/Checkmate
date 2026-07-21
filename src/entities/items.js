@@ -8,42 +8,56 @@ import { isCollidingWithObstacles } from "../core/collision.js";
  */
 
 const ITEM_VISUALS = {
-  clue: { color: "#F4D03F" }, // warm yellow
-  marker: { color: "#5DADE2" }, // blue
-  fragment: { color: "#AF7AC5" }, // purple (mystery)
-  sign: { color: "#58D68D" }, // green
-  litter: { color: "#AAB7B8" }, // gray
-  light: { color: "#F7DC6F" }, // pale gold
-  ball: { color: "#EC7063" }, // red
-  notice: { color: "#F5B041" }, // orange
-  bell: { color: "#FAD7A0" }, // antique brass
-  photo: { color: "#E8ECEF" }, // camera-flash white
+  clue: { color: "#F4D03F", size: 9 }, // warm yellow
+  marker: { color: "#5DADE2", size: 10 }, // blue
+  fragment: { color: "#AF7AC5", size: 9 }, // purple (mystery)
+  sign: { color: "#58D68D", size: 11 }, // green
+  litter: { color: "#AAB7B8", size: 9 }, // gray
+  light: { color: "#F7DC6F", size: 10 }, // pale gold
+  ball: { color: "#EC7063", size: 8 }, // red
+  notice: { color: "#F5B041", size: 9 }, // orange
+  bell: { color: "#FAD7A0", size: 11 }, // antique brass
+  photo: { color: "#E8ECEF", size: 10 }, // camera-flash white
 };
+
+// The bike must be able to touch an item without crashing into whatever
+// it landed beside — keep this much clearance around every spawn
+const PICKUP_CLEARANCE = 34;
 
 export function spawnQuestItems(npc, itemsArray, { buildings = [], trees = [] } = {}) {
   if (!npc.quest) return;
 
   const itemId = npc.quest.params?.item || npc.quest.item;
   const amount = npc.quest.params?.amount || npc.quest.amount || 1;
-  const visual = ITEM_VISUALS[itemId] || { color: "#4CA3AF" };
+  const visual = ITEM_VISUALS[itemId] || { color: "#4CA3AF", size: 9 };
+  const size = visual.size;
 
   for (let i = 0; i < amount; i++) {
     let attempts = 0;
     let placed = false;
 
     while (attempts < 5000) {
-      // Random position in the world
-      const x = Math.random() * (WORLD_WIDTH - 5);
-      const y = Math.random() * (WORLD_HEIGHT - 5);
+      // Random position in the world, clear of the edges
+      const x = 40 + Math.random() * (WORLD_WIDTH - size - 80);
+      const y = 40 + Math.random() * (WORLD_HEIGHT - size - 80);
 
-      // Check collisions: buildings, trees, other items
+      // Check collisions with full pickup clearance so nothing spawns
+      // wedged against an obstacle the bike would crash into
+      const pad = PICKUP_CLEARANCE;
       const safe =
-        !isCollidingWithObstacles(x, y, 5, 5, buildings, trees) &&
+        !isCollidingWithObstacles(
+          x - pad,
+          y - pad,
+          size + pad * 2,
+          size + pad * 2,
+          buildings,
+          trees
+        ) &&
         !itemsArray.some(
           (it) =>
-            it.x < x + 5 &&
+            it.x < x + size &&
             it.x + it.size > x &&
-            it.y < y + 5 &&
+            it.y < y + size &&
             it.y + it.size > y
         );
 
@@ -52,7 +66,7 @@ export function spawnQuestItems(npc, itemsArray, { buildings = [], trees = [] } 
           id: itemId,
           x,
           y,
-          size: 5,
+          size,
           color: visual.color,
           collected: false,
         });

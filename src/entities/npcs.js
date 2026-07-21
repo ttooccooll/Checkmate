@@ -124,6 +124,9 @@ export class NPC {
   }
 
   checkDangerCollision(player) {
+    // Story-locked NPCs are invisible until unlocked — they must never be
+    // a ghost you can run into
+    if (!this.visible) return false;
     // Tiny 1×1 hitbox in the center of the NPC
     const npcCenterBox = {
       x: this.x + this.width / 2,

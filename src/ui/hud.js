@@ -8,6 +8,7 @@ const upgradeLabels = {
   speedBoost: "⚡ Boost",
   offRoadTreads: "🛞 Treads",
   metalDetector: "🧲 Detector",
+  shockAbsorbers: "🔩 Shocks",
 };
 
 // The HUD backdrop uses shadowBlur 50 — a per-frame gaussian if drawn

@@ -187,6 +187,7 @@ let upgrades = {
   helmet: true,
   offRoadTreads: false,
   metalDetector: false,
+  shockAbsorbers: false,
   ...savedUpgrades,
 };
 
@@ -317,8 +318,11 @@ async function startNewGame() {
   startingGame = true;
 
   // Immediate feedback — world generation takes a beat, and the player
-  // should never wonder whether the click landed
-  document.getElementById("new-game-btn").textContent = "Loading…";
+  // should never wonder whether the click landed. The button steps aside
+  // so the toast never sits on top of it.
+  const loadingBtn = document.getElementById("new-game-btn");
+  loadingBtn.textContent = "Loading…";
+  loadingBtn.style.visibility = "hidden";
   showMessage("Rolling into town…", 4000);
   // let the message actually paint before the heavy work starts
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -403,7 +407,9 @@ async function startNewGame() {
   // spawn quest items
   items = []; // reset
   npcs.forEach((npc) => {
-    spawnQuestItems(npc, items, { buildings, trees });
+    // solidRects includes props and the lighthouse, so nothing spawns
+    // wedged where the bike can't reach it
+    spawnQuestItems(npc, items, { buildings: solidRects, trees });
   });
 
   // Themba's report-the-potholes quest: photo markers sit on real potholes
@@ -420,7 +426,6 @@ async function startNewGame() {
   // road verges, away from the pitch they need bringing back to
   items.forEach((item) => {
     if (item.id !== "ball") return;
-    item.size = 10;
     for (let tries = 0; tries < 300; tries++) {
       const r = roads[Math.floor(Math.random() * roads.length)];
       const horiz = r.width > r.height;
@@ -445,15 +450,21 @@ async function startNewGame() {
           width: pitch.w + 60,
           height: pitch.h + 60,
         });
+      const padded = {
+        x: rect.x - 30,
+        y: rect.y - 30,
+        width: rect.width + 60,
+        height: rect.height + 60,
+      };
       const blocked =
         onPitch ||
         x < 20 ||
         y < 20 ||
         x > WORLD_WIDTH - 30 ||
         y > WORLD_HEIGHT - 30 ||
-        solidRects.some((s) => rectCollision(rect, s)) ||
+        solidRects.some((s) => rectCollision(padded, s)) ||
         trees.some((t) =>
-          rectCollision(rect, {
+          rectCollision(padded, {
             x: t.x,
             y: t.y,
             width: t.size * 2,
@@ -504,6 +515,7 @@ async function startNewGame() {
   document.getElementById("game-container").style.display = "block";
   document.getElementById("touch-controls").style.display = "grid";
   document.getElementById("action-buttons").style.display = "flex";
+  loadingBtn.style.visibility = "";
   resizeCanvas();
 
   const visibleWidth = canvas.width / getDpr();
@@ -751,7 +763,7 @@ function update(deltaTime = 1) {
   // Picking across the lighthouse rocks is slow going
   if (rockSlowTimer > 0) {
     rockSlowTimer -= deltaTime;
-    baseSpeed *= 0.6;
+    baseSpeed *= upgrades.shockAbsorbers ? 0.8 : 0.6;
   }
 
   const speed = baseSpeed * deltaTime;
@@ -827,17 +839,19 @@ function update(deltaTime = 1) {
       const cy = Math.max(hb.y, Math.min(p.y, hb.y + hb.height));
       if ((p.x - cx) ** 2 + (p.y - cy) ** 2 < (p.r * 0.8) ** 2) {
         p.hitCooldown = 90;
-        potholeSlowTimer = 40;
+        // Shock absorbers soak up most of the hit
+        const damp = upgrades.shockAbsorbers ? 0.4 : 1;
+        potholeSlowTimer = upgrades.shockAbsorbers ? 14 : 40;
         // The front wheel kicks sideways — faster in means further off-line
         const speedMag = Math.hypot(carriedVx, carriedVy) || 1;
         const kickAng =
           Math.atan2(carriedVy, carriedVx) +
           (Math.random() < 0.5 ? 1 : -1) * (Math.PI / 2) +
           (Math.random() - 0.5) * 0.6;
-        const kick = 1.1 + speedMag * 0.25;
+        const kick = (1.1 + speedMag * 0.25) * damp;
         joltVx += Math.cos(kickAng) * kick;
         joltVy += Math.sin(kickAng) * kick;
-        shakeTimer = 9;
+        shakeTimer = upgrades.shockAbsorbers ? 4 : 9;
         sfx.pothole();
         spawnDust();
         break;
@@ -860,11 +874,12 @@ function update(deltaTime = 1) {
       rockBumpCooldown -= deltaTime;
       if (rockBumpCooldown <= 0) {
         rockBumpCooldown = 5 + Math.random() * 8;
+        const damp = upgrades.shockAbsorbers ? 0.4 : 1;
         const ang = Math.random() * Math.PI * 2;
-        const mag = 0.35 + Math.hypot(carriedVx, carriedVy) * 0.16;
+        const mag = (0.35 + Math.hypot(carriedVx, carriedVy) * 0.16) * damp;
         joltVx += Math.cos(ang) * mag;
         joltVy += Math.sin(ang) * mag;
-        shakeTimer = Math.max(shakeTimer, 3);
+        shakeTimer = Math.max(shakeTimer, upgrades.shockAbsorbers ? 2 : 3);
         spawnDust();
       }
     }
@@ -1275,31 +1290,31 @@ function draw() {
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-      const px = cx + Math.cos(a) * r * 0.38;
-      const py = cy + Math.sin(a) * r * 0.38;
+      const px = cx + Math.cos(a) * r * 0.33;
+      const py = cy + Math.sin(a) * r * 0.33;
       if (i) ctx.lineTo(px, py);
       else ctx.moveTo(px, py);
     }
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(40, 40, 40, 0.55)";
-    ctx.lineWidth = 0.7;
+    ctx.strokeStyle = "rgba(40, 40, 40, 0.45)";
+    ctx.lineWidth = 0.6;
     for (let i = 0; i < 5; i++) {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
       ctx.beginPath();
-      ctx.moveTo(cx + Math.cos(a) * r * 0.38, cy + Math.sin(a) * r * 0.38);
+      ctx.moveTo(cx + Math.cos(a) * r * 0.33, cy + Math.sin(a) * r * 0.33);
       ctx.lineTo(cx + Math.cos(a) * r * 0.95, cy + Math.sin(a) * r * 0.95);
       ctx.stroke();
     }
-    ctx.fillStyle = "rgba(43, 43, 43, 0.85)";
+    ctx.fillStyle = "rgba(43, 43, 43, 0.8)";
     for (let i = 0; i < 5; i++) {
       const a = -Math.PI / 2 + Math.PI / 5 + (i * 2 * Math.PI) / 5;
       ctx.beginPath();
       ctx.arc(
-        cx + Math.cos(a) * r * 0.88,
-        cy + Math.sin(a) * r * 0.88,
-        r * 0.24,
+        cx + Math.cos(a) * r * 0.92,
+        cy + Math.sin(a) * r * 0.92,
+        r * 0.19,
         0,
         Math.PI * 2
       );
@@ -1313,6 +1328,189 @@ function draw() {
     ctx.stroke();
   };
 
+  // Each quest item drawn as the thing it is, at pickup scale
+  const drawItemIcon = (item, cx, cy) => {
+    const s = item.size;
+    switch (item.id) {
+      case "ball":
+        drawBall(cx, cy, s / 2);
+        return true;
+      case "sign": {
+        ctx.fillStyle = "#7a5a3a";
+        ctx.fillRect(cx - 1, cy, 2, s * 0.5);
+        ctx.fillStyle = "#58D68D";
+        ctx.fillRect(cx - s / 2, cy - s * 0.55, s, s * 0.55);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(cx - s / 2, cy - s * 0.55, s, s * 0.55);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+        ctx.fillRect(cx - s * 0.32, cy - s * 0.4, s * 0.64, 1);
+        ctx.fillRect(cx - s * 0.32, cy - s * 0.22, s * 0.45, 1);
+        return true;
+      }
+      case "light": {
+        const g = ctx.createRadialGradient(cx, cy, 0.5, cx, cy, s * 0.75);
+        g.addColorStop(0, "rgba(255, 236, 160, 0.85)");
+        g.addColorStop(1, "rgba(255, 236, 160, 0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(cx - s, cy - s, s * 2, s * 2);
+        ctx.fillStyle = "#5a5a5a";
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffe9a8";
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        return true;
+      }
+      case "litter": {
+        ctx.fillStyle = "#d9d9d4";
+        ctx.beginPath();
+        ctx.moveTo(cx - s * 0.38, cy - s * 0.1);
+        ctx.lineTo(cx - s * 0.12, cy - s * 0.45);
+        ctx.lineTo(cx + s * 0.22, cy - s * 0.32);
+        ctx.lineTo(cx + s * 0.3, cy);
+        ctx.lineTo(cx + s * 0.1, cy + s * 0.25);
+        ctx.lineTo(cx - s * 0.25, cy + s * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(120, 120, 115, 0.7)";
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(90, 130, 90, 0.9)";
+        ctx.fillRect(cx + s * 0.26, cy - s * 0.1, s * 0.2, s * 0.5);
+        return true;
+      }
+      case "notice": {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-0.15);
+        ctx.fillStyle = "#f6f1e4";
+        ctx.fillRect(-s * 0.4, -s * 0.5, s * 0.8, s);
+        ctx.strokeStyle = "rgba(90, 80, 60, 0.5)";
+        ctx.lineWidth = 0.6;
+        ctx.strokeRect(-s * 0.4, -s * 0.5, s * 0.8, s);
+        ctx.fillStyle = "#F5B041";
+        ctx.fillRect(-s * 0.4, -s * 0.5, s * 0.8, s * 0.22);
+        ctx.fillStyle = "rgba(70, 70, 70, 0.6)";
+        ctx.fillRect(-s * 0.28, -s * 0.08, s * 0.56, 0.9);
+        ctx.fillRect(-s * 0.28, s * 0.14, s * 0.4, 0.9);
+        ctx.restore();
+        return true;
+      }
+      case "bell": {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = "#c9a24f";
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.38, s * 0.28);
+        ctx.quadraticCurveTo(-s * 0.42, -s * 0.1, -s * 0.16, -s * 0.34);
+        ctx.quadraticCurveTo(0, -s * 0.5, s * 0.16, -s * 0.34);
+        ctx.quadraticCurveTo(s * 0.42, -s * 0.1, s * 0.38, s * 0.28);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(90, 65, 20, 0.7)";
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        ctx.fillStyle = "#b08c3e";
+        ctx.fillRect(-s * 0.45, s * 0.28, s * 0.9, s * 0.14);
+        ctx.fillStyle = "#6d5518";
+        ctx.beginPath();
+        ctx.arc(0, s * 0.5, s * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 240, 200, 0.55)";
+        ctx.fillRect(-s * 0.16, -s * 0.3, s * 0.1, s * 0.4);
+        ctx.restore();
+        return true;
+      }
+      case "fragment": {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(((cx * 7) % 6) * 0.5);
+        ctx.fillStyle = "#8e6fae";
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.4, s * 0.3);
+        ctx.lineTo(-s * 0.1, -s * 0.45);
+        ctx.lineTo(s * 0.35, -s * 0.15);
+        ctx.lineTo(s * 0.25, s * 0.35);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(50, 30, 70, 0.7)";
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(230, 215, 250, 0.8)";
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.1, -s * 0.45);
+        ctx.lineTo(-s * 0.05, s * 0.3);
+        ctx.stroke();
+        ctx.restore();
+        return true;
+      }
+      case "clue": {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = "#F4D03F";
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const rr = i % 2 === 0 ? s * 0.5 : s * 0.18;
+          const a = (i * Math.PI) / 4;
+          const px = Math.cos(a) * rr;
+          const py = Math.sin(a) * rr;
+          if (i) ctx.lineTo(px, py);
+          else ctx.moveTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        return true;
+      }
+      case "marker": {
+        ctx.strokeStyle = "#777";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - 1, cy + s * 0.5);
+        ctx.lineTo(cx - 1, cy - s * 0.5);
+        ctx.stroke();
+        ctx.fillStyle = "#5DADE2";
+        ctx.beginPath();
+        ctx.moveTo(cx - 1, cy - s * 0.5);
+        ctx.lineTo(cx + s * 0.5, cy - s * 0.28);
+        ctx.lineTo(cx - 1, cy - s * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        return true;
+      }
+      case "photo": {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = "#3c3c40";
+        ctx.fillRect(-s * 0.5, -s * 0.32, s, s * 0.64);
+        ctx.fillStyle = "#2a2a2e";
+        ctx.fillRect(-s * 0.2, -s * 0.42, s * 0.4, s * 0.12);
+        ctx.strokeStyle = "#cfcfd4";
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "#8fb7d6";
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.13, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#f3e9b0";
+        ctx.fillRect(s * 0.28, -s * 0.26, s * 0.12, s * 0.12);
+        ctx.restore();
+        return true;
+      }
+      default:
+        return false;
+    }
+  };
+
   items.forEach((item) => {
     if (item.collected) return;
 
@@ -1321,30 +1519,21 @@ function draw() {
     // Offset each item's pulse by position so they don't blink in sync
     const phase = pulseNow / 180 + itemCx * 0.05;
 
-    if (item.id === "ball") {
-      // Quest balls glow so they're findable; delivered ones just sit there
-      if (!item.decor) {
-        ctx.strokeStyle = item.color;
-        ctx.globalAlpha = 0.35 + 0.25 * Math.sin(phase);
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(itemCx, itemCy, item.size / 2 + 4, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-      drawBall(itemCx, itemCy, item.size / 2);
-      return;
+    // A quiet finder ring — the icons carry the identity now (delivered
+    // decor items don't need finding at all)
+    if (!item.decor) {
+      ctx.strokeStyle = item.color;
+      ctx.globalAlpha = 0.16 + 0.1 * Math.sin(phase);
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(itemCx, itemCy, item.size / 2 + 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
     }
 
-    // Soft glow ring so quest items stand out from coins
-    ctx.strokeStyle = item.color;
-    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(phase);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(itemCx, itemCy, item.size / 2 + 4, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    if (drawItemIcon(item, itemCx, itemCy)) return;
 
+    // Unknown item types keep the classic pulsing dot
     ctx.fillStyle = item.color;
     ctx.beginPath();
     ctx.arc(
@@ -1523,6 +1712,7 @@ function endGame(reason = "Game Over") {
   upgrades.metalDetector = false;
   upgrades.speedBoost = false;
   upgrades.offRoadTreads = false;
+  upgrades.shockAbsorbers = false;
   offRoadTimer = 0;
   treadsWarned = false;
   localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
@@ -1734,6 +1924,8 @@ async function buyUpgrade(upgradeName) {
       speedBoost: "Speed Boost unlocked — lasts this run.",
       offRoadTreads: "Off-Road Treads unlocked — this run; they wear out off-road.",
       metalDetector: "Metal Detector unlocked — lasts this run.",
+      shockAbsorbers:
+        "Shock Absorbers unlocked — potholes and rough ground barely bite. Lasts this run.",
     };
 
     showMessage(`✔ ${labels[upgradeName]}`);
@@ -1798,6 +1990,12 @@ bindPointerButton(
 bindPointerButton(
   "off-road-treads-btn",
   () => buyUpgrade("offRoadTreads"),
+  () => {}
+);
+
+bindPointerButton(
+  "shock-absorbers-btn",
+  () => buyUpgrade("shockAbsorbers"),
   () => {}
 );
 

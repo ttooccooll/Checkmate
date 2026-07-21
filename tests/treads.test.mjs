@@ -21,6 +21,7 @@ await page.addInitScript(() => {
       helmet: false,
       offRoadTreads: true,
       metalDetector: true,
+      shockAbsorbers: true,
     })
   );
 });
@@ -48,6 +49,7 @@ const ok =
   stored.speedBoost === false &&
   stored.offRoadTreads === false &&
   stored.metalDetector === false &&
+  stored.shockAbsorbers === false &&
   problems.length === 0;
 
 finish("treads", ok, { stored, problems });

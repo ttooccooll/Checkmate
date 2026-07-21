@@ -14,6 +14,7 @@ export const PRICES_SATS = {
   helmet: 50,
   speedBoost: 50,
   offRoadTreads: 75,
+  shockAbsorbers: 75,
   metalDetector: 100,
   continueRun: 5000,
 };
