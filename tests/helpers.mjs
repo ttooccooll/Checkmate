@@ -17,7 +17,17 @@ export async function startGame(page) {
   await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
   await page.waitForTimeout(1200);
   await page.click("#new-game-btn");
-  await page.waitForTimeout(2500);
+  // World generation takes a moment — wait for the button to flip
+  // Loading… → Quest Log instead of guessing a fixed delay
+  await page
+    .waitForFunction(
+      () =>
+        document.getElementById("new-game-btn").textContent.trim() ===
+        "Quest Log",
+      null,
+      { timeout: 25000 }
+    )
+    .catch(() => {});
   return (await page.textContent("#new-game-btn")).trim() === "Quest Log";
 }
 
@@ -44,9 +54,9 @@ export async function dieByTaxi(page) {
         (t) =>
           t.type === "taxi" &&
           t.x > 150 &&
-          t.x < 2850 &&
+          t.x < 3450 &&
           t.y > 150 &&
-          t.y < 2850
+          t.y < 3450
       ) || cm.traffic.taxis[0];
     const jump = async () => {
       const t = safeTaxi();
@@ -56,14 +66,36 @@ export async function dieByTaxi(page) {
       await frame();
       await frame();
     };
-    await jump();
-    // Wait out the helmet invulnerability OFF the road — with 14 vehicles
-    // roaming, ambient traffic can otherwise land the fatal hit first and
-    // the death message names a bakkie or hatch instead of our taxi.
-    cm.player.x = 2900;
-    cm.player.y = 2900;
-    await new Promise((r) => setTimeout(r, 1700));
-    await jump();
+    // Wait out any invulnerability (spawn grace, helmet save) OFF the
+    // road — with 18 vehicles roaming, ambient traffic could otherwise
+    // land the hit first and the death message names the wrong vehicle.
+    // (2400, 3480) clears every possible road position and the lighthouse.
+    // Invulnerability is frame-based, so poll it instead of guessing a
+    // wall-clock delay (headless frames run slow under load).
+    const waitCrashable = () =>
+      new Promise((resolve) => {
+        const t0 = performance.now();
+        const poll = () => {
+          if (
+            cm.player.invulnerableTimer <= 0 ||
+            performance.now() - t0 > 8000
+          ) {
+            resolve();
+          } else {
+            setTimeout(poll, 100);
+          }
+        };
+        poll();
+      });
+
+    cm.player.x = 2400;
+    cm.player.y = 3480;
+    await waitCrashable();
+    await jump(); // helmet absorbs this one (when owned)
+    cm.player.x = 2400;
+    cm.player.y = 3480;
+    await waitCrashable();
+    if (cm.isRunning()) await jump(); // the fatal hit
   });
   await page.waitForSelector("#share-nostr-btn", { timeout: 5000 });
 }

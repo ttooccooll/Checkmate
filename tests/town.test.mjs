@@ -52,16 +52,18 @@ const townScape = await page.evaluate(() => {
     keeperAtLighthouse: keeper
       ? Math.hypot(keeper.x - lh.x, keeper.y - lh.y) < 150
       : false,
-    ballsOnPitch:
-      !!pitch &&
-      balls.length > 0 &&
-      balls.every(
-        (b) =>
-          b.x > pitch.x &&
-          b.x < pitch.x + pitch.w &&
-          b.y > pitch.y &&
-          b.y < pitch.y + pitch.h
-      ),
+    // The balls rolled off down the streets — they start away from the
+    // pitch, waiting to be brought back
+    ballsOffPitch:
+      balls.length === 3 &&
+      (!pitch ||
+        !balls.some(
+          (b) =>
+            b.x > pitch.x &&
+            b.x < pitch.x + pitch.w &&
+            b.y > pitch.y &&
+            b.y < pitch.y + pitch.h
+        )),
   };
 });
 
@@ -107,6 +109,23 @@ const jolt = await page.evaluate(() => ({
   hitRegistered: window.__cm.getPotholes().some((p) => p.hitCooldown > 0),
 }));
 
+// --- The lighthouse rocks: ridable, but they rattle the bike ---
+// Approach south of the tower — the path crosses the rocky apron while
+// staying outside the crash radius.
+await page.evaluate(() => {
+  const cm = window.__cm;
+  const lh = cm.getLighthouse();
+  cm.player.x = lh.x - 130;
+  cm.player.y = lh.y + 100;
+});
+await page.keyboard.down("d");
+await page.waitForTimeout(650);
+const rocks = await page.evaluate(() => ({
+  rattling: window.__cm.getRockSlow() > 0,
+  running: window.__cm.isRunning(),
+}));
+await page.keyboard.up("d");
+
 // --- Quest offer prompt: ride up to Nandi, click through her lines ---
 await page.evaluate(() => {
   const cm = window.__cm;
@@ -140,6 +159,40 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(300);
 
+// --- Ball delivery: holding 3 balls is not enough — they must reach the
+// pitch, and once delivered they stay there as decor ---
+const ballQuest = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const npc = cm.getNpcs().find((n) => n.id === "keabetswe");
+  const pitch = cm.getPitch();
+  if (!npc || !npc.currentQuest || !pitch) return { missing: true };
+  npc.currentQuest.active = true;
+  cm.player.inventory = cm.player.inventory || {};
+  cm.player.inventory.ball = 3;
+  cm.player.x = 40;
+  cm.player.y = 1000; // clear of every possible road position
+  await new Promise((r) => setTimeout(r, 400));
+  const completedAway = !!npc.currentQuest.completed;
+  cm.player.x = pitch.x + pitch.w / 2;
+  cm.player.y = pitch.y + pitch.h / 2;
+  await new Promise((r) => setTimeout(r, 500));
+  const completedAtPitch = !!npc.currentQuest.completed;
+  const decorBalls = cm.getItems().filter((i) => i.id === "ball" && i.decor);
+  return {
+    completedAway,
+    completedAtPitch,
+    decorOnPitch:
+      decorBalls.length === 3 &&
+      decorBalls.every(
+        (b) =>
+          b.x > pitch.x &&
+          b.x < pitch.x + pitch.w &&
+          b.y > pitch.y &&
+          b.y < pitch.y + pitch.h
+      ),
+  };
+});
+
 // --- Taxi queue: force a faster taxi directly behind another, same lane ---
 await page.evaluate(() => {
   const cm = window.__cm;
@@ -161,7 +214,7 @@ await page.evaluate(() => {
   }
   // move the player far away so player-braking doesn't interfere
   cm.player.x = 40;
-  cm.player.y = 2900;
+  cm.player.y = 1000;
 });
 await page.waitForTimeout(3000);
 
@@ -265,16 +318,21 @@ const ok =
   townScape.pitchPlaced &&
   !townScape.pitchOnRoad &&
   townScape.keeperAtLighthouse &&
-  townScape.ballsOnPitch &&
+  townScape.ballsOffPitch &&
   world.potholeCount > 0 &&
   world.allOnRoad &&
   world.photoCount === 4 &&
   world.photosOnPotholes &&
-  world.fleet.length === 14 &&
-  world.fleet.filter((t) => t === "taxi").length === 6 &&
-  world.fleet.filter((t) => t === "bakkie").length === 4 &&
-  world.fleet.filter((t) => t === "hatch").length === 4 &&
+  world.fleet.length === 18 &&
+  world.fleet.filter((t) => t === "taxi").length === 8 &&
+  world.fleet.filter((t) => t === "bakkie").length === 5 &&
+  world.fleet.filter((t) => t === "hatch").length === 5 &&
   jolt.hitRegistered &&
+  rocks.rattling &&
+  rocks.running &&
+  ballQuest.completedAway === false &&
+  ballQuest.completedAtPitch === true &&
+  ballQuest.decorOnPitch &&
   (offer.promptText || "").includes("Search the shoreline") &&
   (offer.promptText || "").includes("+15 points") &&
   offer.buttons.some((b) => b.includes("Accept")) &&
@@ -295,7 +353,9 @@ finish("town", ok, {
   townScape,
   world,
   jolt,
+  rocks,
   offer,
+  ballQuest,
   queue,
   crossing,
   crossing2,

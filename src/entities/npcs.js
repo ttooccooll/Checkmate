@@ -216,7 +216,12 @@ export class Quest {
     switch (this.type) {
       case "collect": {
         const have = player.inventory?.[this.params.item] || 0;
-        return have >= this.params.amount;
+        if (have < this.params.amount) return false;
+        // Some collections must be dropped somewhere (balls → the pitch)
+        if (this.params.dropoff && !player.zones?.[this.params.dropoff]) {
+          return false;
+        }
+        return true;
       }
       case "solvePuzzle":
         return player.solvedPuzzles?.includes(this.params.puzzleId);
@@ -240,6 +245,13 @@ export class Quest {
   getProgressText(player) {
     const progress = this.getProgress(player);
     if (!progress) return "";
+    if (
+      this.type === "collect" &&
+      this.params.dropoff &&
+      progress.current >= progress.total
+    ) {
+      return ` (${progress.current} / ${progress.total} — drop off at the ${this.params.dropoff})`;
+    }
     return ` (${progress.current} / ${progress.total})`;
   }
 

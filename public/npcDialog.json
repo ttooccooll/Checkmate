@@ -401,21 +401,21 @@
     "name": "Keabetswe",
     "hidden": true,
     "dialog": [
-      "Children chase seagulls and balls near the promenade.",
-      "Balls often roll into the tide or the street.",
-      "Someone needs to gather them before they’re lost."
+      "The children lost their play balls again. They roll down the streets, some nearly to the tide line.",
+      "If you spot any on your rounds, gather them up.",
+      "Leave them at the soccer pitch — that's where the game is."
     ],
     "postQuestDialog": [
-      "You found the missing balls?",
-      "The kids are thrilled!",
+      "The balls are back at the pitch?",
+      "The kids are already down there playing.",
       "You’ve made their day.",
       "If only everyone knew how the promenade is coming back to life… Mpho's community board could tell them, if it weren't bare."
     ],
     "quest": {
       "id": "lost_play_balls",
-      "description": "Find 3 lost play balls near the town promenade and pier.",
+      "description": "Round up 3 play balls from the streets and drop them off at the soccer pitch.",
       "type": "collect",
-      "params": { "item": "ball", "amount": 3 },
+      "params": { "item": "ball", "amount": 3, "dropoff": "pitch" },
       "rewardScore": 3,
       "unlockNPC": "mpho",
       "unlockText": "Keabetswe thinks Mpho could spread the good news — if the community board weren't empty."

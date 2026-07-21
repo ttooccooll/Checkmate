@@ -190,7 +190,8 @@ export class TrafficManager {
     if (!roads.length) return;
 
     // Taxis first (tests and helpers rely on early indices being taxis),
-    // then the rest of the town's traffic
+    // then the rest of the town's traffic. Sized for the 3600px town —
+    // the same on-street density the 14-vehicle fleet gave the old map.
     const fleet = [
       "taxi",
       "taxi",
@@ -198,10 +199,14 @@ export class TrafficManager {
       "taxi",
       "taxi",
       "taxi",
+      "taxi",
+      "taxi",
       "bakkie",
       "bakkie",
       "bakkie",
       "bakkie",
+      "bakkie",
+      "hatch",
       "hatch",
       "hatch",
       "hatch",

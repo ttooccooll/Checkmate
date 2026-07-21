@@ -1,5 +1,5 @@
-export const WORLD_WIDTH = 3000;
-export const WORLD_HEIGHT = 3000;
+export const WORLD_WIDTH = 3600;
+export const WORLD_HEIGHT = 3600;
 export const ROAD_HEIGHT = 100;
 export const COLLISION_FACTOR = 0.5;
 export const ROAD_BUFFER = 10;

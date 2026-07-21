@@ -99,7 +99,7 @@ const fragile = await page.evaluate(async () => {
   const t =
     cm.traffic.taxis.find(
       (x) =>
-        x.type === "taxi" && x.x > 150 && x.x < 2850 && x.y > 150 && x.y < 2850
+        x.type === "taxi" && x.x > 150 && x.x < 3450 && x.y > 150 && x.y < 3450
     ) || cm.traffic.taxis[0];
   cm.player.x = t.x - 15;
   cm.player.y = t.y - 15;
@@ -121,7 +121,7 @@ await browser.close();
 const ok =
   started &&
   world.skids > 0 &&
-  world.taxis === 14 &&
+  world.taxis === 18 &&
   pausedOn === true &&
   pausedOff === false &&
   delivery.offered === "pickup" &&

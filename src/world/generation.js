@@ -25,8 +25,8 @@ export class RoadSegment {
 export function generateRoads() {
   const roads = [];
 
-  const H_ROADS = 4;
-  const V_ROADS = 5;
+  const H_ROADS = 5;
+  const V_ROADS = 6;
   const hSpacing = WORLD_HEIGHT / (H_ROADS + 1);
   const vSpacing = WORLD_WIDTH / (V_ROADS + 1);
 
@@ -305,7 +305,7 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   const shuffled = [...buildings].sort(() => Math.random() - 0.5);
   let tanks = 0;
   for (const b of shuffled) {
-    if (tanks >= 10) break;
+    if (tanks >= 14) break;
     const size = 28 + Math.random() * 6;
     const spots = [
       { x: b.x - size - 8, y: b.y + Math.random() * Math.max(1, b.height - size) },
@@ -336,7 +336,7 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   // Containers in yards and open ground
   let placed = 0;
   let attempts = 0;
-  while (placed < 6 && attempts++ < 900) {
+  while (placed < 8 && attempts++ < 1100) {
     const horiz = Math.random() < 0.5;
     const w = horiz ? 140 : 57;
     const h = horiz ? 57 : 140;
@@ -362,7 +362,7 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   // Upturned boats on the verges
   placed = 0;
   attempts = 0;
-  while (placed < 7 && attempts++ < 900) {
+  while (placed < 9 && attempts++ < 1100) {
     const horiz = Math.random() < 0.5;
     const w = horiz ? 68 : 30;
     const h = horiz ? 30 : 68;

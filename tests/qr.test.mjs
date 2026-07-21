@@ -31,7 +31,12 @@ await page.route("**/api/check-invoice*", (route) =>
 await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
 await page.waitForTimeout(1200);
 await page.click("#new-game-btn");
-await page.waitForTimeout(2000);
+await page.waitForFunction(
+  () =>
+    document.getElementById("new-game-btn").textContent.trim() === "Quest Log",
+  null,
+  { timeout: 25000 }
+);
 
 // Helmet is owned by default; Speed Boost triggers the QR flow
 await page.click("#speed-boost-btn");

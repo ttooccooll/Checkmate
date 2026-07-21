@@ -28,7 +28,12 @@ await page.addInitScript(() => {
 await page.goto(BASE_URL, { waitUntil: "networkidle", timeout: 30000 });
 await page.waitForTimeout(1200);
 await page.click("#new-game-btn");
-await page.waitForTimeout(2500);
+await page.waitForFunction(
+  () =>
+    document.getElementById("new-game-btn").textContent.trim() === "Quest Log",
+  null,
+  { timeout: 25000 }
+);
 await parkNpcs(page);
 // helmet is false, so a single taxi hit is fatal — dieByTaxi's second
 // jump is a no-op after game over

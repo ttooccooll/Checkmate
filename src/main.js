@@ -134,7 +134,7 @@ let solidRects = []; // buildings + props + lighthouse, for spawn avoidance
 let dustParticles = [];
 
 // The lighthouse stands on the point — the south-west corner of the map
-const LIGHTHOUSE = { x: 175, y: 2820, hitR: 78, drawSize: 270 };
+const LIGHTHOUSE = { x: 175, y: 3420, hitR: 78, drawSize: 270 };
 const LIGHTHOUSE_RESERVE = {
   x: LIGHTHOUSE.x - 160,
   y: LIGHTHOUSE.y - 160,
@@ -155,6 +155,8 @@ let carriedVx = 0;
 let carriedVy = 0;
 let slideSkidTimer = 0;
 let potholeSlowTimer = 0;
+let rockSlowTimer = 0;
+let rockBumpCooldown = 0;
 let photoFlashTimer = 0;
 
 // A pothole hit shoves the bike off-line briefly (decays each frame)
@@ -286,6 +288,7 @@ async function loadNPCs() {
           params: {
             amount: n.quest.params?.amount ?? n.quest.amount,
             item: n.quest.params?.item ?? n.quest.item,
+            dropoff: n.quest.params?.dropoff,
             puzzleId: n.quest.puzzleId,
           },
         })
@@ -326,8 +329,6 @@ async function startNewGame() {
     await whenReady();
   }
 
-  resizeCanvas();
-
   score = 0;
   flashTimer = 0;
   dustParticles = [];
@@ -338,7 +339,7 @@ async function startNewGame() {
 
   roads = generateRoads();
   renderRoadsOffscreen(roads);
-  potholes = generatePotholes(roads, 16);
+  potholes = generatePotholes(roads, 23);
   renderPotholesOffscreen(potholes);
 
   pitch = placePitch(roads, [LIGHTHOUSE_RESERVE]);
@@ -359,7 +360,7 @@ async function startNewGame() {
   // keep clear of them
   const shackImg =
     buildingImages.find((i) => i.src.includes("shack")) || buildingImages[0];
-  const clusters = buildClusters(roads, reserved, shackImg, 3);
+  const clusters = buildClusters(roads, reserved, shackImg, 4);
   reserved.push(...clusters.clusterRects);
   // Cluster containers stick out past the cluster margin — reserve their
   // footprints so loose houses can't be placed on top of them
@@ -372,9 +373,9 @@ async function startNewGame() {
     }))
   );
 
-  trees = generateTrees(70, roads, treeImages, reserved);
+  trees = generateTrees(100, roads, treeImages, reserved);
   renderTreesOffscreen(trees);
-  buildings = generateBuildings(50, roads, buildingImages, reserved);
+  buildings = generateBuildings(72, roads, buildingImages, reserved);
   buildings.push(...clusters.shacks);
   buildings.forEach((b) => {
     if (b.img.complete) bakeBuilding(b);
@@ -387,7 +388,7 @@ async function startNewGame() {
     ...props.map((p) => ({ x: p.x, y: p.y, width: p.w, height: p.h })),
     LIGHTHOUSE_RESERVE,
   ];
-  coins = generateCoins(15, solidRects, trees);
+  coins = generateCoins(22, solidRects, trees);
 
   // Load NPCs
   await loadNPCs();
@@ -415,15 +416,57 @@ async function startNewGame() {
     }
   });
 
-  // The kids' lost balls ended up around the pitch, naturally
-  if (pitch) {
-    items.forEach((item) => {
-      if (item.id === "ball") {
-        item.x = pitch.x + 20 + Math.random() * (pitch.w - 40);
-        item.y = pitch.y + 20 + Math.random() * (pitch.h - 40);
+  // The kids' balls rolled off down the streets — scatter them along the
+  // road verges, away from the pitch they need bringing back to
+  items.forEach((item) => {
+    if (item.id !== "ball") return;
+    item.size = 10;
+    for (let tries = 0; tries < 300; tries++) {
+      const r = roads[Math.floor(Math.random() * roads.length)];
+      const horiz = r.width > r.height;
+      const off = 14 + Math.random() * 34;
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const x = horiz
+        ? r.x + 40 + Math.random() * (r.width - 80)
+        : side < 0
+          ? r.x - off - item.size
+          : r.x + r.width + off;
+      const y = horiz
+        ? side < 0
+          ? r.y - off - item.size
+          : r.y + r.height + off
+        : r.y + 40 + Math.random() * (r.height - 80);
+      const rect = { x, y, width: item.size, height: item.size };
+      const onPitch =
+        pitch &&
+        rectCollision(rect, {
+          x: pitch.x - 30,
+          y: pitch.y - 30,
+          width: pitch.w + 60,
+          height: pitch.h + 60,
+        });
+      const blocked =
+        onPitch ||
+        x < 20 ||
+        y < 20 ||
+        x > WORLD_WIDTH - 30 ||
+        y > WORLD_HEIGHT - 30 ||
+        solidRects.some((s) => rectCollision(rect, s)) ||
+        trees.some((t) =>
+          rectCollision(rect, {
+            x: t.x,
+            y: t.y,
+            width: t.size * 2,
+            height: t.size * 2,
+          })
+        );
+      if (!blocked) {
+        item.x = x;
+        item.y = y;
+        break;
       }
-    });
-  }
+    }
+  });
 
   const spawn = findSafeSpawn({ npcs, buildings: solidRects, trees });
   player.x = spawn.x;
@@ -446,11 +489,22 @@ async function startNewGame() {
   carriedVy = 0;
   slideSkidTimer = 0;
   potholeSlowTimer = 0;
+  rockSlowTimer = 0;
+  rockBumpCooldown = 0;
   joltVx = 0;
   joltVy = 0;
   shakeTimer = 0;
   engine.start();
   ambient.start();
+
+  // Only now swap the intro art for the game world — the cover stays up
+  // the whole time the town is being built
+  document.body.classList.remove("pregame");
+  document.getElementById("intro-screen").style.display = "none";
+  document.getElementById("game-container").style.display = "block";
+  document.getElementById("touch-controls").style.display = "grid";
+  document.getElementById("action-buttons").style.display = "flex";
+  resizeCanvas();
 
   const visibleWidth = canvas.width / getDpr();
   const visibleHeight = canvas.height / getDpr();
@@ -694,6 +748,12 @@ function update(deltaTime = 1) {
     baseSpeed *= 0.5;
   }
 
+  // Picking across the lighthouse rocks is slow going
+  if (rockSlowTimer > 0) {
+    rockSlowTimer -= deltaTime;
+    baseSpeed *= 0.6;
+  }
+
   const speed = baseSpeed * deltaTime;
   const prevDirection = player.direction;
 
@@ -787,6 +847,28 @@ function update(deltaTime = 1) {
   potholes.forEach((p) => {
     if (p.hitCooldown > 0) p.hitCooldown -= deltaTime;
   });
+
+  // The rocky apron around the lighthouse is ridable, but it rattles the
+  // bike: constant small kicks and a slower pace while you're on it
+  if (moving) {
+    const dRock = Math.hypot(
+      player.x + player.width / 2 - LIGHTHOUSE.x,
+      player.y + player.height / 2 - LIGHTHOUSE.y
+    );
+    if (dRock > LIGHTHOUSE.hitR && dRock < LIGHTHOUSE.drawSize / 2 - 4) {
+      rockSlowTimer = 8;
+      rockBumpCooldown -= deltaTime;
+      if (rockBumpCooldown <= 0) {
+        rockBumpCooldown = 5 + Math.random() * 8;
+        const ang = Math.random() * Math.PI * 2;
+        const mag = 0.35 + Math.hypot(carriedVx, carriedVy) * 0.16;
+        joltVx += Math.cos(ang) * mag;
+        joltVy += Math.sin(ang) * mag;
+        shakeTimer = Math.max(shakeTimer, 3);
+        spawnDust();
+      }
+    }
+  }
 
   // Sliding in the wet leaves rubber: skid when the bike's travel departs
   // from where the rider is pointing (or keeps rolling with no input)
@@ -911,6 +993,17 @@ function update(deltaTime = 1) {
     }
   }
 
+  // Drop-off zones quests can require (balls → the pitch)
+  player.zones = player.zones || {};
+  player.zones.pitch =
+    !!pitch &&
+    rectCollision(player.getHitbox(), {
+      x: pitch.x,
+      y: pitch.y,
+      width: pitch.w,
+      height: pitch.h,
+    });
+
   npcs.forEach((npc) => {
     const completedQuest = npc.checkQuestCompletion(player, npcs, {
       showMessage,
@@ -924,6 +1017,22 @@ function update(deltaTime = 1) {
 
       const stage = STORY_STAGE_BY_QUEST[completedQuest.id];
       if (stage) applyStoryStage(stage);
+
+      // The balls stay where you dropped them: on the pitch, in play
+      if (completedQuest.id === "lost_play_balls" && pitch) {
+        player.inventory.ball = 0;
+        for (let i = 0; i < 3; i++) {
+          items.push({
+            id: "ball",
+            decor: true,
+            collected: false,
+            size: 10,
+            color: "#EC7063",
+            x: pitch.x + 40 + Math.random() * (pitch.w - 80),
+            y: pitch.y + 40 + Math.random() * (pitch.h - 80),
+          });
+        }
+      }
 
       showMessage(
         `🎉 Quest "${
@@ -990,6 +1099,7 @@ function update(deltaTime = 1) {
   items.forEach((item) => {
     if (
       !item.collected &&
+      !item.decor &&
       rectCollision(player.getHitbox(), {
         x: item.x,
         y: item.y,
@@ -1006,6 +1116,14 @@ function update(deltaTime = 1) {
         sfx.shutter();
         photoFlashTimer = 8;
         showMessage("📸 Pothole photographed!");
+      } else if (item.id === "ball") {
+        sfx.item();
+        const have = player.inventory.ball;
+        showMessage(
+          have >= 3
+            ? "⚽ That's all of them — drop them off at the pitch."
+            : `⚽ Ball picked up (${have}/3).`
+        );
       } else {
         sfx.item();
         showMessage(`🎉 Collected ${item.id}!`);
@@ -1066,7 +1184,7 @@ function draw() {
 
   const nowMs = performance.now();
 
-  // --- Draw world (only the viewport slice of the 3000x3000 canvases) ---
+  // --- Draw world (only the viewport slice of the world-sized canvases) ---
   const viewW = Math.min(canvas.width / getDpr(), WORLD_WIDTH - camera.x);
   const viewH = Math.min(canvas.height / getDpr(), WORLD_HEIGHT - camera.y);
   const blitWorld = (source) =>
@@ -1087,6 +1205,26 @@ function draw() {
 
   // --- Skid marks (under everything that moves) ---
   skidMarks.draw(ctx, isVisible);
+
+  // --- The lighthouse on the point (under the rider: the rocky apron is
+  // ground you bump across, only the tower itself is solid) ---
+  if (
+    lighthouseSprite.complete &&
+    isVisible(
+      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.drawSize,
+      LIGHTHOUSE.drawSize
+    )
+  ) {
+    ctx.drawImage(
+      lighthouseSprite,
+      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.drawSize,
+      LIGHTHOUSE.drawSize
+    );
+  }
 
   // --- Draw NPCs ---
   npcs.forEach((npc) => npc.draw(ctx));
@@ -1112,6 +1250,69 @@ function draw() {
   });
 
   const pulseNow = nowMs;
+
+  // A small soccer ball: shaded leather, centre pentagon, seams, rim panels
+  const drawBall = (cx, cy, r) => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.clip();
+    const grad = ctx.createRadialGradient(
+      cx - r * 0.4,
+      cy - r * 0.4,
+      r * 0.2,
+      cx,
+      cy,
+      r
+    );
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.7, "#e9e9e6");
+    grad.addColorStop(1, "#b5b5b0");
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+    ctx.fillStyle = "#2b2b2b";
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      const px = cx + Math.cos(a) * r * 0.38;
+      const py = cy + Math.sin(a) * r * 0.38;
+      if (i) ctx.lineTo(px, py);
+      else ctx.moveTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(40, 40, 40, 0.55)";
+    ctx.lineWidth = 0.7;
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r * 0.38, cy + Math.sin(a) * r * 0.38);
+      ctx.lineTo(cx + Math.cos(a) * r * 0.95, cy + Math.sin(a) * r * 0.95);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "rgba(43, 43, 43, 0.85)";
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + Math.PI / 5 + (i * 2 * Math.PI) / 5;
+      ctx.beginPath();
+      ctx.arc(
+        cx + Math.cos(a) * r * 0.88,
+        cy + Math.sin(a) * r * 0.88,
+        r * 0.24,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.strokeStyle = "rgba(40, 40, 40, 0.8)";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  };
+
   items.forEach((item) => {
     if (item.collected) return;
 
@@ -1119,6 +1320,21 @@ function draw() {
     const itemCy = item.y + item.size / 2;
     // Offset each item's pulse by position so they don't blink in sync
     const phase = pulseNow / 180 + itemCx * 0.05;
+
+    if (item.id === "ball") {
+      // Quest balls glow so they're findable; delivered ones just sit there
+      if (!item.decor) {
+        ctx.strokeStyle = item.color;
+        ctx.globalAlpha = 0.35 + 0.25 * Math.sin(phase);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(itemCx, itemCy, item.size / 2 + 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      drawBall(itemCx, itemCy, item.size / 2);
+      return;
+    }
 
     // Soft glow ring so quest items stand out from coins
     ctx.strokeStyle = item.color;
@@ -1225,25 +1441,6 @@ function draw() {
     ctx.restore();
   });
 
-  // --- The lighthouse on the point ---
-  if (
-    lighthouseSprite.complete &&
-    isVisible(
-      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
-      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
-      LIGHTHOUSE.drawSize,
-      LIGHTHOUSE.drawSize
-    )
-  ) {
-    ctx.drawImage(
-      lighthouseSprite,
-      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
-      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
-      LIGHTHOUSE.drawSize,
-      LIGHTHOUSE.drawSize
-    );
-  }
-
   ctx.restore();
 
   // --- Atmosphere: dusk tint + fog (screen space) ---
@@ -1332,13 +1529,7 @@ function endGame(reason = "Game Over") {
 
   const newGameBtn = document.getElementById("new-game-btn");
   newGameBtn.textContent = "New Game";
-  newGameBtn.onclick = () => {
-    document.getElementById("intro-screen").style.display = "none";
-    document.getElementById("game-container").style.display = "block";
-    document.getElementById("touch-controls").style.display = "grid";
-    document.getElementById("action-buttons").style.display = "flex";
-    startNewGame();
-  };
+  newGameBtn.onclick = () => startNewGame();
   dialogManager.endDialog();
   questLog.hide();
   gameRunning = false;
@@ -1508,6 +1699,7 @@ window.__cm = {
   getRoads: () => roads,
   getPotholes: () => potholes,
   getPotholeSlow: () => potholeSlowTimer,
+  getRockSlow: () => rockSlowTimer,
   getItems: () => items,
   getProps: () => props,
   getPitch: () => pitch,
@@ -1554,12 +1746,8 @@ document.getElementById("new-game-btn").addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  document.body.classList.remove("pregame");
-  document.getElementById("intro-screen").style.display = "none";
-  document.getElementById("game-container").style.display = "block";
-  document.getElementById("touch-controls").style.display = "grid";
-  document.getElementById("action-buttons").style.display = "flex";
-
+  // The intro (and its cover art) stays up until the world is actually
+  // built — startNewGame swaps the screens when it's ready to roll
   startNewGame();
 });
 

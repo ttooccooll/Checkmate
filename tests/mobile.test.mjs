@@ -30,7 +30,12 @@ const pregame = await page.evaluate(() => {
 });
 
 await page.click("#new-game-btn");
-await page.waitForTimeout(2500);
+await page.waitForFunction(
+  () =>
+    document.getElementById("new-game-btn").textContent.trim() === "Quest Log",
+  null,
+  { timeout: 25000 }
+);
 
 const ingame = await page.evaluate(() => {
   const vis = (id) => {
