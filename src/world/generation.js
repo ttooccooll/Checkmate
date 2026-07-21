@@ -53,7 +53,7 @@ export function isOnRoad(roads, x, y, width, height) {
   );
 }
 
-export function generateBuildings(count, roads, buildingImages) {
+export function generateBuildings(count, roads, buildingImages, reserved = []) {
   let arr = [];
   let attempts = 0;
 
@@ -86,7 +86,10 @@ export function generateBuildings(count, roads, buildingImages) {
     const x = Math.random() * (WORLD_WIDTH - width);
     const y = Math.random() * (WORLD_HEIGHT - height);
 
-    if (isOnRoad(roads, x, y, width, height)) {
+    if (
+      isOnRoad(roads, x, y, width, height) ||
+      reserved.some((r) => rectCollision({ x, y, width, height }, r))
+    ) {
       attempts++;
       continue;
     }
@@ -111,7 +114,7 @@ export function generateBuildings(count, roads, buildingImages) {
   return arr;
 }
 
-export function generateTrees(count, roads, treeImages) {
+export function generateTrees(count, roads, treeImages, reserved = []) {
   const arr = [];
   let attempts = 0;
 
@@ -121,7 +124,11 @@ export function generateTrees(count, roads, treeImages) {
     const x = Math.random() * (WORLD_WIDTH - size * 2);
     const y = Math.random() * (WORLD_HEIGHT - size * 2);
 
-    if (!isOnRoad(roads, x, y, size * 2, size * 2)) {
+    const rect = { x, y, width: size * 2, height: size * 2 };
+    if (
+      !isOnRoad(roads, x, y, size * 2, size * 2) &&
+      !reserved.some((r) => rectCollision(rect, r))
+    ) {
       arr.push(new Tree(x, y, size, img));
     }
 
@@ -249,6 +256,141 @@ export function generatePotholes(roads, count = 16) {
 
 // Pass `roads` to also keep the spawn off the road surface (used for NPCs
 // so taxis can never drive over a pedestrian; the player may spawn on roads).
+// One worn five-a-side pitch somewhere in the grass blocks
+export const PITCH_W = 340;
+export const PITCH_H = 220;
+
+export function placePitch(roads, reserved = []) {
+  for (let i = 0; i < 4000; i++) {
+    const horiz = Math.random() < 0.5;
+    const w = horiz ? PITCH_W : PITCH_H;
+    const h = horiz ? PITCH_H : PITCH_W;
+    const x = 60 + Math.random() * (WORLD_WIDTH - w - 120);
+    const y = 60 + Math.random() * (WORLD_HEIGHT - h - 120);
+    const rect = { x: x - 20, y: y - 20, width: w + 40, height: h + 40 };
+    if (
+      !isOnRoad(roads, rect.x, rect.y, rect.width, rect.height) &&
+      !reserved.some((r) => rectCollision(rect, r))
+    ) {
+      return { x, y, w, h };
+    }
+  }
+  return null;
+}
+
+// Yard clutter: water tanks beside houses, containers and upturned boats
+// in the open. Solid (they crash like buildings) so they never sit on
+// roads, the pitch, or the lighthouse rock.
+export function placeProps(roads, buildings, trees, reserved = []) {
+  const props = [];
+
+  const blocked = (rect) =>
+    isOnRoad(roads, rect.x - 8, rect.y - 8, rect.width + 16, rect.height + 16) ||
+    reserved.some((r) => rectCollision(rect, r)) ||
+    buildings.some((b) => rectCollision(rect, b)) ||
+    trees.some((t) =>
+      rectCollision(rect, { x: t.x, y: t.y, width: t.size * 2, height: t.size * 2 })
+    ) ||
+    props.some((p) =>
+      rectCollision(rect, { x: p.x - 12, y: p.y - 12, width: p.w + 24, height: p.h + 24 })
+    );
+
+  const inWorld = (rect) =>
+    rect.x > 20 &&
+    rect.y > 20 &&
+    rect.x + rect.width < WORLD_WIDTH - 20 &&
+    rect.y + rect.height < WORLD_HEIGHT - 20;
+
+  // Tanks huddle against houses
+  const shuffled = [...buildings].sort(() => Math.random() - 0.5);
+  let tanks = 0;
+  for (const b of shuffled) {
+    if (tanks >= 10) break;
+    const size = 28 + Math.random() * 6;
+    const spots = [
+      { x: b.x - size - 8, y: b.y + Math.random() * Math.max(1, b.height - size) },
+      { x: b.x + b.width + 8, y: b.y + Math.random() * Math.max(1, b.height - size) },
+      { x: b.x + Math.random() * Math.max(1, b.width - size), y: b.y - size - 8 },
+      { x: b.x + Math.random() * Math.max(1, b.width - size), y: b.y + b.height + 8 },
+    ].sort(() => Math.random() - 0.5);
+    for (const s of spots) {
+      const rect = { x: s.x, y: s.y, width: size, height: size };
+      if (inWorld(rect) && !blocked(rect)) {
+        props.push({
+          type: "tank",
+          x: s.x,
+          y: s.y,
+          w: size,
+          h: size,
+          bw: size,
+          bh: size,
+          rot: 0,
+          variant: tanks % 2,
+        });
+        tanks++;
+        break;
+      }
+    }
+  }
+
+  // Containers in yards and open ground
+  let placed = 0;
+  let attempts = 0;
+  while (placed < 6 && attempts++ < 900) {
+    const horiz = Math.random() < 0.5;
+    const w = horiz ? 92 : 38;
+    const h = horiz ? 38 : 92;
+    const x = 30 + Math.random() * (WORLD_WIDTH - w - 60);
+    const y = 30 + Math.random() * (WORLD_HEIGHT - h - 60);
+    const rect = { x, y, width: w, height: h };
+    if (!blocked(rect)) {
+      props.push({
+        type: "container",
+        x,
+        y,
+        w,
+        h,
+        bw: 92,
+        bh: 38,
+        rot: horiz ? 0 : Math.PI / 2,
+        variant: placed % 3,
+      });
+      placed++;
+    }
+  }
+
+  // Upturned boats on the verges
+  placed = 0;
+  attempts = 0;
+  while (placed < 7 && attempts++ < 900) {
+    const horiz = Math.random() < 0.5;
+    const w = horiz ? 68 : 30;
+    const h = horiz ? 30 : 68;
+    const x = 30 + Math.random() * (WORLD_WIDTH - w - 60);
+    const y = 30 + Math.random() * (WORLD_HEIGHT - h - 60);
+    const rect = { x, y, width: w, height: h };
+    if (!blocked(rect)) {
+      props.push({
+        type: "boat",
+        x,
+        y,
+        w,
+        h,
+        bw: 30,
+        bh: 68,
+        rot:
+          (horiz ? Math.PI / 2 : 0) +
+          (Math.random() - 0.5) * 0.45 +
+          (Math.random() < 0.5 ? Math.PI : 0),
+        variant: placed % 3,
+      });
+      placed++;
+    }
+  }
+
+  return props;
+}
+
 export function findSafeSpawn(
   { avoid = [], npcs = [], buildings = [], trees = [], roads = [] },
   maxAttempts = 5000

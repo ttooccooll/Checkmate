@@ -70,6 +70,127 @@ export function texturesReady() {
   return grassRendered && roadTexture.complete;
 }
 
+// Refill the grass base — startNewGame calls this before painting the
+// pitch so per-run ground markings never accumulate across runs.
+export function renderGrassBase() {
+  tryRenderGrass();
+}
+
+// World-prop sprites (shadows baked in, like the vehicles)
+const propImg = (name) => {
+  const img = new Image();
+  img.src = `/assets/${name}.webp`;
+  return img;
+};
+
+export const propSprites = {
+  tank: [propImg("tank1"), propImg("tank2")],
+  container: [propImg("container1"), propImg("container2"), propImg("container3")],
+  boat: [propImg("boat1"), propImg("boat2"), propImg("boat3")],
+};
+
+export const lighthouseSprite = propImg("lighthouse");
+
+// A worn five-a-side pitch painted straight onto the grass: faded lines,
+// goal frames with a hint of net, and bare goalmouth earth.
+export function renderPitchOffscreen(pitch) {
+  if (!pitch) return;
+  const g = grassCtx;
+  const { x, y, w, h } = pitch;
+  const horiz = w > h;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
+  // Bare, kicked-to-death earth at the goalmouths and centre
+  const wear = (wx, wy, rx, ry, alpha) => {
+    g.save();
+    g.fillStyle = `rgba(148, 130, 100, ${alpha})`;
+    g.filter = "blur(6px)";
+    g.beginPath();
+    g.ellipse(wx, wy, rx, ry, 0, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  };
+  if (horiz) {
+    wear(x + 24, cy, 34, 44, 0.5);
+    wear(x + w - 24, cy, 34, 44, 0.5);
+  } else {
+    wear(cx, y + 24, 44, 34, 0.5);
+    wear(cx, y + h - 24, 44, 34, 0.5);
+  }
+  wear(cx, cy, 26, 22, 0.35);
+
+  // Faded painted lines
+  g.save();
+  g.strokeStyle = "rgba(244, 244, 238, 0.5)";
+  g.lineWidth = 3;
+  g.strokeRect(x, y, w, h);
+
+  if (horiz) {
+    g.beginPath();
+    g.moveTo(cx, y);
+    g.lineTo(cx, y + h);
+    g.stroke();
+  } else {
+    g.beginPath();
+    g.moveTo(x, cy);
+    g.lineTo(x + w, cy);
+    g.stroke();
+  }
+
+  g.beginPath();
+  g.arc(cx, cy, Math.min(w, h) * 0.17, 0, Math.PI * 2);
+  g.stroke();
+
+  // Goal boxes
+  const boxD = Math.min(w, h) * 0.28;
+  const boxL = Math.min(w, h) * 0.62;
+  if (horiz) {
+    g.strokeRect(x, cy - boxL / 2, boxD, boxL);
+    g.strokeRect(x + w - boxD, cy - boxL / 2, boxD, boxL);
+  } else {
+    g.strokeRect(cx - boxL / 2, y, boxL, boxD);
+    g.strokeRect(cx - boxL / 2, y + h - boxD, boxL, boxD);
+  }
+
+  // A second, patchier pass so the paint reads worn, not fresh
+  g.strokeStyle = "rgba(244, 244, 238, 0.22)";
+  g.lineWidth = 5;
+  g.setLineDash([26, 34]);
+  g.strokeRect(x, y, w, h);
+  g.setLineDash([]);
+
+  // Goals: white frame with a touch of net hatching behind
+  const goalW = Math.min(w, h) * 0.24;
+  const drawGoal = (gx, gy, facing) => {
+    g.strokeStyle = "rgba(250, 250, 246, 0.85)";
+    g.lineWidth = 2.5;
+    const depth = 10;
+    g.save();
+    g.translate(gx, gy);
+    g.rotate(facing);
+    g.strokeRect(-goalW / 2, -depth, goalW, depth);
+    g.strokeStyle = "rgba(230, 230, 226, 0.35)";
+    g.lineWidth = 1;
+    for (let i = 1; i < 5; i++) {
+      const nx = -goalW / 2 + (goalW / 5) * i;
+      g.beginPath();
+      g.moveTo(nx, -depth);
+      g.lineTo(nx, 0);
+      g.stroke();
+    }
+    g.restore();
+  };
+  if (horiz) {
+    drawGoal(x, cy, Math.PI / 2);
+    drawGoal(x + w, cy, -Math.PI / 2);
+  } else {
+    drawGoal(cx, y, Math.PI);
+    drawGoal(cx, y + h, 0);
+  }
+  g.restore();
+}
+
 // Resolves once the critical world textures are usable
 export function whenReady() {
   return new Promise((resolve) => {

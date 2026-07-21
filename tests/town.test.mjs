@@ -30,6 +30,41 @@ const npcsOnRoad = await page.evaluate(() => {
   ).length;
 });
 
+// --- World props, the pitch, and the keeper at his lighthouse ---
+// (checked before parkNpcs moves everyone)
+const townScape = await page.evaluate(() => {
+  const cm = window.__cm;
+  const roads = cm.getRoads();
+  const props = cm.getProps();
+  const pitch = cm.getPitch();
+  const lh = cm.getLighthouse();
+  const keeper = cm.getNpcs().find((n) => n.id === "lighthouse_keeper");
+  const balls = cm.getItems().filter((i) => i.id === "ball");
+  const onRoad = (x, y, w, h) =>
+    roads.some(
+      (r) => x + w > r.x && x < r.x + r.width && y + h > r.y && y < r.y + r.height
+    );
+  return {
+    propCount: props.length,
+    propsOnRoad: props.filter((p) => onRoad(p.x, p.y, p.w, p.h)).length,
+    pitchPlaced: !!pitch,
+    pitchOnRoad: pitch ? onRoad(pitch.x, pitch.y, pitch.w, pitch.h) : true,
+    keeperAtLighthouse: keeper
+      ? Math.hypot(keeper.x - lh.x, keeper.y - lh.y) < 150
+      : false,
+    ballsOnPitch:
+      !!pitch &&
+      balls.length > 0 &&
+      balls.every(
+        (b) =>
+          b.x > pitch.x &&
+          b.x < pitch.x + pitch.w &&
+          b.y > pitch.y &&
+          b.y < pitch.y + pitch.h
+      ),
+  };
+});
+
 await parkNpcs(page);
 await page.evaluate(() => window.__cm.player.setInvulnerable(1e9));
 
@@ -213,6 +248,12 @@ await browser.close();
 const ok =
   started &&
   npcsOnRoad === 0 &&
+  townScape.propCount >= 12 &&
+  townScape.propsOnRoad === 0 &&
+  townScape.pitchPlaced &&
+  !townScape.pitchOnRoad &&
+  townScape.keeperAtLighthouse &&
+  townScape.ballsOnPitch &&
   world.potholeCount > 0 &&
   world.allOnRoad &&
   world.photoCount === 4 &&
@@ -238,6 +279,7 @@ const ok =
 finish("town", ok, {
   started,
   npcsOnRoad,
+  townScape,
   world,
   jolt,
   offer,

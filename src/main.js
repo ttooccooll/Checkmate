@@ -37,6 +37,8 @@ import {
   generateTrees,
   generateCoins,
   generatePotholes,
+  placePitch,
+  placeProps,
   findSafeSpawn,
   isOnRoad,
 } from "./world/generation.js";
@@ -51,6 +53,10 @@ import {
   renderRoadsOffscreen,
   renderPotholesOffscreen,
   renderTreesOffscreen,
+  renderGrassBase,
+  renderPitchOffscreen,
+  propSprites,
+  lighthouseSprite,
   bakeBuilding,
   BUILDING_SHADOW_PAD,
 } from "./world/worldRender.js";
@@ -121,7 +127,19 @@ let coins = [];
 let items = [];
 let roads = [];
 let potholes = [];
+let props = [];
+let pitch = null;
+let solidRects = []; // buildings + props + lighthouse, for spawn avoidance
 let dustParticles = [];
+
+// The lighthouse stands on the point — the south-west corner of the map
+const LIGHTHOUSE = { x: 150, y: 2850, hitR: 45, drawSize: 150 };
+const LIGHTHOUSE_RESERVE = {
+  x: LIGHTHOUSE.x - 95,
+  y: LIGHTHOUSE.y - 95,
+  width: 190,
+  height: 190,
+};
 
 let score = 0;
 let gameRunning = false;
@@ -277,7 +295,7 @@ async function loadNPCs() {
     const spawn = findSafeSpawn({
       avoid: [...npcs, player],
       npcs,
-      buildings,
+      buildings: solidRects.length ? solidRects : buildings,
       trees,
       roads, // pedestrians stand on the verge, never in the street
     });
@@ -319,16 +337,45 @@ async function startNewGame() {
   renderRoadsOffscreen(roads);
   potholes = generatePotholes(roads, 16);
   renderPotholesOffscreen(potholes);
-  trees = generateTrees(70, roads, treeImages);
+
+  pitch = placePitch(roads, [LIGHTHOUSE_RESERVE]);
+  renderGrassBase();
+  renderPitchOffscreen(pitch);
+
+  const reserved = [LIGHTHOUSE_RESERVE];
+  if (pitch) {
+    reserved.push({
+      x: pitch.x - 20,
+      y: pitch.y - 20,
+      width: pitch.w + 40,
+      height: pitch.h + 40,
+    });
+  }
+
+  trees = generateTrees(70, roads, treeImages, reserved);
   renderTreesOffscreen(trees);
-  buildings = generateBuildings(50, roads, buildingImages);
+  buildings = generateBuildings(50, roads, buildingImages, reserved);
   buildings.forEach((b) => {
     if (b.img.complete) bakeBuilding(b);
   });
-  coins = generateCoins(15, buildings, trees);
+  props = placeProps(roads, buildings, trees, reserved);
+
+  solidRects = [
+    ...buildings,
+    ...props.map((p) => ({ x: p.x, y: p.y, width: p.w, height: p.h })),
+    LIGHTHOUSE_RESERVE,
+  ];
+  coins = generateCoins(15, solidRects, trees);
 
   // Load NPCs
   await loadNPCs();
+
+  // The keeper lives where the story says he does
+  const keeper = npcs.find((n) => n.id === "lighthouse_keeper");
+  if (keeper) {
+    keeper.x = LIGHTHOUSE.x + 58;
+    keeper.y = LIGHTHOUSE.y - 26;
+  }
 
   // spawn quest items
   items = []; // reset
@@ -346,7 +393,17 @@ async function startNewGame() {
     }
   });
 
-  const spawn = findSafeSpawn({ npcs, buildings, trees });
+  // The kids' lost balls ended up around the pitch, naturally
+  if (pitch) {
+    items.forEach((item) => {
+      if (item.id === "ball") {
+        item.x = pitch.x + 20 + Math.random() * (pitch.w - 40);
+        item.y = pitch.y + 20 + Math.random() * (pitch.h - 40);
+      }
+    });
+  }
+
+  const spawn = findSafeSpawn({ npcs, buildings: solidRects, trees });
   player.x = spawn.x;
   player.y = spawn.y;
   player.setInvulnerable(20);
@@ -815,6 +872,22 @@ function update(deltaTime = 1) {
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
 
+  // Yard props and the lighthouse are as solid as buildings
+  if (player.canCrash()) {
+    const hb = player.getHitbox();
+    for (const p of props) {
+      if (rectCollision(hb, { x: p.x, y: p.y, width: p.w, height: p.h })) {
+        player.crash("prop");
+        break;
+      }
+    }
+    const dxL = player.x + player.width / 2 - LIGHTHOUSE.x;
+    const dyL = player.y + player.height / 2 - LIGHTHOUSE.y;
+    if (dxL * dxL + dyL * dyL < LIGHTHOUSE.hitR * LIGHTHOUSE.hitR) {
+      player.crash("lighthouse");
+    }
+  }
+
   npcs.forEach((npc) => {
     const completedQuest = npc.checkQuestCompletion(player, npcs, {
       showMessage,
@@ -1115,6 +1188,39 @@ function draw() {
     }
   });
 
+  // --- Yard props (tanks, containers, upturned boats) ---
+  props.forEach((p) => {
+    if (!isVisible(p.x - 12, p.y - 12, p.w + 24, p.h + 24)) return;
+    const pool = propSprites[p.type];
+    const img = pool && pool[p.variant % pool.length];
+    if (!img || !img.complete) return;
+
+    ctx.save();
+    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+    ctx.rotate(p.rot);
+    ctx.drawImage(img, -p.bw / 2, -p.bh / 2, p.bw, p.bh);
+    ctx.restore();
+  });
+
+  // --- The lighthouse on the point ---
+  if (
+    lighthouseSprite.complete &&
+    isVisible(
+      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.drawSize,
+      LIGHTHOUSE.drawSize
+    )
+  ) {
+    ctx.drawImage(
+      lighthouseSprite,
+      LIGHTHOUSE.x - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.y - LIGHTHOUSE.drawSize / 2,
+      LIGHTHOUSE.drawSize,
+      LIGHTHOUSE.drawSize
+    );
+  }
+
   ctx.restore();
 
   // --- Atmosphere: dusk tint + fog (screen space) ---
@@ -1349,6 +1455,7 @@ function handleCrash(reason) {
     taxi: "You were flattened by a taxi!",
     bakkie: "A bakkie flattened you!",
     hatch: "You were run down in traffic!",
+    lighthouse: "You rode into the lighthouse. The keeper definitely saw.",
   };
   endGame(reasons[reason] || "You crashed!");
 }
@@ -1376,6 +1483,9 @@ window.__cm = {
   getPotholes: () => potholes,
   getPotholeSlow: () => potholeSlowTimer,
   getItems: () => items,
+  getProps: () => props,
+  getPitch: () => pitch,
+  getLighthouse: () => LIGHTHOUSE,
   isPaused: () => paused,
   isRunning: () => gameRunning,
   getScore: () => score,
