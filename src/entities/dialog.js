@@ -25,7 +25,8 @@ export class DialogManager {
       fontFamily: "Arial",
       fontSize: "18px",
       borderRadius: "8px",
-      maxWidth: "400px",
+      maxWidth: "min(400px, 88vw)",
+      boxSizing: "border-box",
       display: "none",
       zIndex: 1000,
     });

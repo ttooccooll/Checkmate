@@ -75,6 +75,15 @@ export async function payWithQR(item) {
 
     cancelQRPayment = false;
 
+    // Mobile can't scan its own screen: the wallet deep link is the
+    // primary path there. Copy stays available as the universal backup.
+    const walletBtn = document.getElementById("open-wallet-btn");
+    if (walletBtn) {
+      walletBtn.onclick = () => {
+        window.location.href = `lightning:${invoice}`;
+      };
+    }
+
     // Show the container first — a display:none element measures as 0
     invoiceText.textContent = invoice;
     container.classList.add("visible");

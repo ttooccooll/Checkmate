@@ -196,10 +196,31 @@ initKeyboard({
 });
 
 const touchControls = document.getElementById("touch-controls");
+const IS_TOUCH = isTouchDevice();
 
-if (!isTouchDevice()) {
+if (!IS_TOUCH) {
   touchControls.style.display = "none";
 }
+
+// Touch devices: keyboard hints are useless, and pause/volume need buttons
+if (IS_TOUCH) {
+  const hint = document.getElementById("intro-hint");
+  if (hint) {
+    hint.textContent =
+      "Drag anywhere to steer, or use the arrow pad · ⏸ pause · 🔊 sound";
+  }
+  const utils = document.getElementById("mobile-utils");
+  if (utils) utils.style.display = "flex";
+}
+
+document.getElementById("pause-btn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  togglePause();
+});
+document.getElementById("sound-btn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  showMessage(cycleVolume(), 1200);
+});
 
 // A small permanent mark on the title screen for finishing the story
 try {
@@ -1063,7 +1084,11 @@ function draw() {
     ctx.fillText("⏸ Paused", vw / 2, vh / 2 - 16);
     ctx.fillStyle = "rgba(242, 236, 223, 0.8)";
     ctx.font = "16px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("Press P to ride on", vw / 2, vh / 2 + 22);
+    ctx.fillText(
+      IS_TOUCH ? "Tap ⏸ to ride on" : "Press P to ride on",
+      vw / 2,
+      vh / 2 + 22
+    );
     ctx.restore();
   }
 }
@@ -1290,6 +1315,7 @@ document.getElementById("new-game-btn").addEventListener("click", (e) => {
   e.preventDefault();
   e.stopPropagation();
 
+  document.body.classList.remove("pregame");
   document.getElementById("intro-screen").style.display = "none";
   document.getElementById("game-container").style.display = "block";
   document.getElementById("touch-controls").style.display = "grid";

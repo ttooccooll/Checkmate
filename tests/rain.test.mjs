@@ -65,6 +65,19 @@ const wetCoast = await rideAndRelease();
 // Sliding should also have left skid marks
 const skids = await page.evaluate(() => window.__cm.skidMarks.marks.length);
 
+// --- Fog rolls in slowly now: ~8s ramp, so after 2s it's still building ---
+await page.evaluate(() => {
+  const a = window.__cm.ambience;
+  a.rainTarget = 0;
+  a.rainIntensity = 0;
+  a.fogTarget = 1;
+  a.fogIntensity = 0;
+  a.fogEndsAt = 1e9;
+  a.nextWeatherAt = 1e9;
+});
+await page.waitForTimeout(2000);
+const fogRamp = await page.evaluate(() => window.__cm.ambience.fogIntensity);
+
 await browser.close();
 
 const ok =
@@ -74,6 +87,16 @@ const ok =
   wetCoast > 5 && // wet: real momentum
   wetCoast > dryCoast + 4 &&
   skids > 0 &&
+  fogRamp > 0.1 && // fog is building...
+  fogRamp < 0.45 && // ...but a 3s ramp would already be at ~0.66
   problems.length === 0;
 
-finish("rain", ok, { started, raining, dryCoast, wetCoast, skids, problems });
+finish("rain", ok, {
+  started,
+  raining,
+  dryCoast,
+  wetCoast,
+  skids,
+  fogRamp,
+  problems,
+});

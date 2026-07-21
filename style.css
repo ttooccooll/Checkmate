@@ -155,10 +155,30 @@ canvas {
 }
 
 /* Hide the game container and controls until the game starts */
-#game-container,
-#touch-controls,
-#action-buttons {
+#game-container {
   display: none;
+}
+
+/* Pregame (title screen): only the New Game button shows, centered at the
+   bottom — the shop, arrow pad, and utility buttons wait for the game. */
+body.pregame #touch-controls,
+body.pregame #mobile-utils,
+body.pregame #action-buttons button:not(#new-game-btn) {
+  display: none !important;
+}
+
+body.pregame #action-buttons {
+  top: auto;
+  bottom: 26px;
+  right: 50%;
+  transform: translateX(50%);
+  transition: none;
+}
+
+body.pregame #new-game-btn {
+  font-size: 20px;
+  padding: 14px 36px;
+  opacity: 1;
 }
 
 #game-container {
@@ -229,6 +249,34 @@ canvas {
   grid-row: 3;
 }
 
+/* On-screen pause/volume for touch devices (shown via JS) */
+#mobile-utils {
+  position: fixed;
+  bottom: 18px;
+  left: 12px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10;
+}
+
+#mobile-utils button {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
+  border: 2px solid #aaa;
+  box-shadow: 0 4px 0 #999, 0 6px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0.75;
+}
+
+#mobile-utils button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #999, 0 3px 5px rgba(0, 0, 0, 0.15);
+}
+
 #action-buttons {
   position: fixed;
   top: 5px;
@@ -273,6 +321,23 @@ canvas {
   transform-origin: top right;
 }
 
+/* Narrow phones: the shop column must not eat the play area */
+@media (max-width: 520px) {
+  #action-buttons {
+    gap: 6px;
+    max-width: 60vw;
+  }
+  #action-buttons button {
+    font-size: 12px;
+    padding: 6px 9px;
+    white-space: normal;
+    line-height: 1.25;
+  }
+  .smaller-buttons {
+    transform: scale(0.62);
+  }
+}
+
 #score-box {
   position: fixed;
   top: 15px;
@@ -292,6 +357,8 @@ canvas {
   position: fixed;
   top: 50%;
   left: 50%;
+  max-width: 88vw;
+  box-sizing: border-box;
   transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.97);
   padding: 15px 20px;
@@ -485,8 +552,22 @@ canvas {
 
 .qr-buttons {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px; /* space between buttons */
+}
+
+/* The wallet deep link is the primary mobile path; Copy stays as backup */
+#open-wallet-btn {
+  flex: 1 1 100%;
+  background: linear-gradient(145deg, #ffd257, #ffab2e);
+  color: #3a2500;
+  box-shadow: 0 3px 0 #c47b00, 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+#open-wallet-btn:active {
+  box-shadow: 0 1px 0 #c47b00, 0 3px 4px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, #ffc247, #ff9d1e);
 }
 
 .qr-buttons button {

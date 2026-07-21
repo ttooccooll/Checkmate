@@ -21,6 +21,18 @@ export class Ambience {
     }));
     this.splashes = [];
     this.splashCarry = 0;
+
+    // Fog banks: big soft patches that drift in off the water
+    this.fogBlobs = Array.from({ length: 7 }, () => ({
+      x: Math.random() * 1.4 - 0.2,
+      y: Math.random() * 1.4 - 0.2,
+      r: 0.16 + Math.random() * 0.2, // radius relative to viewport width
+      vx: -(0.014 + Math.random() * 0.012),
+      vy: -(0.004 + Math.random() * 0.007),
+      a: 0.1 + Math.random() * 0.08,
+      phase: Math.random() * Math.PI * 2,
+    }));
+
     this.reset();
   }
 
@@ -68,7 +80,7 @@ export class Ambience {
     if (idle && this.timeSec >= this.nextWeatherAt) {
       if (Math.random() < 0.55) {
         this.fogTarget = 1;
-        this.fogEndsAt = this.timeSec + 22 + Math.random() * 12;
+        this.fogEndsAt = this.timeSec + 26 + Math.random() * 14;
         if (onFogIn) onFogIn();
       } else {
         this.rainTarget = 1;
@@ -87,12 +99,25 @@ export class Ambience {
       if (onRainOut) onRainOut();
     }
 
-    // ~3s ramps
-    const step = dtSec / 3;
+    // Fog rolls in slowly (~8s); squalls hit fast (~3s), as squalls do
+    const fogStep = dtSec / 8;
+    const rainStep = dtSec / 3;
     const fogDiff = this.fogTarget - this.fogIntensity;
-    this.fogIntensity += Math.max(-step, Math.min(step, fogDiff));
+    this.fogIntensity += Math.max(-fogStep, Math.min(fogStep, fogDiff));
     const rainDiff = this.rainTarget - this.rainIntensity;
-    this.rainIntensity += Math.max(-step, Math.min(step, rainDiff));
+    this.rainIntensity += Math.max(-rainStep, Math.min(rainStep, rainDiff));
+
+    // Drift the fog banks while any fog is around
+    if (this.fogIntensity > 0.005) {
+      for (const b of this.fogBlobs) {
+        b.x += b.vx * dtSec + Math.sin(this.timeSec * 0.3 + b.phase) * 0.004 * dtSec;
+        b.y += b.vy * dtSec;
+        if (b.x < -0.45) b.x += 1.9;
+        if (b.y < -0.45) b.y += 1.9;
+        if (b.x > 1.45) b.x -= 1.9;
+        if (b.y > 1.45) b.y -= 1.9;
+      }
+    }
 
     // --- Rain particles ---
     if (this.rainIntensity > 0.01) {
@@ -206,22 +231,38 @@ export class Ambience {
       ctx.stroke();
     }
 
+    // Fog: an even haze, drifting banks of thicker patches, and distance
+    // falling away around the rider — not a hard milky ring
     if (this.fogIntensity > 0.01) {
-      const breathe = 1 + 0.05 * Math.sin(this.timeSec * 0.7);
-      const inner = 165 * breathe;
-      const outer = 440;
-      const a = this.fogIntensity;
+      const i = this.fogIntensity;
+      const e = i * i * (3 - 2 * i); // smoothstep: eases in and out
+
+      ctx.fillStyle = `rgba(214, 221, 227, ${0.26 * e})`;
+      ctx.fillRect(0, 0, vw, vh);
+
+      for (const b of this.fogBlobs) {
+        const bx = b.x * vw;
+        const by = b.y * vh;
+        const r = b.r * vw;
+        const g = ctx.createRadialGradient(bx, by, r * 0.15, bx, by, r);
+        g.addColorStop(0, `rgba(221, 227, 232, ${b.a * e})`);
+        g.addColorStop(1, "rgba(221, 227, 232, 0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(bx - r, by - r, r * 2, r * 2);
+      }
+
+      const outer = Math.hypot(vw, vh) * 0.62;
       const g = ctx.createRadialGradient(
         playerX,
         playerY,
-        inner,
+        190,
         playerX,
         playerY,
         outer
       );
-      g.addColorStop(0, "rgba(224, 228, 233, 0)");
-      g.addColorStop(0.55, `rgba(224, 228, 233, ${0.42 * a})`);
-      g.addColorStop(1, `rgba(220, 225, 231, ${0.86 * a})`);
+      g.addColorStop(0, "rgba(216, 223, 229, 0)");
+      g.addColorStop(0.55, `rgba(216, 223, 229, ${0.3 * e})`);
+      g.addColorStop(1, `rgba(216, 223, 229, ${0.62 * e})`);
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, vw, vh);
     }

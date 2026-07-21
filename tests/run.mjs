@@ -11,6 +11,7 @@ const BROWSER_TESTS = [
   "continue",
   "rain",
   "town",
+  "mobile",
   "nostr",
   "qr",
   "treads",
