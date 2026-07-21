@@ -37,6 +37,7 @@ export class NPC {
     this.hasTalked = false;
     this.postQuestDialog = data.postQuestDialog || [];
     this.epilogueDialog = data.epilogueDialog || null;
+    this.stageDialog = data.stageDialog || null; // town gossip per story stage
     this.hasReactedToQuest = false;
 
     this.visible = !data.hidden;

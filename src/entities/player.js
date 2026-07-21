@@ -15,10 +15,27 @@ export class Player {
 
     this.sprite = sprite;
     this.spriteLoaded = false;
+    this.baked = null; // sprite + drop shadow, rendered once
+    this.bakePad = 16;
 
-    sprite.onload = () => {
+    const bake = () => {
       this.spriteLoaded = true;
+      const pad = this.bakePad;
+      const c = document.createElement("canvas");
+      c.width = this.width + pad * 2;
+      c.height = this.height + pad * 2;
+      const bctx = c.getContext("2d");
+      bctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+      bctx.shadowBlur = 10;
+      bctx.drawImage(sprite, pad, pad, this.width, this.height);
+      this.baked = c;
     };
+
+    if (sprite.complete && sprite.naturalWidth) {
+      bake();
+    } else {
+      sprite.onload = bake;
+    }
 
     this.clue = 0;       // For Thabo
     this.marker = 0;     // For Kagiso & Hlokomela
@@ -70,16 +87,12 @@ export class Player {
     if (this.invulnerableTimer > 0) {
       ctx.globalAlpha = 0.55 + 0.35 * Math.sin(performance.now() / 60);
     }
-    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-    ctx.shadowBlur = 10;
     ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
     ctx.rotate((this.displayAngle * Math.PI) / 180);
     ctx.drawImage(
-      this.sprite,
-      -this.width / 2,
-      -this.height / 2,
-      this.width,
-      this.height
+      this.baked,
+      -this.width / 2 - this.bakePad,
+      -this.height / 2 - this.bakePad
     );
     ctx.restore();
   }

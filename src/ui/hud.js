@@ -10,6 +10,29 @@ const upgradeLabels = {
   metalDetector: "🧲 Detector",
 };
 
+// The HUD backdrop uses shadowBlur 50 — a per-frame gaussian if drawn
+// live. Cache it per size; it only changes when the line count does.
+let hudBgCanvas = null;
+let hudBgKey = "";
+const HUD_GLOW_PAD = 60;
+
+function hudBackdrop(bgWidth, bgHeight) {
+  const key = `${bgWidth}x${bgHeight}`;
+  if (key !== hudBgKey) {
+    const c = document.createElement("canvas");
+    c.width = bgWidth + HUD_GLOW_PAD * 2;
+    c.height = bgHeight + HUD_GLOW_PAD * 2;
+    const bctx = c.getContext("2d");
+    bctx.shadowColor = "rgba(255,255,255,0.5)";
+    bctx.shadowBlur = 50;
+    bctx.fillStyle = "rgba(255,255,255,0.3)";
+    bctx.fillRect(HUD_GLOW_PAD, HUD_GLOW_PAD, bgWidth, bgHeight);
+    hudBgCanvas = c;
+    hudBgKey = key;
+  }
+  return hudBgCanvas;
+}
+
 export function drawHUD(
   ctx,
   { score, upgrades, offRoadTimer, deliveryLine, fogLine, rainLine }
@@ -29,13 +52,12 @@ export function drawHUD(
   const bgHeight = numLines * lineHeight + padding * 2;
   const bgWidth = 130;
 
-  // Draw a light white background
-  ctx.save();
-  ctx.shadowColor = "rgba(255,255,255,0.5)";
-  ctx.shadowBlur = 50;
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.fillRect(hudX - padding, hudY - padding, bgWidth, bgHeight);
-  ctx.restore();
+  // Draw a light white background (cached — see hudBackdrop)
+  ctx.drawImage(
+    hudBackdrop(bgWidth, bgHeight),
+    hudX - padding - HUD_GLOW_PAD,
+    hudY - padding - HUD_GLOW_PAD
+  );
 
   // Draw text on top
   ctx.font = "16px monospace";

@@ -51,6 +51,8 @@ import {
   renderRoadsOffscreen,
   renderPotholesOffscreen,
   renderTreesOffscreen,
+  bakeBuilding,
+  BUILDING_SHADOW_PAD,
 } from "./world/worldRender.js";
 
 import { QuestLogManager } from "./ui/questLog.js";
@@ -136,6 +138,11 @@ let slideSkidTimer = 0;
 let potholeSlowTimer = 0;
 let photoFlashTimer = 0;
 
+// A pothole hit shoves the bike off-line briefly (decays each frame)
+let joltVx = 0;
+let joltVy = 0;
+let shakeTimer = 0;
+
 const CONTINUE_PRICE_LABEL = "⚡ Continue · 5,000 sats";
 let offRoadTimer = 0;
 let treadsWarned = false;
@@ -164,8 +171,14 @@ let upgrades = {
 
 // --- Canvas & input wiring ----------------------------------------------------
 
+// Capped at 2: 3x panels burn fill-rate for detail nobody can see at
+// this art scale
+function getDpr() {
+  return Math.min(window.devicePixelRatio || 1, 2);
+}
+
 function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = getDpr();
 
   canvas.width = window.innerWidth * dpr;
   canvas.height = window.innerHeight * dpr;
@@ -300,6 +313,7 @@ async function startNewGame() {
 
   offRoadTimer = 0;
   treadsWarned = false;
+  storyStage = 0;
 
   roads = generateRoads();
   renderRoadsOffscreen(roads);
@@ -308,6 +322,9 @@ async function startNewGame() {
   trees = generateTrees(70, roads, treeImages);
   renderTreesOffscreen(trees);
   buildings = generateBuildings(50, roads, buildingImages);
+  buildings.forEach((b) => {
+    if (b.img.complete) bakeBuilding(b);
+  });
   coins = generateCoins(15, buildings, trees);
 
   // Load NPCs
@@ -350,11 +367,14 @@ async function startNewGame() {
   carriedVy = 0;
   slideSkidTimer = 0;
   potholeSlowTimer = 0;
+  joltVx = 0;
+  joltVy = 0;
+  shakeTimer = 0;
   engine.start();
   ambient.start();
 
-  const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
-  const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
+  const visibleWidth = canvas.width / getDpr();
+  const visibleHeight = canvas.height / getDpr();
 
   camera.x = player.x + player.width / 2 - visibleWidth / 2;
   camera.y = player.y + player.height / 2 - visibleHeight / 2;
@@ -388,6 +408,38 @@ async function startNewGame() {
     lastTime = t;
     startingGame = false;
     gameLoop(t);
+  });
+}
+
+// --- Story stages ------------------------------------------------------------
+// Word travels in a small town. As the mystery progresses, NPCs with
+// stageDialog entries pick up new lines — the latest stage they know
+// about. Purely dialogQueue swaps; quests and reactions are untouched.
+
+const STORY_STAGE_BY_QUEST = {
+  mystery_bell_fragments: 1,
+  mystery_old_routes: 2,
+  mystery_keeper_clues: 3,
+  mystery_clear_path: 4,
+  mystery_ring_bell: 5,
+};
+const STAGE_KEYS = ["fragments", "routes", "keeper", "path", "bell"];
+
+let storyStage = 0;
+
+function applyStoryStage(stage) {
+  if (stage <= storyStage) return;
+  storyStage = stage;
+  npcs.forEach((npc) => {
+    if (!npc.stageDialog) return;
+    for (let s = stage; s >= 1; s--) {
+      const lines = npc.stageDialog[STAGE_KEYS[s - 1]];
+      if (lines) {
+        npc.dialogQueue = [...lines];
+        npc.hasTalked = false;
+        break;
+      }
+    }
   });
 }
 
@@ -506,7 +558,7 @@ function spawnDust() {
 }
 
 function isVisible(x, y, w, h) {
-  const dpr = window.devicePixelRatio || 1;
+  const dpr = getDpr();
   const vw = canvas.width / dpr;
   const vh = canvas.height / dpr;
 
@@ -559,7 +611,7 @@ function update(deltaTime = 1) {
   // A pothole jolt knocks the pace down for a moment
   if (potholeSlowTimer > 0) {
     potholeSlowTimer -= deltaTime;
-    baseSpeed *= 0.55;
+    baseSpeed *= 0.5;
   }
 
   const speed = baseSpeed * deltaTime;
@@ -613,8 +665,15 @@ function update(deltaTime = 1) {
   if (Math.abs(carriedVx) < 0.01) carriedVx = 0;
   if (Math.abs(carriedVy) < 0.01) carriedVy = 0;
 
-  player.move(carriedVx, carriedVy);
+  player.move(carriedVx + joltVx, carriedVy + joltVy);
   player.clamp(WORLD_WIDTH, WORLD_HEIGHT);
+
+  // The pothole shove dies out over ~20 frames
+  const joltDecay = Math.pow(0.85, deltaTime);
+  joltVx *= joltDecay;
+  joltVy *= joltDecay;
+  if (Math.abs(joltVx) < 0.02) joltVx = 0;
+  if (Math.abs(joltVy) < 0.02) joltVy = 0;
 
   const moving = Math.abs(carriedVx) > 0.05 || Math.abs(carriedVy) > 0.05;
   sessionStats.timeSec += deltaTime / 60;
@@ -628,7 +687,17 @@ function update(deltaTime = 1) {
       const cy = Math.max(hb.y, Math.min(p.y, hb.y + hb.height));
       if ((p.x - cx) ** 2 + (p.y - cy) ** 2 < (p.r * 0.8) ** 2) {
         p.hitCooldown = 90;
-        potholeSlowTimer = 35;
+        potholeSlowTimer = 40;
+        // The front wheel kicks sideways — faster in means further off-line
+        const speedMag = Math.hypot(carriedVx, carriedVy) || 1;
+        const kickAng =
+          Math.atan2(carriedVy, carriedVx) +
+          (Math.random() < 0.5 ? 1 : -1) * (Math.PI / 2) +
+          (Math.random() - 0.5) * 0.6;
+        const kick = 1.1 + speedMag * 0.25;
+        joltVx += Math.cos(kickAng) * kick;
+        joltVy += Math.sin(kickAng) * kick;
+        shakeTimer = 9;
         sfx.pothole();
         spawnDust();
         break;
@@ -757,6 +826,9 @@ function update(deltaTime = 1) {
       sessionStats.quests++;
       sfx.quest();
 
+      const stage = STORY_STAGE_BY_QUEST[completedQuest.id];
+      if (stage) applyStoryStage(stage);
+
       showMessage(
         `🎉 Quest "${
           completedQuest.description || "Unnamed Quest"
@@ -862,19 +934,19 @@ function updateCamera(deltaTime) {
   const targetX =
     player.x +
     player.width / 2 -
-    canvas.width / 2 / (window.devicePixelRatio || 1);
+    canvas.width / 2 / getDpr();
   const targetY =
     player.y +
     player.height / 2 -
-    canvas.height / 2 / (window.devicePixelRatio || 1);
+    canvas.height / 2 / getDpr();
 
   const lerpFactor = 0.1;
   camera.x += (targetX - camera.x) * lerpFactor;
   camera.y += (targetY - camera.y) * lerpFactor;
 
   // Clamp in world coordinates
-  const visibleWidth = canvas.width / (window.devicePixelRatio || 1);
-  const visibleHeight = canvas.height / (window.devicePixelRatio || 1);
+  const visibleWidth = canvas.width / getDpr();
+  const visibleHeight = canvas.height / getDpr();
 
   camera.x = Math.max(0, Math.min(WORLD_WIDTH - visibleWidth, camera.x));
   camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
@@ -885,15 +957,37 @@ function updateCamera(deltaTime) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // --- Translate for camera ---
+  // --- Translate for camera (plus the pothole rattle) ---
   ctx.save();
-  ctx.translate(-camera.x, -camera.y);
+  let shakeX = 0;
+  let shakeY = 0;
+  if (shakeTimer > 0) {
+    const mag = 2.2 * (shakeTimer / 9);
+    shakeX = (Math.random() - 0.5) * 2 * mag;
+    shakeY = (Math.random() - 0.5) * 2 * mag;
+  }
+  ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
 
   const nowMs = performance.now();
 
-  // --- Draw world ---
-  ctx.drawImage(grassCanvas, 0, 0);
-  ctx.drawImage(roadCanvas, 0, 0);
+  // --- Draw world (only the viewport slice of the 3000x3000 canvases) ---
+  const viewW = Math.min(canvas.width / getDpr(), WORLD_WIDTH - camera.x);
+  const viewH = Math.min(canvas.height / getDpr(), WORLD_HEIGHT - camera.y);
+  const blitWorld = (source) =>
+    ctx.drawImage(
+      source,
+      camera.x,
+      camera.y,
+      viewW,
+      viewH,
+      camera.x,
+      camera.y,
+      viewW,
+      viewH
+    );
+
+  blitWorld(grassCanvas);
+  blitWorld(roadCanvas);
 
   // --- Skid marks (under everything that moves) ---
   skidMarks.draw(ctx, isVisible);
@@ -1004,25 +1098,27 @@ function draw() {
   player.draw(ctx);
 
   // --- Draw trees ---
-  ctx.drawImage(treeCanvas, 0, 0);
+  blitWorld(treeCanvas);
 
-  // --- Draw buildings with shadows ---
+  // --- Draw buildings with (pre-baked) shadows ---
   buildings.forEach((b) => {
     if (!isVisible(b.x, b.y, b.width, b.height)) return;
 
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,1)";
-    ctx.shadowBlur = 20;
-
-    ctx.drawImage(b.img, b.x, b.y, b.width, b.height);
-    ctx.restore();
+    if (!b.baked && b.img.complete) bakeBuilding(b);
+    if (b.baked) {
+      ctx.drawImage(
+        b.baked,
+        b.x - BUILDING_SHADOW_PAD,
+        b.y - BUILDING_SHADOW_PAD
+      );
+    }
   });
 
   ctx.restore();
 
   // --- Atmosphere: dusk tint + fog (screen space) ---
   {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getDpr();
     ambience.drawScreen(
       ctx,
       canvas.width / dpr,
@@ -1034,7 +1130,7 @@ function draw() {
 
   // --- Crash flash overlay ---
   if (flashTimer > 0) {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getDpr();
     ctx.fillStyle = `rgba(255, 40, 40, ${(0.3 * flashTimer) / FLASH_DURATION})`;
     ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   }
@@ -1042,7 +1138,7 @@ function draw() {
   // --- Camera flash (photographing a pothole) ---
   if (photoFlashTimer > 0) {
     photoFlashTimer -= 1;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getDpr();
     ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * (photoFlashTimer / 8)})`;
     ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   }
@@ -1071,7 +1167,7 @@ function draw() {
 
   // --- Pause overlay ---
   if (paused) {
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getDpr();
     const vw = canvas.width / dpr;
     const vh = canvas.height / dpr;
     ctx.save();
@@ -1180,6 +1276,9 @@ function gameLoop(timestamp) {
   if (flashTimer > 0) {
     flashTimer = Math.max(0, flashTimer - deltaTime);
   }
+  if (shakeTimer > 0) {
+    shakeTimer = Math.max(0, shakeTimer - deltaTime);
+  }
 
   questLog.update(npcs, player);
   if (!paused) update(deltaTime);
@@ -1204,6 +1303,8 @@ async function continueRun() {
   player.setInvulnerable(180); // ~3s to ride clear of whatever ended the run
   carriedVx = 0;
   carriedVy = 0;
+  joltVx = 0;
+  joltVy = 0;
   flashTimer = 0;
   gameRunning = true;
   paused = false;

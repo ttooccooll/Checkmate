@@ -50,6 +50,20 @@ export class QuestLogManager {
 
     if (!active || !completed) return;
 
+    // Rebuilding DOM every frame is wasted work — skip unless something
+    // about the quests actually changed.
+    const sig = npcs
+      .map((npc) => {
+        const q = npc.currentQuest;
+        if (!q) return "";
+        return `${q.id}:${q.active ? 1 : 0}:${
+          npc.completedQuests.includes(q.id) ? 1 : 0
+        }:${q.getProgressText(player)}`;
+      })
+      .join("|");
+    if (sig === this._sig) return;
+    this._sig = sig;
+
     active.innerHTML = "";
     completed.innerHTML = "";
 

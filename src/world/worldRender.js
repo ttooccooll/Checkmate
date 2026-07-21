@@ -291,6 +291,23 @@ export function renderPotholesOffscreen(potholes) {
   });
 }
 
+// Canvas shadowBlur is a per-draw gaussian — far too slow to run every
+// frame per building. Bake each building with its shadow once; the frame
+// loop just blits the result. Padding covers the blur spread.
+export const BUILDING_SHADOW_PAD = 26;
+
+export function bakeBuilding(b) {
+  const pad = BUILDING_SHADOW_PAD;
+  const c = document.createElement("canvas");
+  c.width = Math.ceil(b.width + pad * 2);
+  c.height = Math.ceil(b.height + pad * 2);
+  const bctx = c.getContext("2d");
+  bctx.shadowColor = "rgba(0,0,0,1)";
+  bctx.shadowBlur = 20;
+  bctx.drawImage(b.img, pad, pad, b.width, b.height);
+  b.baked = c;
+}
+
 export function renderTreesOffscreen(trees) {
   treeCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 

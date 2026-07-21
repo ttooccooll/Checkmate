@@ -49,6 +49,9 @@ const endState = await page.evaluate(() => ({
   storyFlag: localStorage.getItem("checkmateStoryComplete"),
   nandiOpener: window.__cm.getNpcs().find((n) => n.id === "nandi")
     ?.dialogQueue[0],
+  // Town gossip: the stage system should have given Musa his bell lines
+  musaOpener: window.__cm.getNpcs().find((n) => n.id === "musa")
+    ?.dialogQueue[0],
   score: null,
 }));
 
@@ -64,6 +67,7 @@ const ok =
   endState.shareBtn &&
   endState.storyFlag === "true" &&
   (endState.nandiOpener || "").includes("heard it too") &&
+  (endState.musaOpener || "").includes("in the water") &&
   problems.length === 0;
 
 finish("story", ok, { started, setup, bellMsg, glow, endState, problems });

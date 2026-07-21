@@ -6,8 +6,15 @@
     "dialog": [
       "The lighthouse keeper?",
       "He didn’t leave town.",
-      "He just… stopped being seen."
+      "He just… stopped being seen.",
+      "He fixed my bicycle chain once. Never said a word the whole time. Best repair I ever had."
     ],
+    "stageDialog": {
+      "bell": [
+        "First night in years I slept with the window open.",
+        "Just in case it rings again."
+      ]
+    },
     "postQuestDialog": [
       "You found his things?",
       "Then he was still trying to do his job.",
@@ -31,7 +38,14 @@
       "I miss the smell of rain along the cliffs.",
       "Storms come fast, then disappear into the bay.",
       "The coast really shows its moods here."
-    ]
+    ],
+    "stageDialog": {
+      "fragments": [
+        "People say Nandi found pieces of the old bell.",
+        "She always heard the weather before the rest of us did.",
+        "Maybe some people just listen better."
+      ]
+    }
   },
   {
     "id": "sipho",
@@ -40,7 +54,14 @@
       "Nothing beats a braai by the seaside.",
       "Everyone debates which boerewors brand is best.",
       "As long as the fire is hot, the day’s a win."
-    ]
+    ],
+    "stageDialog": {
+      "keeper": [
+        "They say the lighthouse keeper never actually left town.",
+        "Forty years, and the man never once came to a braai.",
+        "Some people keep a different kind of fire going."
+      ]
+    }
   },
   {
     "id": "nomsa",
@@ -58,8 +79,16 @@
     "dialog": [
       "You’re asking about the bell?",
       "It wasn’t for ships. It was for people.",
-      "When someone didn’t come home… it rang."
+      "When someone didn’t come home… it rang.",
+      "Nineteen strokes for a boat overdue. I used to count them against my window."
     ],
+    "stageDialog": {
+      "bell": [
+        "Nineteen strokes for a boat overdue. Three for a safe return.",
+        "Last night I counted three.",
+        "Somebody up there remembered the code."
+      ]
+    },
     "postQuestDialog": [
       "I’m glad someone still listens.",
       "Places don’t forget things.",
@@ -92,7 +121,14 @@
       "The beaches here are peaceful, with warm water and warmer smiles.",
       "Just don’t forget sun protection.",
       "The tide and the people are what make it magical."
-    ]
+    ],
+    "stageDialog": {
+      "bell": [
+        "I was in the water when it rang.",
+        "Every swimmer stood up at the same time, like church.",
+        "That was you, hey?"
+      ]
+    }
   },
   {
     "id": "anele",
@@ -110,7 +146,14 @@
       "Even small power outages reveal our patience.",
       "Cooking on gas becomes an art.",
       "You have to laugh and enjoy the moment."
-    ]
+    ],
+    "stageDialog": {
+      "bell": [
+        "The bell rang, and two minutes later the power went out.",
+        "This town has always had a sense of humour.",
+        "Still — nobody minded the dark last night."
+      ]
+    }
   },
   {
     "id": "busisiwe",
@@ -167,7 +210,14 @@
       "Evenings on the cliffs are calm.",
       "Watching the sun set over the waves is enough for reflection.",
       "Peace lives here if you stop and look."
-    ]
+    ],
+    "stageDialog": {
+      "fragments": [
+        "So you're the one asking about the bell.",
+        "Nandi said someone she trusts was doing the looking.",
+        "Then look properly."
+      ]
+    }
   },
   {
     "id": "nandi",
@@ -256,8 +306,15 @@
     "dialog": [
       "No one walks up there anymore.",
       "Paths don’t vanish on their own.",
-      "They disappear when people stop caring."
+      "They disappear when people stop caring.",
+      "I sweep the bottom steps out of habit. Someone keeps sweeping the top ones."
     ],
+    "stageDialog": {
+      "bell": [
+        "I went up this morning.",
+        "Both sets of steps were swept."
+      ]
+    },
     "postQuestDialog": [
       "The path feels open again.",
       "Like it’s breathing.",
@@ -281,7 +338,14 @@
       "Early mornings along the coast are quiet.",
       "The town wakes with the sunrise and the waves.",
       "Notice the little details others miss."
-    ]
+    ],
+    "stageDialog": {
+      "path": [
+        "There was a light at the point this morning. Just for a moment, before sunrise.",
+        "I thought I imagined it.",
+        "I don't think I imagined it."
+      ]
+    }
   },
   {
     "id": "refilwe",
@@ -407,7 +471,9 @@
     "hidden": true,
     "dialog": [
       "So. Someone finally followed the sound.",
+      "I know your face. You stand the way your sister does — like you're already halfway to the next place.",
       "I kept the light long after the town stopped looking up.",
+      "The rope rotted in '09. The winch seized the year after. I kept the ledger anyway — every boat out, every safe return.",
       "The old bell needs attention… find it, and let them hear it one more time."
     ],
     "postQuestDialog": [
