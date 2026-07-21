@@ -393,6 +393,86 @@ body.pregame #new-game-btn {
   animation: none;
 }
 
+/* End-of-run card: dark and quiet, score front and center */
+#message-modal.card-dark {
+  background: rgba(13, 27, 36, 0.94);
+  color: #ece5d4;
+  border: 1px solid rgba(236, 229, 212, 0.14);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  padding: 26px 32px 22px;
+  min-width: 272px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+#message-modal .go-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+#message-modal .go-reason {
+  margin-top: 9px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  opacity: 0.82;
+}
+
+#message-modal .go-score {
+  margin-top: 14px;
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+#message-modal .go-score-note {
+  margin-top: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+#message-modal .go-score-note.best {
+  color: #ffd257;
+  opacity: 1;
+}
+
+#message-modal .go-stats {
+  margin-top: 11px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.62;
+  line-height: 1.5;
+}
+
+#message-modal.card-dark .share-row {
+  border-top: 1px solid rgba(236, 229, 212, 0.12);
+}
+
+#message-modal #card-new-game-btn {
+  display: block;
+  margin: 0 auto 12px;
+  padding: 11px 26px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(145deg, #48a385, #3d9070);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #317264, 0 6px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+#message-modal #card-new-game-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #317264, 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
 /* Share-to-Nostr action area on the game-over card */
 #message-modal .share-row {
   margin-top: 20px;
@@ -613,8 +693,7 @@ body.pregame #new-game-btn {
   }
 
   /* Desktop: transient messages sit at the bottom, out of the action.
-     Interactive cards (game over, story) stay centered. Mobile keeps
-     messages centered because the arrow pad owns the bottom. */
+     Interactive cards (game over, story) stay centered. */
   #message-modal {
     top: auto;
     bottom: 26px;
@@ -626,4 +705,35 @@ body.pregame #new-game-btn {
     bottom: auto;
     transform: translate(-50%, -50%);
   }
+}
+
+/* Touch devices: dock transient toasts top-left, tucked under the HUD,
+   so they never sit over the rider mid-screen. Interactive cards
+   (game over, story) stay centered. */
+body.touch #message-modal {
+  top: 140px;
+  left: 8px;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  max-width: min(64vw, 340px);
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+body.touch #message-modal.interactive {
+  top: 50%;
+  left: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  max-width: 88vw;
+  font-size: 18px;
+  padding: 15px 20px;
+  text-align: center;
+}
+
+body.touch #message-modal.interactive.card-dark {
+  padding: 26px 32px 22px;
 }

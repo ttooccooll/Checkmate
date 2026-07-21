@@ -154,7 +154,7 @@ export function renderPitchOffscreen(pitch) {
 
   // Faded painted lines
   g.save();
-  g.strokeStyle = "rgba(244, 244, 238, 0.5)";
+  g.strokeStyle = "rgba(244, 244, 238, 0.34)";
   g.lineWidth = 3;
   g.strokeRect(x, y, w, h);
 
@@ -186,7 +186,7 @@ export function renderPitchOffscreen(pitch) {
   }
 
   // A second, patchier pass so the paint reads worn, not fresh
-  g.strokeStyle = "rgba(244, 244, 238, 0.22)";
+  g.strokeStyle = "rgba(244, 244, 238, 0.14)";
   g.lineWidth = 5;
   g.setLineDash([26, 34]);
   g.strokeRect(x, y, w, h);
@@ -195,14 +195,14 @@ export function renderPitchOffscreen(pitch) {
   // Goals: white frame with a touch of net hatching behind
   const goalW = Math.min(w, h) * 0.24;
   const drawGoal = (gx, gy, facing) => {
-    g.strokeStyle = "rgba(250, 250, 246, 0.85)";
+    g.strokeStyle = "rgba(250, 250, 246, 0.62)";
     g.lineWidth = 2.5;
     const depth = 10;
     g.save();
     g.translate(gx, gy);
     g.rotate(facing);
     g.strokeRect(-goalW / 2, -depth, goalW, depth);
-    g.strokeStyle = "rgba(230, 230, 226, 0.35)";
+    g.strokeStyle = "rgba(230, 230, 226, 0.24)";
     g.lineWidth = 1;
     for (let i = 1; i < 5; i++) {
       const nx = -goalW / 2 + (goalW / 5) * i;

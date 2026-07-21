@@ -236,6 +236,8 @@ if (!IS_TOUCH) {
 
 // Touch devices: keyboard hints are useless, and pause/volume need buttons
 if (IS_TOUCH) {
+  // Lets CSS dock transient toasts under the HUD instead of mid-screen
+  document.body.classList.add("touch");
   const hint = document.getElementById("intro-hint");
   if (hint) {
     hint.textContent =
@@ -311,18 +313,18 @@ async function startNewGame() {
   if (startingGame || gameRunning) return;
   startingGame = true;
 
+  // Immediate feedback — world generation takes a beat, and the player
+  // should never wonder whether the click landed
+  document.getElementById("new-game-btn").textContent = "Loading…";
+  showMessage("Rolling into town…", 4000);
+  // let the message actually paint before the heavy work starts
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
   // If textures are still downloading, wait them out instead of making
   // the player click again
   if (!texturesReady()) {
-    const newGameBtn = document.getElementById("new-game-btn");
-    const prevLabel = newGameBtn.textContent;
-    newGameBtn.textContent = "Loading…";
-    showMessage("Loading the coast…", 1500);
     await whenReady();
-    newGameBtn.textContent = prevLabel;
   }
-
-  showMessage("New Game!", 2000);
 
   resizeCanvas();
 
@@ -474,6 +476,8 @@ async function startNewGame() {
     button.classList.add("smaller-buttons");
   });
 
+  showMessage("New Game!", 2000);
+
   introMessageTimer = setTimeout(() => {
     showMessage(
       "🔔 A distant bell echoes through the air… It reminds you of your sister Nandi, who always described mysterious ringing at the lighthouse.",
@@ -582,12 +586,11 @@ function runStoryFinale() {
       nandi.hasTalked = false;
     }
 
-    const card = `
-🔔 The Bell of the Bay 🔔
-The keeper's watch is over. The town remembers its own.
-Story complete · +200 points
-Nandi will want a word.
-    `.trim();
+    const card = {
+      title: "The Bell of the Bay",
+      subtitle: "The keeper's watch is over. The town remembers its own.",
+      lines: ["Story complete · +200 points", "Nandi will want a word."],
+    };
 
     const shareText = [
       "🔔 Followed the mystery to the end and rang the bell above the bay.",
@@ -1357,15 +1360,6 @@ function endGame(reason = "Game Over") {
   const t = Math.max(0, Math.round(sessionStats.timeSec));
   const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
 
-  const message = `
-💥 Game Over 💥
-${reason}
-Score: ${score}
-${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
-🛣️ ${km} km · ⏱️ ${clock}
-🪙 ${sessionStats.coins} coins · 📦 ${deliveries.completed} deliveries · 📜 ${sessionStats.quests} quests
-  `.trim();
-
   const shareText = [
     "🏍️ Checkmate Delivery",
     reason,
@@ -1377,11 +1371,23 @@ ${isNewBest ? "🏆 New personal best!" : `Best: ${previousBest}`}
   ].join("\n");
 
   showGameOverMessage(
-    message,
+    {
+      title: "Game Over",
+      subtitle: reason,
+      score,
+      scoreNote: isNewBest ? "New personal best" : `Best ${previousBest}`,
+      isBest: isNewBest,
+      lines: [
+        `${km} km · ${clock} · ${sessionStats.coins} coins · ${deliveries.completed} deliveries · ${sessionStats.quests} quests`,
+      ],
+    },
     shareText,
-    continuesUsed
-      ? {}
-      : { continueLabel: CONTINUE_PRICE_LABEL, onContinue: continueRun }
+    {
+      ...(continuesUsed
+        ? {}
+        : { continueLabel: CONTINUE_PRICE_LABEL, onContinue: continueRun }),
+      onNewGame: () => newGameBtn.onclick?.(),
+    }
   );
 
   resetButtonSize();

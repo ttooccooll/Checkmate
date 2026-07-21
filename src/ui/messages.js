@@ -9,6 +9,7 @@ export function showMessage(text, duration = 5000, closable = false) {
   modal.textContent = text;
   modal.style.display = "block";
   modal.classList.toggle("interactive", closable);
+  modal.classList.remove("card-dark");
 
   clearTimeout(modal._timer);
 
@@ -26,13 +27,36 @@ export function showMessage(text, duration = 5000, closable = false) {
   }
 }
 
-// Game-over modal with a "Share on Nostr" button — and, when offered, a
-// pay-to-continue button above it. Clicking anywhere else closes the
-// modal; the buttons themselves never do.
-export function showGameOverMessage(text, shareText, options = {}) {
+// End-of-run card: a dark, quiet layout — title, cause, the score large,
+// one muted stats line — with pay-to-continue, New Game, and Share-on-Nostr
+// actions. Clicking anywhere outside the buttons closes it.
+export function showGameOverMessage(content, shareText, options = {}) {
   const modal = document.getElementById("message-modal");
   clearTimeout(modal._timer);
-  modal.textContent = text;
+  modal.textContent = "";
+  modal.classList.add("card-dark");
+
+  const line = (cls, text) => {
+    if (text === undefined || text === null) return;
+    const el = document.createElement("div");
+    el.className = cls;
+    el.textContent = text;
+    modal.appendChild(el);
+  };
+
+  line("go-title", content.title);
+  line("go-reason", content.subtitle);
+  if (content.score !== undefined) line("go-score", String(content.score));
+  if (content.scoreNote) {
+    line(content.isBest ? "go-score-note best" : "go-score-note", content.scoreNote);
+  }
+  (content.lines || []).forEach((l) => line("go-stats", l));
+
+  const closeModal = () => {
+    modal.style.display = "none";
+    modal.classList.remove("interactive", "card-dark");
+    modal.onclick = null;
+  };
 
   const shareRow = document.createElement("div");
   shareRow.className = "share-row";
@@ -50,9 +74,7 @@ export function showGameOverMessage(text, shareText, options = {}) {
 
       const paid = await options.onContinue();
       if (paid) {
-        modal.style.display = "none";
-        modal.classList.remove("interactive");
-        modal.onclick = null;
+        closeModal();
       } else {
         contBtn.classList.remove("busy");
         contBtn.disabled = false;
@@ -60,6 +82,18 @@ export function showGameOverMessage(text, shareText, options = {}) {
       }
     });
     shareRow.appendChild(contBtn);
+  }
+
+  if (options.onNewGame) {
+    const newBtn = document.createElement("button");
+    newBtn.id = "card-new-game-btn";
+    newBtn.textContent = "New Game";
+    newBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeModal();
+      options.onNewGame();
+    });
+    shareRow.appendChild(newBtn);
   }
 
   const shareBtn = document.createElement("button");
@@ -113,8 +147,6 @@ export function showGameOverMessage(text, shareText, options = {}) {
   modal.classList.add("interactive");
   modal.onclick = (e) => {
     if (e.target.closest(".share-row")) return;
-    modal.style.display = "none";
-    modal.classList.remove("interactive");
-    modal.onclick = null;
+    closeModal();
   };
 }
