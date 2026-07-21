@@ -10,7 +10,6 @@
 // buildings 512 q 0.85, small sprites 128-256 q 0.85-0.92.
 const { chromium } = require("playwright");
 const fs = require("fs");
-const path = require("path");
 
 const MAX_DIM = Number(process.env.MAX_DIM || 512);
 const QUALITY = Number(process.env.QUALITY || 0.85);
