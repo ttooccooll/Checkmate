@@ -139,8 +139,40 @@ const queue = await page.evaluate(() => {
     lateral,
     leaderSpeed: a.currentSpeed,
     followerSpeed: b.currentSpeed,
-    allMoving: window.__cm.traffic.taxis.every((t) => t.currentSpeed > 0.1),
+    // Hard-yielding at a crossing legally stops a vehicle, so "everyone
+    // moving" is no longer an invariant — but most of the fleet should be.
+    movingCount: window.__cm.traffic.taxis.filter((t) => t.currentSpeed > 0.1)
+      .length,
   };
+});
+
+// --- Crossing yield: a vertical vehicle must never overlap a horizontal
+// one occupying the intersection — it stops and waits ---
+const crossing = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const A = cm.traffic.taxis.find((t) => t.horizontal);
+  const B = cm.traffic.taxis.find((t) => !t.horizontal);
+  const cx = B.road.x + B.road.width / 2;
+  const cy = A.road.y + A.road.height / 2;
+
+  A.x = cx; // park the horizontal one crawling through the box
+  A.speed = 0.8;
+  A.currentSpeed = 0.8;
+  B.y = cy - B.forward * 160; // vertical approaches the same box
+  B.currentSpeed = B.speed;
+
+  const hit = (r1, r2) =>
+    r1.x < r2.x + r2.width &&
+    r1.x + r1.width > r2.x &&
+    r1.y < r2.y + r2.height &&
+    r1.y + r1.height > r2.y;
+
+  let everOverlapped = false;
+  for (let i = 0; i < 10; i++) {
+    await new Promise((r) => setTimeout(r, 300));
+    if (hit(A.hitbox(), B.hitbox())) everOverlapped = true;
+  }
+  return { everOverlapped, bSpeed: B.currentSpeed };
 });
 
 await browser.close();
@@ -164,7 +196,17 @@ const ok =
   queue.lateral < 5 && // still in the same lane
   queue.gap > 55 && // no overlap (taxis are 75 long, center gap > 55 with follow logic)
   queue.followerSpeed > 0.1 && // following, not frozen
-  queue.allMoving && // nobody deadlocked anywhere on the map
+  queue.movingCount >= 10 && // a couple may be waiting at crossings, most roll
+  crossing.everOverlapped === false && // crossing traffic never overlaps
   problems.length === 0;
 
-finish("town", ok, { started, npcsOnRoad, world, jolt, offer, queue, problems });
+finish("town", ok, {
+  started,
+  npcsOnRoad,
+  world,
+  jolt,
+  offer,
+  queue,
+  crossing,
+  problems,
+});

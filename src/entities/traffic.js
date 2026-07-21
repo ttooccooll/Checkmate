@@ -9,9 +9,9 @@ const WRAP_MARGIN = 90;
 
 // Per-type dimensions and temperament
 const VEHICLE_TYPES = {
-  taxi: { w: 40, h: 75, minSpeed: 2.1, speedRange: 1.1 },
-  bakkie: { w: 38, h: 70, minSpeed: 2.2, speedRange: 1.1 },
-  hatch: { w: 34, h: 58, minSpeed: 2.6, speedRange: 1.1 },
+  taxi: { w: 40, h: 75, minSpeed: 2.5, speedRange: 1.0 },
+  bakkie: { w: 38, h: 70, minSpeed: 2.6, speedRange: 1.0 },
+  hatch: { w: 34, h: 58, minSpeed: 2.9, speedRange: 1.0 },
 };
 
 class Taxi {
@@ -77,39 +77,59 @@ class Taxi {
       }
     }
 
-    // Other taxis. Two asymmetric rules, so nobody ever brakes for someone
+    // Other vehicles. Asymmetric rules, so nobody ever brakes for someone
     // who is braking for them:
     //  - same lane: the one behind follows the one in front
-    //  - crossing at intersections: vertical yields to horizontal early;
+    //  - crossing at intersections: vertical fully yields to horizontal;
     //    horizontal only emergency-slows when a crosser is right on top
+    let hardYield = false;
     for (const o of others) {
       if (o === this) continue;
       const ahead = this.horizontal
         ? (o.x - this.x) * this.forward
         : (o.y - this.y) * this.forward;
-      if (ahead <= 0) continue;
       const lateral = Math.abs(this.horizontal ? o.y - this.y : o.x - this.x);
 
       const sameLane = o.road === this.road && o.forward === this.forward;
-      if (sameLane && lateral < 20 && ahead < 100) {
-        targetSpeed = Math.min(
-          targetSpeed,
-          ahead < 70 ? o.currentSpeed * 0.7 : o.currentSpeed
-        );
-      } else if (!sameLane && lateral < 42 && ahead < 110) {
-        if (!this.horizontal && o.horizontal) {
-          targetSpeed = Math.min(targetSpeed, this.speed * 0.15);
-        } else if (ahead < 50) {
-          targetSpeed = Math.min(targetSpeed, this.speed * 0.3);
+      if (sameLane) {
+        if (ahead > 0 && lateral < 20 && ahead < 100) {
+          targetSpeed = Math.min(
+            targetSpeed,
+            ahead < 70 ? o.currentSpeed * 0.7 : o.currentSpeed
+          );
+        }
+        continue;
+      }
+      if (o.horizontal === this.horizontal) continue; // parallel roads
+
+      // Crossing traffic: use real body extents. Their long axis lies along
+      // my lateral axis; their width lies along my direction of travel.
+      const corridorHalf = this.w / 2 + o.h / 2 + 6;
+      const occupyDepth = this.h / 2 + o.w / 2;
+      if (lateral < corridorHalf && ahead > -occupyDepth && ahead < 150) {
+        if (!this.horizontal) {
+          if (ahead < occupyDepth + 30) {
+            hardYield = true; // stop dead — they're in (or at) the box
+            targetSpeed = 0;
+          } else {
+            targetSpeed = Math.min(targetSpeed, this.speed * 0.18);
+          }
+        } else if (ahead < occupyDepth + 20) {
+          targetSpeed = Math.min(targetSpeed, this.speed * 0.25);
         }
       }
     }
 
-    // Never a full stop — queues always creep, so they always clear
-    targetSpeed = Math.max(targetSpeed, this.speed * 0.08);
+    // Never a full stop — except a hard yield, which clears itself because
+    // horizontal traffic always keeps rolling
+    if (!hardYield) {
+      targetSpeed = Math.max(targetSpeed, this.speed * 0.08);
+    }
 
+    // Brakes are stronger than the accelerator
+    const lerpRate = targetSpeed < this.currentSpeed ? 0.18 : 0.06;
     this.currentSpeed +=
-      (targetSpeed - this.currentSpeed) * Math.min(1, 0.06 * deltaTime);
+      (targetSpeed - this.currentSpeed) * Math.min(1, lerpRate * deltaTime);
 
     const v = this.currentSpeed * this.forward * deltaTime;
     if (this.horizontal) {
@@ -171,18 +191,28 @@ export class TrafficManager {
       zonesByRoad.set(road, zones);
     });
 
+    // One vehicle per (road, direction) slot: no two vehicles ever share a
+    // lane, so slow leaders can't collect a permanent train behind them.
+    const slots = [];
+    roads.forEach((road) => {
+      slots.push({ road, forward: 1 }, { road, forward: -1 });
+    });
+    for (let i = slots.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [slots[i], slots[j]] = [slots[j], slots[i]];
+    }
+
     const typeCounts = {};
-    fleet.forEach((type) => {
-      const road = roads[Math.floor(Math.random() * roads.length)];
-      const forward = Math.random() < 0.5 ? 1 : -1;
+    fleet.forEach((type, idx) => {
+      const slot = slots[idx % slots.length];
       const pool = this.sprites[type] || this.sprites.taxi;
       typeCounts[type] = (typeCounts[type] || 0) + 1;
       const sprite = pool[(typeCounts[type] - 1) % pool.length];
       const taxi = new Taxi(
         sprite,
-        road,
-        forward,
-        zonesByRoad.get(road) || [],
+        slot.road,
+        slot.forward,
+        zonesByRoad.get(slot.road) || [],
         type
       );
 

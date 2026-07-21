@@ -611,4 +611,19 @@ body.pregame #new-game-btn {
   #touch-controls {
     display: none !important;
   }
+
+  /* Desktop: transient messages sit at the bottom, out of the action.
+     Interactive cards (game over, story) stay centered. Mobile keeps
+     messages centered because the arrow pad owns the bottom. */
+  #message-modal {
+    top: auto;
+    bottom: 26px;
+    transform: translateX(-50%);
+  }
+
+  #message-modal.interactive {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+  }
 }

@@ -41,7 +41,6 @@ export class NPC {
 
     this.visible = !data.hidden;
     this.wasHidden = !!data.hidden;
-    this.bobPhase = Math.random() * Math.PI * 2;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -170,18 +169,14 @@ export class NPC {
     if (!this.sprite.complete) return;
     if (!this.visible) return;
 
-    // Gentle idle bob, phase-offset per NPC so the crowd doesn't sync up
-    const bob = Math.sin(performance.now() / 420 + this.bobPhase) * 1.4;
-
-    // --- Fake shadow (VERY cheap) — shrinks slightly as the NPC "rises" ---
-    const shadowScale = 1 - (bob + 1.4) * 0.06;
+    // --- Fake shadow (VERY cheap) ---
     ctx.fillStyle = "rgba(0,0,0,0.25)";
     ctx.beginPath();
     ctx.ellipse(
       this.x + this.width / 2, // center X
       this.y + this.height - 2, // just under feet
-      this.width * 0.35 * shadowScale,
-      this.height * 0.18 * shadowScale,
+      this.width * 0.35,
+      this.height * 0.18,
       0,
       0,
       Math.PI * 2
@@ -189,7 +184,7 @@ export class NPC {
     ctx.fill();
 
     // --- NPC sprite ---
-    ctx.drawImage(this.sprite, this.x, this.y + bob, this.width, this.height);
+    ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
   }
 }
 
