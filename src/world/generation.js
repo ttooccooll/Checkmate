@@ -148,6 +148,105 @@ export function generateCoins(count, buildings, trees) {
   return arr;
 }
 
+// Potholes: irregular decay patches on the road surface. All geometry is
+// precomputed here (jittered outline, offset deep spot, radial cracks,
+// gravel specks) so the renderer just replays fixed paths — every pothole
+// is unique and stays identical from frame to frame.
+export function generatePotholes(roads, count = 16) {
+  // Intersection centers — potholes stay clear of them
+  const crossings = [];
+  roads.forEach((a, i) => {
+    for (let j = i + 1; j < roads.length; j++) {
+      const b = roads[j];
+      const ix = Math.max(a.x, b.x);
+      const iw = Math.min(a.x + a.width, b.x + b.width) - ix;
+      const iy = Math.max(a.y, b.y);
+      const ih = Math.min(a.y + a.height, b.y + b.height) - iy;
+      if (iw > 0 && ih > 0) crossings.push({ x: ix + iw / 2, y: iy + ih / 2 });
+    }
+  });
+
+  const potholes = [];
+  let attempts = 0;
+
+  while (potholes.length < count && attempts < count * 50) {
+    attempts++;
+    const road = roads[Math.floor(Math.random() * roads.length)];
+    const r = 6 + Math.random() * 7;
+    const inset = r + 10;
+    const x = road.x + inset + Math.random() * (road.width - inset * 2);
+    const y = road.y + inset + Math.random() * (road.height - inset * 2);
+
+    if (crossings.some((c) => Math.hypot(c.x - x, c.y - y) < 130)) continue;
+    if (potholes.some((p) => Math.hypot(p.x - x, p.y - y) < 150)) continue;
+
+    // Jittered outline
+    const verts = 11;
+    const outline = [];
+    for (let v = 0; v < verts; v++) {
+      const ang = (v / verts) * Math.PI * 2 + Math.random() * 0.25;
+      const rr = r * (0.72 + Math.random() * 0.55);
+      outline.push([x + Math.cos(ang) * rr, y + Math.sin(ang) * rr]);
+    }
+
+    // Deep spot, offset from center
+    const deepDx = (Math.random() - 0.5) * r * 0.5;
+    const deepDy = (Math.random() - 0.5) * r * 0.5;
+    const inner = outline.map(([px, py]) => [
+      x + deepDx + (px - x) * 0.5,
+      y + deepDy + (py - y) * 0.5,
+    ]);
+
+    // Radial cracks, each a short wobbly polyline
+    const cracks = [];
+    const crackCount = 3 + Math.floor(Math.random() * 3);
+    for (let c = 0; c < crackCount; c++) {
+      const ang = Math.random() * Math.PI * 2;
+      const len = r * (0.8 + Math.random() * 1.3);
+      const pts = [[x + Math.cos(ang) * r * 0.85, y + Math.sin(ang) * r * 0.85]];
+      const segs = 3;
+      for (let s = 1; s <= segs; s++) {
+        const wobble = (Math.random() - 0.5) * 3.5;
+        const d = r * 0.85 + (len * s) / segs;
+        const wAng = ang + (wobble * 0.06 * s) / segs;
+        pts.push([
+          x + Math.cos(wAng) * d + wobble * 0.4,
+          y + Math.sin(wAng) * d + wobble * 0.4,
+        ]);
+      }
+      cracks.push(pts);
+    }
+
+    // Loose gravel inside and just past the lip
+    const gravel = [];
+    const gravelCount = 8 + Math.floor(Math.random() * 7);
+    for (let g = 0; g < gravelCount; g++) {
+      const ang = Math.random() * Math.PI * 2;
+      const d = Math.random() * r * 1.25;
+      gravel.push([
+        x + Math.cos(ang) * d,
+        y + Math.sin(ang) * d,
+        Math.random() < 0.5 ? 0 : 1, // tone variant
+      ]);
+    }
+
+    potholes.push({
+      x,
+      y,
+      r,
+      outline,
+      inner,
+      deepDx,
+      deepDy,
+      cracks,
+      gravel,
+      hitCooldown: 0,
+    });
+  }
+
+  return potholes;
+}
+
 // Pass `roads` to also keep the spawn off the road surface (used for NPCs
 // so taxis can never drive over a pedestrian; the player may spawn on roads).
 export function findSafeSpawn(

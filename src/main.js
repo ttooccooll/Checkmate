@@ -36,6 +36,7 @@ import {
   generateBuildings,
   generateTrees,
   generateCoins,
+  generatePotholes,
   findSafeSpawn,
   isOnRoad,
 } from "./world/generation.js";
@@ -48,6 +49,7 @@ import {
   texturesReady,
   whenReady,
   renderRoadsOffscreen,
+  renderPotholesOffscreen,
   renderTreesOffscreen,
 } from "./world/worldRender.js";
 
@@ -72,19 +74,26 @@ player.onCrash = (reason) => {
   handleCrash(reason);
 };
 
-const taxiSprites = [
-  "/assets/taxi1.webp",
-  "/assets/taxi2.webp",
-  "/assets/taxi3.webp",
-].map((src) => {
-  const img = new Image();
-  img.src = src;
-  return img;
-});
+const loadSprites = (srcs) =>
+  srcs.map((src) => {
+    const img = new Image();
+    img.src = src;
+    return img;
+  });
+
+const vehicleSprites = {
+  taxi: loadSprites([
+    "/assets/taxi1.webp",
+    "/assets/taxi2.webp",
+    "/assets/taxi3.webp",
+  ]),
+  bakkie: loadSprites(["/assets/bakkie.webp"]),
+  hatch: loadSprites(["/assets/hatch1.webp", "/assets/hatch2.webp"]),
+};
 
 const skidMarks = new SkidMarks();
 const ambience = new Ambience();
-const traffic = new TrafficManager(taxiSprites);
+const traffic = new TrafficManager(vehicleSprites);
 const deliveries = new DeliveryManager({
   showMessage: (msg, ms) => showMessage(msg, ms),
   addScore: (n) => addScore(n),
@@ -100,6 +109,7 @@ let trees = [];
 let coins = [];
 let items = [];
 let roads = [];
+let potholes = [];
 let dustParticles = [];
 
 let score = 0;
@@ -114,6 +124,7 @@ let rafScheduled = false;
 let carriedVx = 0;
 let carriedVy = 0;
 let slideSkidTimer = 0;
+let potholeSlowTimer = 0;
 
 const CONTINUE_PRICE_LABEL = "⚡ Continue · 21,000 sats";
 let offRoadTimer = 0;
@@ -261,6 +272,8 @@ async function startNewGame() {
 
   roads = generateRoads();
   renderRoadsOffscreen(roads);
+  potholes = generatePotholes(roads, 16);
+  renderPotholesOffscreen(potholes);
   trees = generateTrees(70, roads, treeImages);
   renderTreesOffscreen(trees);
   buildings = generateBuildings(50, roads, buildingImages);
@@ -273,6 +286,16 @@ async function startNewGame() {
   items = []; // reset
   npcs.forEach((npc) => {
     spawnQuestItems(npc, items, { buildings, trees });
+  });
+
+  // Themba's report-the-potholes quest: photo markers sit on real potholes
+  let photoIdx = 0;
+  items.forEach((item) => {
+    if (item.id === "photo" && potholes.length) {
+      const p = potholes[photoIdx++ % potholes.length];
+      item.x = p.x - item.size / 2;
+      item.y = p.y - item.size / 2;
+    }
   });
 
   const spawn = findSafeSpawn({ npcs, buildings, trees });
@@ -295,6 +318,7 @@ async function startNewGame() {
   carriedVx = 0;
   carriedVy = 0;
   slideSkidTimer = 0;
+  potholeSlowTimer = 0;
   engine.start();
   ambient.start();
 
@@ -501,6 +525,12 @@ function update(deltaTime = 1) {
     baseSpeed *= 0.5;
   }
 
+  // A pothole jolt knocks the pace down for a moment
+  if (potholeSlowTimer > 0) {
+    potholeSlowTimer -= deltaTime;
+    baseSpeed *= 0.55;
+  }
+
   const speed = baseSpeed * deltaTime;
   const prevDirection = player.direction;
 
@@ -557,6 +587,26 @@ function update(deltaTime = 1) {
 
   const moving = Math.abs(carriedVx) > 0.05 || Math.abs(carriedVy) > 0.05;
   sessionStats.timeSec += deltaTime / 60;
+
+  // Pothole hits: a thunk, a puff of dust, and a brief loss of pace
+  if (moving) {
+    const hb = player.getHitbox();
+    for (const p of potholes) {
+      if (p.hitCooldown > 0) continue;
+      const cx = Math.max(hb.x, Math.min(p.x, hb.x + hb.width));
+      const cy = Math.max(hb.y, Math.min(p.y, hb.y + hb.height));
+      if ((p.x - cx) ** 2 + (p.y - cy) ** 2 < (p.r * 0.8) ** 2) {
+        p.hitCooldown = 90;
+        potholeSlowTimer = 35;
+        sfx.pothole();
+        spawnDust();
+        break;
+      }
+    }
+  }
+  potholes.forEach((p) => {
+    if (p.hitCooldown > 0) p.hitCooldown -= deltaTime;
+  });
 
   // Sliding in the wet leaves rubber: skid when the bike's travel departs
   // from where the rider is pointing (or keeps rolling with no input)
@@ -622,9 +672,9 @@ function update(deltaTime = 1) {
   engine.update(moving ? baseSpeed / 8 : 0);
 
   traffic.update(deltaTime, player, {
-    onCrash: () => player.crash("taxi"),
+    onCrash: (vehicleType) => player.crash(vehicleType),
     horn: () => sfx.horn(),
-    // Taxi drivers ease off in the wet
+    // Drivers ease off in the wet
     speedFactor: 1 - 0.15 * ambience.rainIntensity,
   });
 
@@ -1145,6 +1195,8 @@ function handleCrash(reason) {
     building: "You crashed into a building!",
     tree: "You hit a tree!",
     taxi: "You were flattened by a taxi!",
+    bakkie: "A bakkie flattened you!",
+    hatch: "You were run down in traffic!",
   };
   endGame(reasons[reason] || "You crashed!");
 }
@@ -1169,6 +1221,9 @@ window.__cm = {
   player,
   getNpcs: () => npcs,
   getRoads: () => roads,
+  getPotholes: () => potholes,
+  getPotholeSlow: () => potholeSlowTimer,
+  getItems: () => items,
   isPaused: () => paused,
   isRunning: () => gameRunning,
   getScore: () => score,

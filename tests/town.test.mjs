@@ -33,6 +33,45 @@ const npcsOnRoad = await page.evaluate(() => {
 await parkNpcs(page);
 await page.evaluate(() => window.__cm.player.setInvulnerable(1e9));
 
+// --- Potholes, photo markers, and the vehicle fleet ---
+const world = await page.evaluate(() => {
+  const cm = window.__cm;
+  const roads = cm.getRoads();
+  const potholes = cm.getPotholes();
+  const photos = cm.getItems().filter((i) => i.id === "photo");
+  return {
+    potholeCount: potholes.length,
+    allOnRoad: potholes.every((p) =>
+      roads.some(
+        (r) => p.x > r.x && p.x < r.x + r.width && p.y > r.y && p.y < r.y + r.height
+      )
+    ),
+    photoCount: photos.length,
+    photosOnPotholes: photos.every((ph) =>
+      potholes.some(
+        (p) =>
+          Math.hypot(p.x - (ph.x + ph.size / 2), p.y - (ph.y + ph.size / 2)) < 3
+      )
+    ),
+    fleet: cm.traffic.taxis.map((t) => t.type),
+  };
+});
+
+// --- Riding into a pothole registers a jolt ---
+await page.evaluate(() => {
+  const cm = window.__cm;
+  const p = cm.getPotholes()[0];
+  cm.player.x = p.x - 40;
+  cm.player.y = p.y - cm.player.height / 2;
+});
+await page.keyboard.down("d");
+await page.waitForTimeout(500);
+await page.keyboard.up("d");
+const jolt = await page.evaluate(() => ({
+  slow: window.__cm.getPotholeSlow(),
+  hitRegistered: window.__cm.getPotholes().some((p) => p.hitCooldown > 0),
+}));
+
 // --- Quest offer prompt: ride up to Nandi, click through her lines ---
 await page.evaluate(() => {
   const cm = window.__cm;
@@ -109,6 +148,15 @@ await browser.close();
 const ok =
   started &&
   npcsOnRoad === 0 &&
+  world.potholeCount > 0 &&
+  world.allOnRoad &&
+  world.photoCount === 4 &&
+  world.photosOnPotholes &&
+  world.fleet.length === 9 &&
+  world.fleet.filter((t) => t === "taxi").length === 5 &&
+  world.fleet.filter((t) => t === "bakkie").length === 2 &&
+  world.fleet.filter((t) => t === "hatch").length === 2 &&
+  jolt.hitRegistered &&
   (offer.promptText || "").includes("Search the shoreline") &&
   (offer.promptText || "").includes("+15 points") &&
   offer.buttons.some((b) => b.includes("Accept")) &&
@@ -119,4 +167,4 @@ const ok =
   queue.allMoving && // nobody deadlocked anywhere on the map
   problems.length === 0;
 
-finish("town", ok, { started, npcsOnRoad, offer, queue, problems });
+finish("town", ok, { started, npcsOnRoad, world, jolt, offer, queue, problems });

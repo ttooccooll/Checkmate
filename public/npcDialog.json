@@ -205,8 +205,22 @@
     "dialog": [
       "Driving along winding coastal roads teaches focus.",
       "Every turn matters, every view is a reward.",
-      "City driving feels easy after this."
-    ]
+      "City driving feels easy after this.",
+      "Mind the potholes, though. The municipality stopped counting them years ago."
+    ],
+    "postQuestDialog": [
+      "You sent the photos in?",
+      "The roads desk says they'll 'schedule an assessment'.",
+      "So — next year, maybe. But it's on record now.",
+      "That's how things start moving around here."
+    ],
+    "quest": {
+      "id": "report_potholes",
+      "description": "Photograph 4 of the worst potholes for the municipality's roads desk.",
+      "type": "collect",
+      "params": { "item": "photo", "amount": 4 },
+      "rewardScore": 12
+    }
   },
   {
     "id": "ayanda",

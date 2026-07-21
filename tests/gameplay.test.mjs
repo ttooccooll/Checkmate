@@ -98,7 +98,8 @@ const fragile = await page.evaluate(async () => {
   cm.player.invulnerableTimer = 0; // this crash is supposed to count
   const t =
     cm.traffic.taxis.find(
-      (x) => x.x > 150 && x.x < 2850 && x.y > 150 && x.y < 2850
+      (x) =>
+        x.type === "taxi" && x.x > 150 && x.x < 2850 && x.y > 150 && x.y < 2850
     ) || cm.traffic.taxis[0];
   cm.player.x = t.x - 15;
   cm.player.y = t.y - 15;
@@ -120,7 +121,7 @@ await browser.close();
 const ok =
   started &&
   world.skids > 0 &&
-  world.taxis === 6 &&
+  world.taxis === 9 &&
   pausedOn === true &&
   pausedOff === false &&
   delivery.offered === "pickup" &&

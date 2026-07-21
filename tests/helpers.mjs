@@ -41,7 +41,12 @@ export async function dieByTaxi(page) {
     const frame = () => new Promise((r) => requestAnimationFrame(r));
     const safeTaxi = () =>
       cm.traffic.taxis.find(
-        (t) => t.x > 150 && t.x < 2850 && t.y > 150 && t.y < 2850
+        (t) =>
+          t.type === "taxi" &&
+          t.x > 150 &&
+          t.x < 2850 &&
+          t.y > 150 &&
+          t.y < 2850
       ) || cm.traffic.taxis[0];
     const jump = async () => {
       const t = safeTaxi();

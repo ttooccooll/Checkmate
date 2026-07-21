@@ -1,20 +1,30 @@
 import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
 import { rectCollision } from "../core/collision.js";
 
-// Minibus taxis cruising the roads. South Africa drives on the left, so
-// each direction of travel keeps to its own side of the road.
-const TAXI_W = 40;
-const TAXI_H = 75;
+// Traffic cruising the roads: minibus taxis, bakkies, and hatchbacks.
+// South Africa drives on the left, so each direction of travel keeps to
+// its own side of the road.
 const LANE_FRAC = 0.26; // lane center offset from road center, as road-height fraction
 const WRAP_MARGIN = 90;
 
+// Per-type dimensions and temperament
+const VEHICLE_TYPES = {
+  taxi: { w: 40, h: 75, minSpeed: 2.1, speedRange: 1.1 },
+  bakkie: { w: 38, h: 70, minSpeed: 2.2, speedRange: 1.1 },
+  hatch: { w: 34, h: 58, minSpeed: 2.6, speedRange: 1.1 },
+};
+
 class Taxi {
-  constructor(sprite, road, forward, slowZones) {
+  constructor(sprite, road, forward, slowZones, type = "taxi") {
     this.sprite = sprite;
+    this.type = type;
+    const spec = VEHICLE_TYPES[type] || VEHICLE_TYPES.taxi;
+    this.w = spec.w;
+    this.h = spec.h;
     this.road = road;
     this.horizontal = road.width > road.height;
     this.forward = forward; // +1 = east/south, -1 = west/north
-    this.speed = 2.1 + Math.random() * 1.1;
+    this.speed = spec.minSpeed + Math.random() * spec.speedRange;
     this.currentSpeed = this.speed;
     this.slowZones = slowZones; // intersection centers along this road's axis
     this.honkCooldown = Math.random() * 4;
@@ -36,8 +46,8 @@ class Taxi {
   }
 
   hitbox() {
-    const w = (this.horizontal ? TAXI_H : TAXI_W) * 0.82;
-    const h = (this.horizontal ? TAXI_W : TAXI_H) * 0.82;
+    const w = (this.horizontal ? this.h : this.w) * 0.82;
+    const h = (this.horizontal ? this.w : this.h) * 0.82;
     return { x: this.x - w / 2, y: this.y - h / 2, width: w, height: h };
   }
 
@@ -120,9 +130,23 @@ export class TrafficManager {
     this.taxis = [];
   }
 
-  spawn(roads, player, count = 6) {
+  spawn(roads, player) {
     this.taxis = [];
     if (!roads.length) return;
+
+    // 5 taxis first (tests and helpers rely on early indices being taxis),
+    // then the rest of the town's traffic
+    const fleet = [
+      "taxi",
+      "taxi",
+      "taxi",
+      "taxi",
+      "taxi",
+      "bakkie",
+      "bakkie",
+      "hatch",
+      "hatch",
+    ];
 
     // Intersection centers along each road's travel axis, for slow zones
     const zonesByRoad = new Map();
@@ -142,11 +166,18 @@ export class TrafficManager {
       zonesByRoad.set(road, zones);
     });
 
-    for (let i = 0; i < count; i++) {
+    fleet.forEach((type, i) => {
       const road = roads[Math.floor(Math.random() * roads.length)];
       const forward = Math.random() < 0.5 ? 1 : -1;
-      const sprite = this.sprites[i % this.sprites.length];
-      const taxi = new Taxi(sprite, road, forward, zonesByRoad.get(road) || []);
+      const pool = this.sprites[type] || this.sprites.taxi;
+      const sprite = pool[i % pool.length];
+      const taxi = new Taxi(
+        sprite,
+        road,
+        forward,
+        zonesByRoad.get(road) || [],
+        type
+      );
 
       // Never materialize a taxi on top of the freshly spawned player
       if (player && Math.hypot(taxi.x - player.x, taxi.y - player.y) < 400) {
@@ -157,7 +188,7 @@ export class TrafficManager {
         }
       }
       this.taxis.push(taxi);
-    }
+    });
   }
 
   update(deltaTime, player, { onCrash, horn, speedFactor = 1 } = {}) {
@@ -185,7 +216,7 @@ export class TrafficManager {
 
       if (distSq < 120 * 120 && onCrash && player.canCrash()) {
         if (rectCollision(playerBox, taxi.hitbox())) {
-          onCrash();
+          onCrash(taxi.type);
         }
       }
     }
@@ -193,15 +224,15 @@ export class TrafficManager {
 
   draw(ctx, isVisible) {
     for (const taxi of this.taxis) {
-      const w = taxi.horizontal ? TAXI_H : TAXI_W;
-      const h = taxi.horizontal ? TAXI_W : TAXI_H;
+      const w = taxi.horizontal ? taxi.h : taxi.w;
+      const h = taxi.horizontal ? taxi.w : taxi.h;
       if (!isVisible(taxi.x - w / 2, taxi.y - h / 2, w, h)) continue;
       if (!taxi.sprite.complete) continue;
 
       ctx.save();
       ctx.translate(taxi.x, taxi.y);
       ctx.rotate((taxi.heading * Math.PI) / 180);
-      ctx.drawImage(taxi.sprite, -TAXI_W / 2, -TAXI_H / 2, TAXI_W, TAXI_H);
+      ctx.drawImage(taxi.sprite, -taxi.w / 2, -taxi.h / 2, taxi.w, taxi.h);
       ctx.restore();
     }
   }

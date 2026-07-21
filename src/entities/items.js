@@ -17,6 +17,7 @@ const ITEM_VISUALS = {
   ball: { color: "#EC7063" }, // red
   notice: { color: "#F5B041" }, // orange
   bell: { color: "#FAD7A0" }, // antique brass
+  photo: { color: "#E8ECEF" }, // camera-flash white
 };
 
 export function spawnQuestItems(npc, itemsArray, { buildings = [], trees = [] } = {}) {

@@ -205,6 +205,92 @@ export function renderRoadsOffscreen(roads) {
   roadCtx.setLineDash([]);
 }
 
+// Bake potholes into the road canvas (call after renderRoadsOffscreen so
+// the holes eat the lane markings too, the way real decay does).
+export function renderPotholesOffscreen(potholes) {
+  const path = (pts) => {
+    roadCtx.beginPath();
+    roadCtx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) roadCtx.lineTo(pts[i][0], pts[i][1]);
+    roadCtx.closePath();
+  };
+
+  potholes.forEach((p) => {
+    // Worn, slightly pale halo where the surface is crumbling
+    roadCtx.save();
+    path(p.outline);
+    roadCtx.shadowColor = "rgba(148, 145, 138, 0.5)";
+    roadCtx.shadowBlur = 4;
+    roadCtx.fillStyle = "rgba(120, 117, 110, 0.25)";
+    roadCtx.fill();
+    roadCtx.restore();
+
+    // Radial cracks
+    roadCtx.strokeStyle = "rgba(58, 55, 50, 0.55)";
+    roadCtx.lineWidth = 0.9;
+    p.cracks.forEach((pts) => {
+      roadCtx.beginPath();
+      roadCtx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) roadCtx.lineTo(pts[i][0], pts[i][1]);
+      roadCtx.stroke();
+    });
+
+    // The hole itself: gravel-toned base falling to a dark offset deep spot
+    path(p.outline);
+    const grad = roadCtx.createRadialGradient(
+      p.x + p.deepDx,
+      p.y + p.deepDy,
+      p.r * 0.15,
+      p.x,
+      p.y,
+      p.r * 1.05
+    );
+    grad.addColorStop(0, "#332f2a");
+    grad.addColorStop(0.6, "#4a463f");
+    grad.addColorStop(1, "#5b574f");
+    roadCtx.fillStyle = grad;
+    roadCtx.fill();
+
+    // A crisp broken lip around the hole
+    path(p.outline);
+    roadCtx.strokeStyle = "rgba(32, 29, 25, 0.45)";
+    roadCtx.lineWidth = 0.8;
+    roadCtx.stroke();
+
+    // Deepest patch
+    path(p.inner);
+    roadCtx.fillStyle = "rgba(38, 34, 30, 0.85)";
+    roadCtx.fill();
+
+    // Sun catches the far lip (light from top-left, consistent with the
+    // building/tree shadows)
+    roadCtx.strokeStyle = "rgba(178, 174, 165, 0.5)";
+    roadCtx.lineWidth = 1;
+    roadCtx.beginPath();
+    let started = false;
+    p.outline.forEach(([px, py]) => {
+      const ang = Math.atan2(py - p.y, px - p.x);
+      if (ang > 0.2 && ang < 1.9) {
+        if (!started) {
+          roadCtx.moveTo(px, py);
+          started = true;
+        } else {
+          roadCtx.lineTo(px, py);
+        }
+      } else {
+        started = false;
+      }
+    });
+    roadCtx.stroke();
+
+    // Loose chips
+    p.gravel.forEach(([gx, gy, tone]) => {
+      roadCtx.fillStyle = tone ? "rgba(130,126,118,0.8)" : "rgba(88,84,77,0.8)";
+      roadCtx.fillRect(gx, gy, 1.4, 1.4);
+    });
+  });
+}
+
 export function renderTreesOffscreen(trees) {
   treeCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 

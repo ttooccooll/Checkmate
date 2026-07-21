@@ -527,6 +527,19 @@ export const sfx = {
     tone({ freq: 2093, type: "sine", duration: 0.55, volume: 0.035, delay: 0.68 });
   },
 
+  // A dull thunk-and-rattle for hitting a pothole
+  pothole() {
+    noise({ duration: 0.09, volume: 0.1, lowpass: 500 });
+    tone({
+      freq: 95,
+      endFreq: 55,
+      type: "sine",
+      duration: 0.12,
+      volume: 0.09,
+      attack: 0.004,
+    });
+  },
+
   // A distant thunder roll for the start of a squall
   thunder() {
     noise({ duration: 1.4, volume: 0.13, lowpass: 140 });
