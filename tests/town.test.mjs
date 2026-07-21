@@ -14,6 +14,22 @@ const problems = [];
 collectProblems(page, problems);
 
 const started = await startGame(page);
+
+// --- No pedestrian may spawn on the road surface (taxis own the road) ---
+const npcsOnRoad = await page.evaluate(() => {
+  const cm = window.__cm;
+  const roads = cm.getRoads();
+  return cm.getNpcs().filter((n) =>
+    roads.some(
+      (r) =>
+        n.x + n.width > r.x &&
+        n.x < r.x + r.width &&
+        n.y + n.height > r.y &&
+        n.y < r.y + r.height
+    )
+  ).length;
+});
+
 await parkNpcs(page);
 await page.evaluate(() => window.__cm.player.setInvulnerable(1e9));
 
@@ -92,6 +108,7 @@ await browser.close();
 
 const ok =
   started &&
+  npcsOnRoad === 0 &&
   (offer.promptText || "").includes("Search the shoreline") &&
   (offer.promptText || "").includes("+15 points") &&
   offer.buttons.some((b) => b.includes("Accept")) &&
@@ -102,4 +119,4 @@ const ok =
   queue.allMoving && // nobody deadlocked anywhere on the map
   problems.length === 0;
 
-finish("town", ok, { started, offer, queue, problems });
+finish("town", ok, { started, npcsOnRoad, offer, queue, problems });

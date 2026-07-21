@@ -224,6 +224,7 @@ async function loadNPCs() {
       npcs,
       buildings,
       trees,
+      roads, // pedestrians stand on the verge, never in the street
     });
     npc.x = spawn.x;
     npc.y = spawn.y;
@@ -1167,6 +1168,7 @@ window.__cm = {
   skidMarks,
   player,
   getNpcs: () => npcs,
+  getRoads: () => roads,
   isPaused: () => paused,
   isRunning: () => gameRunning,
   getScore: () => score,

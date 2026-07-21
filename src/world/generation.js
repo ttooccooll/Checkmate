@@ -148,8 +148,10 @@ export function generateCoins(count, buildings, trees) {
   return arr;
 }
 
+// Pass `roads` to also keep the spawn off the road surface (used for NPCs
+// so taxis can never drive over a pedestrian; the player may spawn on roads).
 export function findSafeSpawn(
-  { avoid = [], npcs = [], buildings = [], trees = [] },
+  { avoid = [], npcs = [], buildings = [], trees = [], roads = [] },
   maxAttempts = 5000
 ) {
   const allAvoid = [...avoid, ...npcs, ...buildings, ...trees];
@@ -169,6 +171,8 @@ export function findSafeSpawn(
     };
 
     const collides =
+      (roads.length > 0 &&
+        isOnRoad(roads, hitbox.x, hitbox.y, hitbox.width, hitbox.height)) ||
       isCollidingWithObstacles(
         hitbox.x,
         hitbox.y,
