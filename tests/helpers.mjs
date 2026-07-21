@@ -57,6 +57,11 @@ export async function dieByTaxi(page) {
       await frame();
     };
     await jump();
+    // Wait out the helmet invulnerability OFF the road — with 14 vehicles
+    // roaming, ambient traffic can otherwise land the fatal hit first and
+    // the death message names a bakkie or hatch instead of our taxi.
+    cm.player.x = 2900;
+    cm.player.y = 2900;
     await new Promise((r) => setTimeout(r, 1700));
     await jump();
   });

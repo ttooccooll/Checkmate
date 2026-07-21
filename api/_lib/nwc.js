@@ -15,7 +15,7 @@ export const PRICES_SATS = {
   speedBoost: 50,
   offRoadTreads: 75,
   metalDetector: 100,
-  continueRun: 21000,
+  continueRun: 5000,
 };
 
 const REQUEST_TIMEOUT_MS = 15000;

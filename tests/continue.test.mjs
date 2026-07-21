@@ -23,7 +23,7 @@ await page.route("**/api/create-invoice", (route) =>
     body: JSON.stringify({
       paymentRequest: FAKE_INVOICE,
       paymentHash: "b".repeat(64),
-      satoshis: 21000,
+      satoshis: 5000,
     }),
   })
 );

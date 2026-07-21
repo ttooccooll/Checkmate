@@ -136,7 +136,7 @@ let slideSkidTimer = 0;
 let potholeSlowTimer = 0;
 let photoFlashTimer = 0;
 
-const CONTINUE_PRICE_LABEL = "⚡ Continue · 21,000 sats";
+const CONTINUE_PRICE_LABEL = "⚡ Continue · 5,000 sats";
 let offRoadTimer = 0;
 let treadsWarned = false;
 let flashTimer = 0;
