@@ -9,9 +9,17 @@ body {
   -webkit-user-select: none;
   user-select: none;
   margin: 0;
+}
+
+/* The cover art is painted exactly once, on body — painting it on both
+   html and body doubles the image at two different scales. */
+html {
+  background: #343434;
+}
+
+body {
   min-height: 100vh;
   min-height: 100svh;
-  background: linear-gradient(160deg, #5fb3ff, #cfefff);
   font-family: "Segoe UI", Arial, sans-serif;
   display: flex;
   justify-content: center;
@@ -21,6 +29,7 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
 
   background-blend-mode: overlay;
   background-color: rgba(52, 52, 52, 0.5);

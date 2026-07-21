@@ -41,9 +41,9 @@ class Taxi {
     return { x: this.x - w / 2, y: this.y - h / 2, width: w, height: h };
   }
 
-  update(deltaTime, player, speedFactor = 1) {
-    // A well-behaved driver: ease off near intersections, brake hard when
-    // someone is in the lane ahead, take it slow in the wet.
+  update(deltaTime, player, speedFactor = 1, others = []) {
+    // A well-behaved driver: ease off near intersections, brake for anyone
+    // in the lane ahead (rider or taxi), take it slow in the wet.
     let targetSpeed = this.speed * speedFactor;
 
     const alongPos = this.horizontal ? this.x : this.y;
@@ -66,6 +66,37 @@ class Taxi {
         targetSpeed = Math.min(targetSpeed, this.speed * 0.12);
       }
     }
+
+    // Other taxis. Two asymmetric rules, so nobody ever brakes for someone
+    // who is braking for them:
+    //  - same lane: the one behind follows the one in front
+    //  - crossing at intersections: vertical yields to horizontal early;
+    //    horizontal only emergency-slows when a crosser is right on top
+    for (const o of others) {
+      if (o === this) continue;
+      const ahead = this.horizontal
+        ? (o.x - this.x) * this.forward
+        : (o.y - this.y) * this.forward;
+      if (ahead <= 0) continue;
+      const lateral = Math.abs(this.horizontal ? o.y - this.y : o.x - this.x);
+
+      const sameLane = o.road === this.road && o.forward === this.forward;
+      if (sameLane && lateral < 20 && ahead < 100) {
+        targetSpeed = Math.min(
+          targetSpeed,
+          ahead < 70 ? o.currentSpeed * 0.7 : o.currentSpeed
+        );
+      } else if (!sameLane && lateral < 42 && ahead < 110) {
+        if (!this.horizontal && o.horizontal) {
+          targetSpeed = Math.min(targetSpeed, this.speed * 0.15);
+        } else if (ahead < 50) {
+          targetSpeed = Math.min(targetSpeed, this.speed * 0.3);
+        }
+      }
+    }
+
+    // Never a full stop — queues always creep, so they always clear
+    targetSpeed = Math.max(targetSpeed, this.speed * 0.08);
 
     this.currentSpeed +=
       (targetSpeed - this.currentSpeed) * Math.min(1, 0.06 * deltaTime);
@@ -135,7 +166,7 @@ export class TrafficManager {
     const playerBox = player.getHitbox();
 
     for (const taxi of this.taxis) {
-      taxi.update(deltaTime, player, speedFactor);
+      taxi.update(deltaTime, player, speedFactor, this.taxis);
       taxi.honkCooldown = Math.max(0, taxi.honkCooldown - deltaTime / 60);
 
       const dx = px - taxi.x;

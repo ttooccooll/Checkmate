@@ -34,12 +34,13 @@ export class DialogManager {
     this.handleDialogClick = this.handleDialogClick.bind(this);
   }
 
-  startDialog(name, lines = [], choices = [], callback = null) {
+  startDialog(name, lines = [], choices = [], callback = null, choicePrompt = "") {
     if (!lines.length && !choices.length) return;
     this.speakerName = name;
     this.activeDialog = [...lines];
     this.currentChoices = choices;
     this.callback = callback;
+    this.choicePrompt = choicePrompt;
     this.showNextLine();
   }
 
@@ -104,10 +105,15 @@ export class DialogManager {
       )
       .join("");
 
+    const promptHtml = this.choicePrompt
+      ? `<div id="dialog-quest-prompt" style="margin-bottom:10px; max-width:320px; line-height:1.4;">${this.choicePrompt}</div>`
+      : "";
+
     this.dialogBox.innerHTML = `
   <div style="margin-bottom:8px;">
     <strong>${this.speakerName}:</strong>
   </div>
+  ${promptHtml}
   <div>${choicesHtml}</div>
 `;
 
@@ -143,6 +149,7 @@ export class DialogManager {
     this.isTyping = false;
     this.activeDialog = null;
     this.currentChoices = [];
+    this.choicePrompt = "";
     this.dialogBox.style.display = "none";
 
     if (this.callback) this.callback();

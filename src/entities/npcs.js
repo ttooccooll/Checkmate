@@ -102,10 +102,22 @@ export class NPC {
       );
     }
 
-    dialogManager.startDialog(this.name, lines, choices, () => {
-      this.talking = false;
-      this.lastTalkTime = performance.now();
-    });
+    // Show what's actually being offered before the player commits
+    const questPrompt =
+      choices.length && this.currentQuest
+        ? `📜 ${this.currentQuest.description} · +${this.currentQuest.rewardScore} points`
+        : "";
+
+    dialogManager.startDialog(
+      this.name,
+      lines,
+      choices,
+      () => {
+        this.talking = false;
+        this.lastTalkTime = performance.now();
+      },
+      questPrompt
+    );
 
     this.talking = true;
     return true;

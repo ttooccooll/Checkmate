@@ -10,6 +10,7 @@ const BROWSER_TESTS = [
   "story",
   "continue",
   "rain",
+  "town",
   "nostr",
   "qr",
   "treads",
