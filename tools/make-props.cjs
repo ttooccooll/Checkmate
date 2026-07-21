@@ -138,63 +138,65 @@ function boatSvg(hullTop, hullMid, hullEdge, keel) {
 // The lighthouse from above: rocky base, white tower ring with red band
 // segments visible at the rim, gallery railing, lantern-room glazing.
 function lighthouseSvg() {
-  // Rock outline: smoothly-varying radius (no starfish spikes)
-  const pts = [];
-  const n = 26;
-  let r = 138;
-  const radii = [];
-  for (let i = 0; i < n; i++) {
-    r += ((i * 53) % 17) - 8; // bounded pseudo-random walk
-    r = Math.max(118, Math.min(152, r));
-    radii.push(r);
-  }
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    // average with neighbours to keep the coastline rounded
-    const rr = (radii[i] + radii[(i + 1) % n] + radii[(i + n - 1) % n]) / 3;
-    pts.push(`${(170 + Math.cos(a) * rr).toFixed(1)},${(170 + Math.sin(a) * rr).toFixed(1)}`);
-  }
+  // The outcrop is a mound of individually shaded boulders — overlapping
+  // rounded stones with top-left highlights and grounded shadows read as
+  // rock in a way flat facets never do.
+  const rnd = (() => {
+    let s = 7;
+    return () => {
+      s = (s * 16807) % 2147483647;
+      return s / 2147483647;
+    };
+  })();
 
-  // Faceted shading: sunlit shards top-left, shaded shards bottom-right
-  const facets = [];
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2 + 0.26;
-    const r0 = 74 + ((i * 41) % 22);
-    const r1 = 104 + ((i * 29) % 30);
-    const spread = 0.34 + ((i * 13) % 10) / 40;
-    const x0 = 170 + Math.cos(a) * r0;
-    const y0 = 170 + Math.sin(a) * r0;
-    const x1 = 170 + Math.cos(a - spread) * r1;
-    const y1 = 170 + Math.sin(a - spread) * r1;
-    const x2 = 170 + Math.cos(a + spread) * r1;
-    const y2 = 170 + Math.sin(a + spread) * r1;
-    const sunlit = Math.cos(a + Math.PI * 0.25) > 0;
-    const tone = sunlit
-      ? `rgba(158, 150, 138, ${0.22 + ((i * 7) % 4) / 30})`
-      : `rgba(52, 48, 44, ${0.2 + ((i * 11) % 5) / 30})`;
-    facets.push(
-      `<polygon points="${x0.toFixed(1)},${y0.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="${tone}"/>`
-    );
+  const boulders = [];
+  const stones = [];
+  // Dense inner mass under and around the tower, thinning outward
+  for (let ring = 0; ring < 3; ring++) {
+    const count = [14, 16, 12][ring];
+    const dist = [58, 96, 126][ring];
+    const size = [26, 20, 13][ring];
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + ring * 0.7 + rnd() * 0.4;
+      const d = dist + (rnd() - 0.5) * 26;
+      const br = size * (0.7 + rnd() * 0.65);
+      const bx = 170 + Math.cos(a) * d;
+      const by = 170 + Math.sin(a) * d;
+      const tone = 96 + Math.floor(rnd() * 46);
+      const warm = Math.floor(rnd() * 10);
+      const rotDeg = Math.floor(rnd() * 180);
+      const ry = br * (0.72 + rnd() * 0.24);
+      boulders.push({ bx, by, br, ry, tone, warm, rotDeg });
+    }
   }
-  // cracks between facets
-  for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2 + 0.55;
-    facets.push(
-      `<line x1="${(170 + Math.cos(a) * 70).toFixed(1)}" y1="${(170 + Math.sin(a) * 70).toFixed(1)}" x2="${(170 + Math.cos(a + 0.22) * 128).toFixed(1)}" y2="${(170 + Math.sin(a + 0.22) * 128).toFixed(1)}" stroke="rgba(38,35,32,0.4)" stroke-width="2.2"/>`
-    );
-  }
-  // scattered boulders around the skirt
-  const rocks = [];
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * Math.PI * 2 + 0.9;
-    const d = 128 + ((i * 31) % 26);
-    const br = 6 + ((i * 17) % 9);
+  // sort so higher (smaller y) boulders draw first — lower ones overlap
+  // them the way a mound stacks
+  boulders.sort((a, b) => a.by - b.by);
+  const boulderSvg = boulders
+    .map((b) => {
+      const base = `rgb(${b.tone + b.warm}, ${b.tone + Math.floor(b.warm * 0.7)}, ${b.tone - 4})`;
+      const dark = `rgba(30, 27, 24, 0.35)`;
+      return `
+  <g transform="rotate(${b.rotDeg} ${b.bx.toFixed(1)} ${b.by.toFixed(1)})">
+    <ellipse cx="${(b.bx + 3).toFixed(1)}" cy="${(b.by + 4.5).toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="rgba(0,0,0,0.3)"/>
+    <ellipse cx="${b.bx.toFixed(1)}" cy="${b.by.toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="${base}" stroke="rgba(42,38,34,0.5)" stroke-width="1.4"/>
+    <ellipse cx="${(b.bx + b.br * 0.22).toFixed(1)}" cy="${(b.by + b.ry * 0.28).toFixed(1)}" rx="${(b.br * 0.72).toFixed(1)}" ry="${(b.ry * 0.6).toFixed(1)}" fill="${dark}"/>
+    <ellipse cx="${(b.bx - b.br * 0.3).toFixed(1)}" cy="${(b.by - b.ry * 0.35).toFixed(1)}" rx="${(b.br * 0.42).toFixed(1)}" ry="${(b.ry * 0.32).toFixed(1)}" fill="rgba(255,252,244,0.28)"/>
+  </g>`;
+    })
+    .join("");
+
+  // Loose scree beyond the mound
+  for (let i = 0; i < 22; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = 132 + rnd() * 28;
+    const br = 2.5 + rnd() * 4.5;
     const bx = 170 + Math.cos(a) * d;
     const by = 170 + Math.sin(a) * d;
-    rocks.push(
-      `<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${br}" ry="${(br * 0.8).toFixed(1)}" fill="rgba(0,0,0,0.28)" transform="translate(2.5,3.5)"/>`,
-      `<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${br}" ry="${(br * 0.8).toFixed(1)}" fill="rgb(${118 + ((i * 19) % 30)}, ${112 + ((i * 19) % 30)}, ${104 + ((i * 19) % 28)})" stroke="rgba(40,38,35,0.45)" stroke-width="1.5"/>`,
-      `<ellipse cx="${(bx - br * 0.3).toFixed(1)}" cy="${(by - br * 0.3).toFixed(1)}" rx="${(br * 0.45).toFixed(1)}" ry="${(br * 0.35).toFixed(1)}" fill="rgba(255,255,255,0.18)"/>`
+    const tone = 104 + Math.floor(rnd() * 40);
+    stones.push(
+      `<ellipse cx="${(bx + 1.2).toFixed(1)}" cy="${(by + 1.8).toFixed(1)}" rx="${br.toFixed(1)}" ry="${(br * 0.8).toFixed(1)}" fill="rgba(0,0,0,0.22)"/>`,
+      `<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${br.toFixed(1)}" ry="${(br * 0.8).toFixed(1)}" fill="rgb(${tone + 6},${tone + 2},${tone - 4})" stroke="rgba(42,38,34,0.4)" stroke-width="0.8"/>`
     );
   }
   // red/white banding visible as rim segments
@@ -245,12 +247,11 @@ function lighthouseSvg() {
       <feGaussianBlur stdDeviation="10"/>
     </filter>
   </defs>
-  <polygon points="${pts.join(" ")}" fill="rgba(0,0,0,0.42)" filter="url(#drop)" transform="translate(8,12)"/>
-  <polygon points="${pts.join(" ")}" fill="url(#rock)" stroke="rgba(30,28,26,0.5)" stroke-width="3"/>
-  ${facets.join("\n  ")}
-  ${rocks.join("\n  ")}
-  <!-- worn ring where feet used to walk -->
-  <circle cx="170" cy="170" r="80" fill="none" stroke="rgba(220,214,200,0.22)" stroke-width="10"/>
+  <!-- sandy ground disc under the outcrop -->
+  <circle cx="172" cy="173" r="140" fill="rgba(146, 132, 106, 0.4)" filter="url(#drop)"/>
+  <circle cx="170" cy="170" r="132" fill="rgba(158, 145, 118, 0.35)"/>
+  ${boulderSvg}
+  ${stones.join("\n  ")}
   <!-- tower -->
   <circle cx="174" cy="174" r="66" fill="rgba(0,0,0,0.35)" filter="url(#drop)"/>
   <circle cx="170" cy="170" r="66" fill="url(#tower)" stroke="rgba(60,56,52,0.55)" stroke-width="2.5"/>

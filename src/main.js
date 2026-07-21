@@ -39,6 +39,7 @@ import {
   generatePotholes,
   placePitch,
   placeProps,
+  buildClusters,
   findSafeSpawn,
   isOnRoad,
 } from "./world/generation.js";
@@ -133,12 +134,12 @@ let solidRects = []; // buildings + props + lighthouse, for spawn avoidance
 let dustParticles = [];
 
 // The lighthouse stands on the point — the south-west corner of the map
-const LIGHTHOUSE = { x: 150, y: 2850, hitR: 45, drawSize: 150 };
+const LIGHTHOUSE = { x: 160, y: 2840, hitR: 62, drawSize: 210 };
 const LIGHTHOUSE_RESERVE = {
-  x: LIGHTHOUSE.x - 95,
-  y: LIGHTHOUSE.y - 95,
-  width: 190,
-  height: 190,
+  x: LIGHTHOUSE.x - 130,
+  y: LIGHTHOUSE.y - 130,
+  width: 260,
+  height: 260,
 };
 
 let score = 0;
@@ -352,13 +353,22 @@ async function startNewGame() {
     });
   }
 
+  // Informal settlement pockets go in first so trees and loose houses
+  // keep clear of them
+  const shackImg =
+    buildingImages.find((i) => i.src.includes("shack")) || buildingImages[0];
+  const clusters = buildClusters(roads, reserved, shackImg, 3);
+  reserved.push(...clusters.clusterRects);
+
   trees = generateTrees(70, roads, treeImages, reserved);
   renderTreesOffscreen(trees);
   buildings = generateBuildings(50, roads, buildingImages, reserved);
+  buildings.push(...clusters.shacks);
   buildings.forEach((b) => {
     if (b.img.complete) bakeBuilding(b);
   });
   props = placeProps(roads, buildings, trees, reserved);
+  props.push(...clusters.containers);
 
   solidRects = [
     ...buildings,
@@ -373,8 +383,8 @@ async function startNewGame() {
   // The keeper lives where the story says he does
   const keeper = npcs.find((n) => n.id === "lighthouse_keeper");
   if (keeper) {
-    keeper.x = LIGHTHOUSE.x + 58;
-    keeper.y = LIGHTHOUSE.y - 26;
+    keeper.x = LIGHTHOUSE.x + 82;
+    keeper.y = LIGHTHOUSE.y - 34;
   }
 
   // spawn quest items
@@ -1510,14 +1520,15 @@ async function buyUpgrade(upgradeName) {
     }
     localStorage.setItem("motorcycleUpgrades", JSON.stringify(upgrades));
     sfx.purchase();
+    // The consumable terms live here now, off the buttons
     const labels = {
-      helmet: "Helmet",
-      speedBoost: "Speed Boost",
-      offRoadTreads: "Off-Road Treads",
-      metalDetector: "Metal Detector",
+      helmet: "Helmet unlocked — absorbs one crash.",
+      speedBoost: "Speed Boost unlocked — lasts this run.",
+      offRoadTreads: "Off-Road Treads unlocked — this run; they wear out off-road.",
+      metalDetector: "Metal Detector unlocked — lasts this run.",
     };
 
-    showMessage(`✔ ${labels[upgradeName]} unlocked!`);
+    showMessage(`✔ ${labels[upgradeName]}`);
   } else {
     showMessage(`❌ Payment failed`);
   }

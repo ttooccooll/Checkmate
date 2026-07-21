@@ -338,8 +338,8 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   let attempts = 0;
   while (placed < 6 && attempts++ < 900) {
     const horiz = Math.random() < 0.5;
-    const w = horiz ? 92 : 38;
-    const h = horiz ? 38 : 92;
+    const w = horiz ? 118 : 48;
+    const h = horiz ? 48 : 118;
     const x = 30 + Math.random() * (WORLD_WIDTH - w - 60);
     const y = 30 + Math.random() * (WORLD_HEIGHT - h - 60);
     const rect = { x, y, width: w, height: h };
@@ -350,8 +350,8 @@ export function placeProps(roads, buildings, trees, reserved = []) {
         y,
         w,
         h,
-        bw: 92,
-        bh: 38,
+        bw: 118,
+        bh: 48,
         rot: horiz ? 0 : Math.PI / 2,
         variant: placed % 3,
       });
@@ -389,6 +389,94 @@ export function placeProps(roads, buildings, trees, reserved = []) {
   }
 
   return props;
+}
+
+// Informal settlement pockets: tight clusters of shacks with a shipping
+// container or two on the edge — the dense counterpoint to the scattered
+// houses. Shacks join the buildings array (collide/bake identically);
+// containers join props.
+export function buildClusters(roads, reserved, shackImg, count = 3) {
+  const shacks = [];
+  const containers = [];
+  const clusterRects = [];
+  let made = 0;
+  let attempts = 0;
+
+  while (made < count && attempts++ < 600) {
+    const cw = 280 + Math.random() * 60;
+    const ch = 230 + Math.random() * 50;
+    const x = 40 + Math.random() * (WORLD_WIDTH - cw - 80);
+    const y = 40 + Math.random() * (WORLD_HEIGHT - ch - 80);
+    const rect = { x: x - 24, y: y - 24, width: cw + 48, height: ch + 48 };
+    if (isOnRoad(roads, rect.x, rect.y, rect.width, rect.height)) continue;
+    if (reserved.some((r) => rectCollision(rect, r))) continue;
+    if (clusterRects.some((r) => rectCollision(rect, r))) continue;
+    clusterRects.push(rect);
+    made++;
+
+    // Dense, slightly ragged rows of shacks
+    const cols = 3;
+    const rows = 2 + (Math.random() < 0.5 ? 1 : 0);
+    const cellW = cw / cols;
+    const cellH = ch / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (Math.random() < 0.18) continue; // gaps where a yard would be
+        let w = 44 + Math.random() * 22;
+        let h = w * (0.7 + Math.random() * 0.5);
+        if (Math.random() < 0.5) [w, h] = [h, w];
+        const sx = x + c * cellW + 6 + Math.random() * Math.max(4, cellW - w - 12);
+        const sy = y + r * cellH + 6 + Math.random() * Math.max(4, cellH - h - 12);
+        shacks.push({
+          x: sx,
+          y: sy,
+          width: w,
+          height: h,
+          img: shackImg,
+          rotated: false,
+        });
+      }
+    }
+
+    // One or two containers along the cluster edge
+    const nCont = 1 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < nCont; i++) {
+      const horiz = Math.random() < 0.5;
+      const w = horiz ? 118 : 48;
+      const h = horiz ? 48 : 118;
+      const side = Math.floor(Math.random() * 4);
+      let px = x;
+      let py = y;
+      if (side === 0) {
+        px = x + Math.random() * Math.max(1, cw - w);
+        py = y - h - 8;
+      } else if (side === 1) {
+        px = x + Math.random() * Math.max(1, cw - w);
+        py = y + ch + 8;
+      } else if (side === 2) {
+        px = x - w - 8;
+        py = y + Math.random() * Math.max(1, ch - h);
+      } else {
+        px = x + cw + 8;
+        py = y + Math.random() * Math.max(1, ch - h);
+      }
+      if (px < 24 || py < 24 || px + w > WORLD_WIDTH - 24 || py + h > WORLD_HEIGHT - 24) continue;
+      if (isOnRoad(roads, px - 8, py - 8, w + 16, h + 16)) continue;
+      containers.push({
+        type: "container",
+        x: px,
+        y: py,
+        w,
+        h,
+        bw: 118,
+        bh: 48,
+        rot: horiz ? 0 : Math.PI / 2,
+        variant: Math.floor(Math.random() * 3),
+      });
+    }
+  }
+
+  return { shacks, containers, clusterRects };
 }
 
 export function findSafeSpawn(
