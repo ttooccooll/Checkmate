@@ -243,6 +243,18 @@ const crossing2 = await page.evaluate(async () => {
   return { everOverlapped, bCleared };
 });
 
+// --- Gridlock melts: over 6 seconds of normal running, every vehicle
+// must actually cover ground (the unstick failsafe guarantees it) ---
+const gridlock = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const before = cm.traffic.taxis.map((t) => ({ x: t.x, y: t.y }));
+  await new Promise((r) => setTimeout(r, 6000));
+  const moved = cm.traffic.taxis.filter(
+    (t, i) => Math.hypot(t.x - before[i].x, t.y - before[i].y) > 40
+  ).length;
+  return { moved, total: cm.traffic.taxis.length };
+});
+
 await browser.close();
 
 const ok =
@@ -274,6 +286,7 @@ const ok =
   crossing.everOverlapped === false && // crossing traffic never overlaps
   crossing2.everOverlapped === false && // even when caught mid-box
   crossing2.bCleared && // the mid-box crosser commits and clears
+  gridlock.moved === gridlock.total && // nobody is permanently stuck
   problems.length === 0;
 
 finish("town", ok, {
@@ -286,5 +299,6 @@ finish("town", ok, {
   queue,
   crossing,
   crossing2,
+  gridlock,
   problems,
 });

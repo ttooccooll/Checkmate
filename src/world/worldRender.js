@@ -101,15 +101,21 @@ export function renderPitchOffscreen(pitch) {
   const cx = x + w / 2;
   const cy = y + h / 2;
 
-  // The playing surface itself: hard-packed dusty ground that fades out
-  // into the veld at the edges — a field, not lines on wild grass
+  // The playing surface itself: hard-packed dusty ground. The apron fades
+  // very gradually into the veld; the field proper is solidly worn.
   g.save();
-  g.filter = "blur(24px)";
-  g.fillStyle = "rgba(174, 154, 116, 0.4)";
-  g.fillRect(x - 16, y - 16, w + 32, h + 32);
-  g.filter = "blur(9px)";
-  g.fillStyle = "rgba(181, 161, 122, 0.38)";
-  g.fillRect(x + 6, y + 6, w - 12, h - 12);
+  g.filter = "blur(46px)";
+  g.fillStyle = "rgba(172, 152, 114, 0.3)";
+  g.fillRect(x - 34, y - 34, w + 68, h + 68);
+  g.filter = "blur(26px)";
+  g.fillStyle = "rgba(176, 156, 118, 0.32)";
+  g.fillRect(x - 10, y - 10, w + 20, h + 20);
+  g.filter = "blur(12px)";
+  g.fillStyle = "rgba(181, 161, 122, 0.34)";
+  g.fillRect(x + 10, y + 10, w - 20, h - 20);
+  g.filter = "none";
+  g.fillStyle = "rgba(184, 165, 126, 0.2)";
+  g.fillRect(x + 22, y + 22, w - 44, h - 44);
   g.filter = "blur(6px)";
   // patchy surface: surviving grass tufts and extra-worn dust
   for (let i = 0; i < 30; i++) {

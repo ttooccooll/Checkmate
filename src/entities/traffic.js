@@ -28,6 +28,8 @@ class Taxi {
     this.currentSpeed = this.speed;
     this.slowZones = slowZones; // intersection centers along this road's axis
     this.honkCooldown = Math.random() * 4;
+    this.stuckTimer = 0; // frames spent (nearly) stationary
+    this.unstickTimer = 0; // while positive: ignore yields, creep through
 
     const laneSize = this.horizontal ? road.height : road.width;
     // Left-hand traffic: eastbound keeps the north lane, westbound the
@@ -106,24 +108,27 @@ class Taxi {
       // my lateral axis; their width lies along my direction of travel.
       const corridorHalf = this.w / 2 + o.h / 2 + 6;
       const occupyDepth = this.h / 2 + o.w / 2;
-      if (lateral < corridorHalf && ahead > -occupyDepth && ahead < 150) {
+      if (lateral < corridorHalf && ahead > -occupyDepth && ahead < 165) {
         if (!this.horizontal) {
-          // Vertical yields — but never stops ON the crossing. Past the
-          // commit point it clears the box instead of blocking it.
-          const commitPoint = occupyDepth - 8;
+          // Vertical yields — but never stops anywhere that could block
+          // the crossing. The commit point sits BEYOND the horizontal's
+          // blocking zone, so every possible rest position is clear of
+          // its lane; anything closer commits and clears the box.
+          const commitPoint = occupyDepth + 18;
           if (ahead <= commitPoint) {
             // committed: keep rolling and get out of the box
-          } else if (ahead < occupyDepth + 30) {
-            hardYield = true; // stop short of the box and wait
+          } else if (ahead < occupyDepth + 55) {
+            hardYield = true; // stop well short of the box and wait
             targetSpeed = 0;
           } else {
             targetSpeed = Math.min(targetSpeed, this.speed * 0.18);
           }
         } else {
-          // Horizontal has priority, but stops for a body physically in
-          // its lane just ahead. That body is always a committed crosser
-          // (waiting verticals stand clear of the lane), so it will move.
-          if (ahead < occupyDepth + 12) {
+          // Horizontal has priority. It stops only for a body actually
+          // overlapping its lane STRIP (not the wider corridor) — which
+          // is always a committed, moving crosser, so it will clear.
+          const stripHalf = this.w / 2 + o.h / 2 + 4;
+          if (lateral < stripHalf && ahead < occupyDepth + 12) {
             hardYield = true;
             targetSpeed = 0;
           } else if (ahead < occupyDepth + 45) {
@@ -133,8 +138,25 @@ class Taxi {
       }
     }
 
+    // Failsafe: no vehicle may sit still forever. Five seconds stationary
+    // and it ignores all yields for a moment and creeps through — whatever
+    // un-modeled configuration caused the wait, it melts.
+    if (this.unstickTimer > 0) {
+      this.unstickTimer -= deltaTime;
+      hardYield = false;
+      targetSpeed = Math.max(targetSpeed, this.speed * 0.4);
+    } else if (this.currentSpeed < 0.15) {
+      this.stuckTimer += deltaTime;
+      if (this.stuckTimer > 300) {
+        this.stuckTimer = 0;
+        this.unstickTimer = 90;
+      }
+    } else {
+      this.stuckTimer = 0;
+    }
+
     // Never a full stop — except a hard yield, which clears itself because
-    // horizontal traffic always keeps rolling
+    // the blocker is always a committed, moving crosser
     if (!hardYield) {
       targetSpeed = Math.max(targetSpeed, this.speed * 0.08);
     }

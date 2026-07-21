@@ -172,42 +172,75 @@ function lighthouseSvg() {
   // sort so higher (smaller y) boulders draw first — lower ones overlap
   // them the way a mound stacks
   boulders.sort((a, b) => a.by - b.by);
+
+  // Irregular polygon outline for a stone — real rock is angular, not oval
+  const stonePts = (cx, cy, rx, ry, rot) => {
+    const n = 8 + Math.floor(rnd() * 3);
+    const pts = [];
+    const c = Math.cos(rot);
+    const s = Math.sin(rot);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rnd() * 0.3;
+      const rr = 0.72 + rnd() * 0.42;
+      const px = Math.cos(a) * rx * rr;
+      const py = Math.sin(a) * ry * rr;
+      pts.push(`${(cx + px * c - py * s).toFixed(1)},${(cy + px * s + py * c).toFixed(1)}`);
+    }
+    return pts.join(" ");
+  };
+
+  const stoneGradients = [];
   const boulderSvg = boulders
-    .map((b) => {
+    .map((b, i) => {
       // Mix cool granite grays with warm weathered browns
       const cool = rnd() < 0.5;
       const t = 88 + Math.floor(rnd() * 58);
-      const base = cool
-        ? `rgb(${t}, ${t + 3}, ${t + 7})`
-        : `rgb(${t + 14}, ${t + 6}, ${t - 6})`;
-      const lumpDx = (rnd() - 0.5) * b.br * 0.7;
-      const lumpDy = (rnd() - 0.5) * b.ry * 0.7;
+      const rgb = (dt) =>
+        cool
+          ? `rgb(${t + dt}, ${t + dt + 3}, ${t + dt + 7})`
+          : `rgb(${t + dt + 14}, ${t + dt + 6}, ${t + dt - 6})`;
+      // Volumetric shading: light top-left falling to a dark edge
+      stoneGradients.push(
+        `<radialGradient id="st${i}" cx="0.34" cy="0.3" r="0.95">
+      <stop offset="0" stop-color="${rgb(34)}"/>
+      <stop offset="0.55" stop-color="${rgb(0)}"/>
+      <stop offset="1" stop-color="${rgb(-30)}"/>
+    </radialGradient>`
+      );
+      const rot = rnd() * Math.PI;
+      const body = stonePts(b.bx, b.by, b.br, b.ry, rot);
+      const shadow = stonePts(b.bx + 3, b.by + 4.5, b.br, b.ry, rot);
       // mottling: darker mineral patches
       const mottles = [];
       const nm = 2 + Math.floor(rnd() * 2);
       for (let m = 0; m < nm; m++) {
         mottles.push(
-          `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry).toFixed(1)}" rx="${(b.br * (0.15 + rnd() * 0.2)).toFixed(1)}" ry="${(b.ry * (0.12 + rnd() * 0.18)).toFixed(1)}" fill="rgba(24, 22, 20, ${(0.1 + rnd() * 0.1).toFixed(2)})"/>`
+          `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br * 0.8).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry * 0.8).toFixed(1)}" rx="${(b.br * (0.14 + rnd() * 0.18)).toFixed(1)}" ry="${(b.ry * (0.11 + rnd() * 0.16)).toFixed(1)}" fill="rgba(24, 22, 20, ${(0.1 + rnd() * 0.1).toFixed(2)})"/>`
         );
       }
       // coastal lichen on about a third of the stones
       const lichen =
         rnd() < 0.34
-          ? `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br * 0.8).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry * 0.8).toFixed(1)}" rx="${(b.br * 0.32).toFixed(1)}" ry="${(b.ry * 0.26).toFixed(1)}" fill="rgba(126, 128, 74, ${(0.16 + rnd() * 0.12).toFixed(2)})"/>`
+          ? `<ellipse cx="${(b.bx + (rnd() - 0.5) * b.br * 0.7).toFixed(1)}" cy="${(b.by + (rnd() - 0.5) * b.ry * 0.7).toFixed(1)}" rx="${(b.br * 0.3).toFixed(1)}" ry="${(b.ry * 0.24).toFixed(1)}" fill="rgba(126, 128, 74, ${(0.16 + rnd() * 0.12).toFixed(2)})"/>`
           : "";
-      const hi = 0.18 + rnd() * 0.18;
+      // a crisp fracture line across some stones
+      const crack =
+        rnd() < 0.4
+          ? `<line x1="${(b.bx - b.br * 0.5).toFixed(1)}" y1="${(b.by + (rnd() - 0.5) * b.ry * 0.7).toFixed(1)}" x2="${(b.bx + b.br * 0.55).toFixed(1)}" y2="${(b.by + (rnd() - 0.5) * b.ry * 0.7).toFixed(1)}" stroke="rgba(30, 27, 24, 0.35)" stroke-width="1.1"/>`
+          : "";
+      const hi = 0.2 + rnd() * 0.16;
       return `
-  <g transform="rotate(${b.rotDeg} ${b.bx.toFixed(1)} ${b.by.toFixed(1)})">
-    <ellipse cx="${(b.bx + 3).toFixed(1)}" cy="${(b.by + 4.5).toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="rgba(0,0,0,0.32)"/>
-    <ellipse cx="${b.bx.toFixed(1)}" cy="${b.by.toFixed(1)}" rx="${b.br.toFixed(1)}" ry="${b.ry.toFixed(1)}" fill="${base}" stroke="rgba(38,34,30,0.55)" stroke-width="1.3"/>
-    <ellipse cx="${(b.bx + lumpDx).toFixed(1)}" cy="${(b.by + lumpDy).toFixed(1)}" rx="${(b.br * 0.72).toFixed(1)}" ry="${(b.ry * 0.75).toFixed(1)}" fill="${base}" stroke="rgba(38,34,30,0.3)" stroke-width="1"/>
-    <ellipse cx="${(b.bx + b.br * 0.24).toFixed(1)}" cy="${(b.by + b.ry * 0.3).toFixed(1)}" rx="${(b.br * 0.74).toFixed(1)}" ry="${(b.ry * 0.6).toFixed(1)}" fill="rgba(28, 25, 22, 0.32)"/>
+  <g>
+    <polygon points="${shadow}" fill="rgba(0,0,0,0.32)"/>
+    <polygon points="${body}" fill="url(#st${i})" stroke="rgba(36,32,28,0.55)" stroke-width="1.2"/>
     ${mottles.join("\n    ")}
     ${lichen}
-    <ellipse cx="${(b.bx - b.br * 0.32).toFixed(1)}" cy="${(b.by - b.ry * 0.38).toFixed(1)}" rx="${(b.br * 0.4).toFixed(1)}" ry="${(b.ry * 0.3).toFixed(1)}" fill="rgba(255,250,240,${hi.toFixed(2)})"/>
+    ${crack}
+    <ellipse cx="${(b.bx - b.br * 0.3).toFixed(1)}" cy="${(b.by - b.ry * 0.36).toFixed(1)}" rx="${(b.br * 0.34).toFixed(1)}" ry="${(b.ry * 0.24).toFixed(1)}" fill="rgba(255,250,240,${hi.toFixed(2)})" transform="rotate(${Math.floor(rot * 57)} ${b.bx.toFixed(1)} ${b.by.toFixed(1)})"/>
   </g>`;
     })
     .join("");
+  const stoneDefs = stoneGradients.join("\n    ");
 
   // Loose scree beyond the mound
   for (let i = 0; i < 22; i++) {
@@ -269,6 +302,7 @@ function lighthouseSvg() {
     <filter id="drop" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="10"/>
     </filter>
+    ${stoneDefs}
   </defs>
   <!-- sandy ground disc under the outcrop -->
   <circle cx="172" cy="173" r="140" fill="rgba(146, 132, 106, 0.4)" filter="url(#drop)"/>
