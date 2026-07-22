@@ -19,6 +19,48 @@ const JOB_ICONS = {
   twostop: "📦",
 };
 
+// What the recipient says when the package lands in their hands
+const RECEIPT_LINES = {
+  standard: [
+    "You made good time.",
+    "Right where it needs to be. Thanks.",
+    "My mother's been waiting on this.",
+    "Put it down anywhere. Bless you.",
+    "That's the one. I owe you a cooldrink.",
+    "You ride like the taxis. Don't tell them I said so.",
+  ],
+  express: [
+    "Already? That was quick.",
+    "Hayibo, that was fast.",
+    "You beat the kettle. I just put it on.",
+    "Quickest wheels on the coast.",
+  ],
+  fragile: [
+    "Not a scratch on it. Thank you.",
+    "I heard the potholes from here. Well done.",
+    "All in one piece. You're careful with the good stuff.",
+  ],
+  fog: [
+    "In this fog? You earned it.",
+    "I can't see my own gate. Respect.",
+  ],
+  twostopLeg: [
+    "This one's mine. The rest keeps moving.",
+    "That's for me. Ride on.",
+  ],
+};
+
+function pickLine(npc, pool) {
+  if (!pool.length) return null;
+  let idx = Math.floor(Math.random() * pool.length);
+  // don't hand the same person the same line twice running
+  if (pool.length > 1 && idx === npc._lastLineIdx) {
+    idx = (idx + 1) % pool.length;
+  }
+  npc._lastLineIdx = idx;
+  return pool[idx];
+}
+
 function rollJobType() {
   const r = Math.random();
   if (r < 0.5) return "standard";
@@ -180,6 +222,7 @@ export class DeliveryManager {
     if (this.jobType === "twostop" && this.legsRemaining > 1) {
       this.legsRemaining--;
       if (this.sfx) this.sfx.pickup();
+      this.dropoffNpc.say(pickLine(this.dropoffNpc, RECEIPT_LINES.twostopLeg));
       this.showMessage(
         `📦 First stop done, +${points}${foggy ? " (fog ×2!)" : ""}. One more to go!`,
         4000
@@ -196,6 +239,14 @@ export class DeliveryManager {
 
     this.completed++;
     if (this.sfx) this.sfx.delivered();
+
+    // The person, not just the points: fog earns its own kind of respect,
+    // otherwise the job type sets the tone
+    const pool = foggy
+      ? RECEIPT_LINES.fog
+      : RECEIPT_LINES[this.jobType] || RECEIPT_LINES.standard;
+    this.dropoffNpc.say(pickLine(this.dropoffNpc, pool));
+
     this.showMessage(
       `📦 Delivered to ${this.dropoffNpc.name}! +${points} points${
         foggy ? " 🌫️ (fog bonus ×2!)" : ""

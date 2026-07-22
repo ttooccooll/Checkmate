@@ -101,6 +101,8 @@ const delivery = await page.evaluate(async () => {
     timer,
     completed: cm.deliveries.completed,
     endState: cm.deliveries.state,
+    // the recipient says something on handoff
+    said: !!(dp && dp.sayText && dp.sayUntil > performance.now()),
   };
 });
 
@@ -181,6 +183,7 @@ const ok =
   delivery.timer > 0 &&
   delivery.completed === 1 &&
   delivery.endState === "idle" &&
+  delivery.said === true &&
   fragile.carrying === "enroute" &&
   fragile.afterCrash === "idle" &&
   fragile.failed >= 1 &&

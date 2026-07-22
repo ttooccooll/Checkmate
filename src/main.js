@@ -1030,7 +1030,10 @@ function update(deltaTime = 1) {
 
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
-      if (!npc.talking && !dialogManager.activeDialog) {
+      // While they're saying a handoff line, the line gets the moment;
+      // linger and the conversation follows
+      const speaking = npc.sayText && npc.sayUntil > performance.now();
+      if (!npc.talking && !dialogManager.activeDialog && !speaking) {
         npc.interact(player, dialogManager, { showMessage });
       }
     }

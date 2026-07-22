@@ -41,8 +41,20 @@ export class NPC {
     this.hasReactedToQuest = false;
     this.everTalked = false; // heard at least one full conversation this run
 
+    // A short spoken line shown above their head (delivery handoffs)
+    this.sayText = null;
+    this.sayUntil = 0;
+    this.sayDur = 0;
+
     this.visible = !data.hidden;
     this.wasHidden = !!data.hidden;
+  }
+
+  // Speak a quick line in-world, no dialog box, no clicking
+  say(text, ms = 4200) {
+    this.sayText = text;
+    this.sayUntil = performance.now() + ms;
+    this.sayDur = ms;
   }
 
   isPlayerNearby(player, range = 80) {
@@ -233,7 +245,8 @@ export class NPC {
     ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
 
     // Name on a small dark plate, clear of the head, as you ride up
-    if (d < 170) {
+    const nameShown = d < 170;
+    if (nameShown) {
       const alpha = Math.min(1, (170 - d) / 60);
       ctx.font = "600 10.5px 'Segoe UI', Arial, sans-serif";
       const tw = ctx.measureText(this.name).width;
@@ -257,6 +270,57 @@ export class NPC {
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
       ctx.globalAlpha = 1;
+    }
+
+    // A spoken line, same plate language as the name, floating just above
+    // it and fading with the moment
+    if (this.sayText && this.sayUntil > performance.now()) {
+      const remain = this.sayUntil - performance.now();
+      const elapsed = this.sayDur - remain;
+      const alpha = Math.min(1, elapsed / 250, remain / 600);
+
+      ctx.font = "600 10.5px 'Segoe UI', Arial, sans-serif";
+      // wrap into at most two lines around ~120px
+      const words = this.sayText.split(" ");
+      const lines = [""];
+      for (const w of words) {
+        const probe = lines[lines.length - 1]
+          ? `${lines[lines.length - 1]} ${w}`
+          : w;
+        if (ctx.measureText(probe).width > 120 && lines[lines.length - 1]) {
+          lines.push(w);
+        } else {
+          lines[lines.length - 1] = probe;
+        }
+      }
+      const lineH = 13;
+      const padX = 7;
+      const chipW =
+        Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2;
+      const chipH = lines.length * lineH + 9;
+      const bottom = nameShown ? this.y - 30 : this.y - 12;
+      const chipY = bottom - chipH;
+
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(12, 18, 24, 0.78)";
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8);
+      } else {
+        ctx.rect(cx - chipW / 2, chipY, chipW, chipH);
+      }
+      ctx.fill();
+      ctx.fillStyle = "#f5efdf";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      lines.forEach((l, i) => {
+        ctx.fillText(l, cx, chipY + 5 + lineH * i + lineH / 2);
+      });
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.globalAlpha = 1;
+    } else if (this.sayText && this.sayUntil <= performance.now()) {
+      this.sayText = null;
     }
   }
 }
