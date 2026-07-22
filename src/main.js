@@ -290,9 +290,9 @@ try {
       mk("note-line line-1", "The kettle's on when you get here.");
       mk(
         "note-line note-bell",
-        "Nobody talks about the bell anymore — they talk about the one who rang it."
+        "Nobody talks about the bell anymore. They talk about the one who rang it."
       );
-      mk("note-sig", "— N.");
+      mk("note-sig", "N.");
     }
 
     const badge = document.createElement("p");
@@ -714,7 +714,7 @@ function runStoryFinale() {
 
     const shareText = [
       "🔔 Followed the mystery to the end and rang the bell above the bay.",
-      "Checkmate Delivery — story complete.",
+      "Checkmate Delivery: story complete.",
       "",
       `Ride the coast, run deliveries, pay in sats ⚡ ${location.origin}`,
       "#gamestr",
@@ -1018,7 +1018,7 @@ function update(deltaTime = 1) {
     onFogOut: () => showMessage("☀️ The fog lifts.", 2500),
     onRainIn: () => {
       showMessage(
-        "🌧️ A squall blows in off the water — the roads are slick!",
+        "🌧️ A squall blows in off the water. The roads are slick!",
         5000
       );
       sfx.thunder();
@@ -1124,7 +1124,7 @@ function update(deltaTime = 1) {
           addScore(75);
           spawnCelebrationCoins();
           showMessage(
-            "🎉 Lanterns flicker on along the promenade — music, laughter, the smell of a braai on the wind. The whole town has come out. +75 points!",
+            "🎉 Lanterns flicker on along the promenade: music, laughter, the smell of a braai on the wind. The whole town has come out. +75 points!",
             9000
           );
         }, 2500);
@@ -1197,7 +1197,7 @@ function update(deltaTime = 1) {
         const have = player.inventory.ball;
         showMessage(
           have >= 3
-            ? "⚽ That's all of them — drop them off at the pitch."
+            ? "⚽ That's all of them. Drop them off at the pitch."
             : `⚽ Ball picked up (${have}/3).`
         );
       } else {
@@ -1815,7 +1815,7 @@ function endGame(reason = "Game Over") {
   const shareText = [
     "🏍️ Checkmate Delivery",
     reason,
-    `Score: ${score}${isNewBest ? " — new personal best 🏆" : ""}`,
+    `Score: ${score}${isNewBest ? ", new personal best 🏆" : ""}`,
     `🛣️ ${km} km · ⏱️ ${clock} · 🪙 ${sessionStats.coins} · 📦 ${deliveries.completed} · 📜 ${sessionStats.quests}`,
     "",
     `Ride the coast, run deliveries, pay in sats ⚡ ${location.origin}`,
@@ -1991,12 +1991,13 @@ async function buyUpgrade(upgradeName) {
     sfx.purchase();
     // The consumable terms live here now, off the buttons
     const labels = {
-      helmet: "Helmet unlocked — absorbs one crash.",
-      speedBoost: "Speed Boost unlocked — lasts this run.",
-      offRoadTreads: "Off-Road Treads unlocked — this run; they wear out off-road.",
-      metalDetector: "Metal Detector unlocked — lasts this run.",
+      helmet: "Helmet unlocked. Absorbs one crash.",
+      speedBoost: "Speed Boost unlocked. Lasts this run.",
+      offRoadTreads:
+        "Off-Road Treads unlocked. They wear out as you ride off-road.",
+      metalDetector: "Metal Detector unlocked. Lasts this run.",
       shockAbsorbers:
-        "Shock Absorbers unlocked — potholes and rough ground barely bite. Lasts this run.",
+        "Shock Absorbers unlocked. Potholes and rough ground barely bite. Lasts this run.",
     };
 
     showMessage(`✔ ${labels[upgradeName]}`);

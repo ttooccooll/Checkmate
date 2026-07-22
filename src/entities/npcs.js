@@ -179,29 +179,13 @@ export class NPC {
     if (!this.sprite.complete) return;
     if (!this.visible) return;
 
-    // --- Fake shadow (VERY cheap) ---
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.beginPath();
-    ctx.ellipse(
-      this.x + this.width / 2, // center X
-      this.y + this.height - 2, // just under feet
-      this.width * 0.35,
-      this.height * 0.18,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-
-    // --- NPC sprite ---
-    ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
-
-    if (!player) return;
     const cx = this.x + this.width / 2;
-    const d = Math.hypot(
-      player.x + player.width / 2 - cx,
-      player.y + player.height / 2 - (this.y + this.height / 2)
-    );
+    const d = player
+      ? Math.hypot(
+          player.x + player.width / 2 - cx,
+          player.y + player.height / 2 - (this.y + this.height / 2)
+        )
+      : Infinity;
 
     // Someone with something you haven't heard: a first conversation,
     // fresh story lines, an unclaimed quest, or a thank-you still waiting
@@ -215,42 +199,64 @@ export class NPC {
         this.postQuestDialog.length &&
         !this.hasReactedToQuest);
 
-    const nameShown = d < 170;
+    // Warm light pooled at their feet, breathing slowly: this person has
+    // something to say. On the ground, where a top-down world keeps its
+    // light — nothing floats over anyone's head.
     if (hasNews && d < 460 && !this.talking) {
-      // A quiet speech bubble, breathing slowly
-      const by = nameShown ? this.y - 24 : this.y - 12;
-      const a = 0.55 + 0.2 * Math.sin(performance.now() / 480 + this.x);
-      ctx.globalAlpha = a;
-      ctx.fillStyle = "#f6f0e0";
-      ctx.strokeStyle = "rgba(40, 36, 28, 0.55)";
-      ctx.lineWidth = 1;
+      const a = 0.34 + 0.14 * Math.sin(performance.now() / 520 + this.x);
+      const fy = this.y + this.height - 2;
+      const glow = ctx.createRadialGradient(cx, fy, 2, cx, fy, 26);
+      glow.addColorStop(0, `rgba(255, 213, 130, ${a.toFixed(2)})`);
+      glow.addColorStop(0.55, `rgba(255, 205, 110, ${(a * 0.45).toFixed(2)})`);
+      glow.addColorStop(1, "rgba(255, 205, 110, 0)");
+      ctx.fillStyle = glow;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(cx - 9, by - 6, 18, 12, 5);
-      else ctx.rect(cx - 9, by - 6, 18, 12);
-      ctx.moveTo(cx - 2, by + 6);
-      ctx.lineTo(cx + 1, by + 10);
-      ctx.lineTo(cx + 4, by + 6);
+      ctx.ellipse(cx, fy, 26, 17, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#55503f";
-      for (const dx of [-4.5, 0, 4.5]) {
-        ctx.beginPath();
-        ctx.arc(cx + dx, by, 1.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
     }
 
-    // Name fades in as you ride up
-    if (nameShown) {
+    // --- Fake shadow (VERY cheap) ---
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(
+      cx, // center X
+      this.y + this.height - 2, // just under feet
+      this.width * 0.35,
+      this.height * 0.18,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    // --- NPC sprite ---
+    ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
+
+    // Name on a small dark plate, clear of the head, as you ride up
+    if (d < 170) {
       const alpha = Math.min(1, (170 - d) / 60);
-      ctx.font = "600 11px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "600 10.5px 'Segoe UI', Arial, sans-serif";
+      const tw = ctx.measureText(this.name).width;
+      const padX = 6;
+      const chipW = tw + padX * 2;
+      const chipH = 16;
+      const chipY = this.y - 10 - chipH;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "rgba(12, 18, 24, 0.72)";
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8);
+      } else {
+        ctx.rect(cx - chipW / 2, chipY, chipW, chipH);
+      }
+      ctx.fill();
+      ctx.fillStyle = "#f2ecdf";
       ctx.textAlign = "center";
-      ctx.fillStyle = `rgba(12, 20, 26, ${(alpha * 0.8).toFixed(2)})`;
-      ctx.fillText(this.name, cx, this.y - 5);
-      ctx.fillStyle = `rgba(245, 239, 225, ${(alpha * 0.95).toFixed(2)})`;
-      ctx.fillText(this.name, cx, this.y - 6);
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.name, cx, chipY + chipH / 2 + 0.5);
       ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -316,7 +322,7 @@ export class Quest {
       this.params.dropoff &&
       progress.current >= progress.total
     ) {
-      return ` (${progress.current} / ${progress.total} — drop off at the ${this.params.dropoff})`;
+      return ` (${progress.current} / ${progress.total}, drop off at the ${this.params.dropoff})`;
     }
     return ` (${progress.current} / ${progress.total})`;
   }

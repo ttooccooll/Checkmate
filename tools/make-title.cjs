@@ -116,12 +116,15 @@ function titleSvg() {
   const checkmate = letters("CHECKMATE", W / 2, 178, 118, "#f2e9d2", 122);
   const delivery = letters("DELIVERY", W / 2, 296, 66, "#e8a13d", 88);
 
-  // Small caption with painted dashes either side
+  // Small caption with a painted diamond either side, the sign-painter way
+  const diamond = (dx) => `
+    <rect x="${dx - 7}" y="352" width="14" height="14" fill="#cfc4a6" opacity="0.75"
+      transform="rotate(45 ${dx} 359)"/>`;
   const caption = `
-    <rect x="${W / 2 - 330}" y="357" width="80" height="4" rx="2" fill="#cfc4a6" opacity="0.7" transform="rotate(-0.6 ${W / 2 - 290} 359)"/>
+    ${diamond(W / 2 - 290)}
     <text x="${W / 2}" y="369" font-family="Arial, sans-serif" font-weight="600" font-size="27"
       fill="#d8cdae" text-anchor="middle" letter-spacing="9" opacity="0.9">BLUEBOTTLE BAY</text>
-    <rect x="${W / 2 + 250}" y="357" width="80" height="4" rx="2" fill="#cfc4a6" opacity="0.7" transform="rotate(0.8 ${W / 2 + 290} 359)"/>`;
+    ${diamond(W / 2 + 290)}`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <defs>

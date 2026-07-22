@@ -102,7 +102,7 @@
       "params": { "item": "marker", "amount": 2 },
       "rewardScore": 20,
       "unlockNPC": "thabo",
-      "unlockText": "The old routes all lead toward the point. Thabo knew the keeper — back when there was a keeper."
+      "unlockText": "The old routes all lead toward the point. Thabo knew the keeper, back when there was a keeper."
     }
   },
   {
@@ -151,7 +151,7 @@
       "bell": [
         "The bell rang, and two minutes later the power went out.",
         "This town has always had a sense of humour.",
-        "Still — nobody minded the dark last night."
+        "Still, nobody minded the dark last night."
       ]
     }
   },
@@ -224,7 +224,7 @@
     "name": "Nandi",
     "dialog": [
       "Some nights, when the fog rolls in, I hear a bell.",
-      "Not from the harbor — from somewhere deeper.",
+      "Not from the harbor. From somewhere deeper.",
       "People say it’s just the sea, but it feels… intentional."
     ],
     "postQuestDialog": [
@@ -261,7 +261,7 @@
     "postQuestDialog": [
       "You sent the photos in?",
       "The roads desk says they'll 'schedule an assessment'.",
-      "So — next year, maybe. But it's on record now.",
+      "So, next year, maybe. But it's on record now.",
       "That's how things start moving around here."
     ],
     "quest": {
@@ -384,7 +384,7 @@
       "You fixed the street light?",
       "Even one light changes how safe the streets feel.",
       "The town thanks you.",
-      "Now the children will play out later — though Keabetswe says their balls keep vanishing into the tide."
+      "Now the children will play out later, though Keabetswe says their balls keep vanishing into the tide."
     ],
     "quest": {
       "id": "fix_street_light",
@@ -403,7 +403,7 @@
     "dialog": [
       "The children lost their play balls again. They roll down the streets, some nearly to the tide line.",
       "If you spot any on your rounds, gather them up.",
-      "Leave them at the soccer pitch — that's where the game is."
+      "Leave them at the soccer pitch. That's where the game is."
     ],
     "postQuestDialog": [
       "The balls are back at the pitch?",
@@ -418,7 +418,7 @@
       "params": { "item": "ball", "amount": 3, "dropoff": "pitch" },
       "rewardScore": 3,
       "unlockNPC": "mpho",
-      "unlockText": "Keabetswe thinks Mpho could spread the good news — if the community board weren't empty."
+      "unlockText": "Keabetswe thinks Mpho could spread the good news, if the community board weren't empty."
     }
   },
   {
@@ -471,9 +471,9 @@
     "hidden": true,
     "dialog": [
       "So. Someone finally followed the sound.",
-      "I know your face. You stand the way your sister does — like you're already halfway to the next place.",
+      "I know your face. You stand the way your sister does, like you're already halfway to the next place.",
       "I kept the light long after the town stopped looking up.",
-      "The rope rotted in '09. The winch seized the year after. I kept the ledger anyway — every boat out, every safe return.",
+      "The rope rotted in '09. The winch seized the year after. I kept the ledger anyway. Every boat out, every safe return.",
       "The old bell needs attention… find it, and let them hear it one more time."
     ],
     "postQuestDialog": [

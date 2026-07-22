@@ -133,8 +133,8 @@ export function showGameOverMessage(content, shareText, options = {}) {
       shareBtn.classList.add("success");
       shareBtn.textContent =
         result.reason === "no-extension"
-          ? "📋 Copied — paste into your Nostr client"
-          : "📋 Couldn't publish — copied instead";
+          ? "📋 Copied. Paste it into your Nostr client"
+          : "📋 Couldn't publish. Copied instead";
     } catch {
       shareBtn.textContent = "❌ Sharing unavailable";
     }

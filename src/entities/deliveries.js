@@ -110,7 +110,7 @@ export class DeliveryManager {
     const name = this.pickupNpc.name;
     const offers = {
       standard: `📦 ${name} has a package that needs delivering! Ride over to collect it.`,
-      express: `⚡ Express job! ${name} needs a package moved fast — double pay.`,
+      express: `⚡ Express job! ${name} needs a package moved fast. Double pay.`,
       fragile: `🥚 ${name} has a fragile package. One crash and it's history.`,
       twostop: `📦 ${name} has a two-stop run. Keep it moving.`,
     };
@@ -163,11 +163,11 @@ export class DeliveryManager {
     const tails = {
       standard: "",
       express: " Double pay on the line!",
-      fragile: " Ride carefully — it won't survive a crash.",
+      fragile: " Ride carefully. It won't survive a crash.",
       twostop: isSecondLeg ? " Last stop!" : " First of two stops.",
     };
     this.showMessage(
-      `📦 Picked up! Deliver to ${this.dropoffNpc.name} — follow the orange arrow. ⏱️ ${secs}s.${tails[this.jobType]}`,
+      `📦 Picked up! Deliver to ${this.dropoffNpc.name}, follow the orange arrow. ⏱️ ${secs}s.${tails[this.jobType]}`,
       5000
     );
   }
@@ -181,7 +181,7 @@ export class DeliveryManager {
       this.legsRemaining--;
       if (this.sfx) this.sfx.pickup();
       this.showMessage(
-        `📦 First stop done, +${points}${foggy ? " (fog ×2!)" : ""} — one more to go!`,
+        `📦 First stop done, +${points}${foggy ? " (fog ×2!)" : ""}. One more to go!`,
         4000
       );
       this.assignDropoff(npcs, this.dropoffNpc);
