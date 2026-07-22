@@ -169,6 +169,31 @@ await page.waitForTimeout(1700); // invulnerability from the helmet crash
 await dieByTaxi(page);
 const gameOverMsg = (await page.textContent("#message-modal")).replace(/\n+/g, " | ");
 
+// --- Restarting inside the death-flash window must not stack a second
+// game loop (the "impossibly fast on mobile" bug): ticks per animation
+// frame stays at one ---
+await page.click("#card-new-game-btn");
+await page.waitForFunction(
+  () =>
+    document.getElementById("new-game-btn").textContent.trim() === "Quest Log",
+  null,
+  { timeout: 25000 }
+);
+const loopRatio = await page.evaluate(async () => {
+  const start = window.__cm.getLoopTicks();
+  let rafs = 0;
+  await new Promise((resolve) => {
+    const t0 = performance.now();
+    const step = () => {
+      rafs++;
+      if (performance.now() - t0 < 800) requestAnimationFrame(step);
+      else resolve();
+    };
+    requestAnimationFrame(step);
+  });
+  return (window.__cm.getLoopTicks() - start) / rafs;
+});
+
 await browser.close();
 
 const ok =
@@ -190,6 +215,8 @@ const ok =
   gameOverMsg.includes("taxi") &&
   gameOverMsg.includes("km") &&
   gameOverMsg.includes("deliveries") &&
+  loopRatio > 0.5 &&
+  loopRatio < 1.4 && // exactly one loop per frame, never a stacked chain
   problems.length === 0;
 
 finish("gameplay", ok, {
@@ -197,6 +224,7 @@ finish("gameplay", ok, {
   world,
   pausedOn,
   pausedOff,
+  loopRatio,
   delivery,
   fragile,
   gameOverMsg,

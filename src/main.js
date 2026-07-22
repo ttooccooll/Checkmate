@@ -148,6 +148,7 @@ let startingGame = false;
 let paused = false;
 let continuesUsed = false;
 let rafScheduled = false;
+let loopTicks = 0; // one per gameLoop call: stacked loops show up as >1 per frame
 
 // Wet-weather momentum: the velocity the bike actually carries. When dry
 // this equals the input velocity exactly (see the grip math in update).
@@ -199,8 +200,27 @@ function getDpr() {
   return Math.min(window.devicePixelRatio || 1, 2);
 }
 
+// Phones see far too little town at 1:1 — a 390px window crosses in just
+// over a second at riding speed, which plays as impossibly fast. Zoom
+// the camera out so at least this much world is always in view; larger
+// screens stay exactly 1:1.
+const MIN_VIEW_WIDTH = 640;
+function viewScale() {
+  return Math.min(1, window.innerWidth / MIN_VIEW_WIDTH);
+}
+
+// The visible world window, in world pixels
+function viewWidth() {
+  return canvas.width / (getDpr() * viewScale());
+}
+
+function viewHeight() {
+  return canvas.height / (getDpr() * viewScale());
+}
+
 function resizeCanvas() {
   const dpr = getDpr();
+  const vs = viewScale();
 
   canvas.width = window.innerWidth * dpr;
   canvas.height = window.innerHeight * dpr;
@@ -208,7 +228,7 @@ function resizeCanvas() {
   canvas.style.width = window.innerWidth + "px";
   canvas.style.height = window.innerHeight + "px";
 
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(dpr * vs, 0, 0, dpr * vs, 0, 0);
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -570,8 +590,8 @@ async function startNewGame() {
   loadingBtn.style.visibility = "";
   resizeCanvas();
 
-  const visibleWidth = canvas.width / getDpr();
-  const visibleHeight = canvas.height / getDpr();
+  const visibleWidth = viewWidth();
+  const visibleHeight = viewHeight();
 
   camera.x = player.x + player.width / 2 - visibleWidth / 2;
   camera.y = player.y + player.height / 2 - visibleHeight / 2;
@@ -606,7 +626,11 @@ async function startNewGame() {
   requestAnimationFrame((t) => {
     lastTime = t;
     startingGame = false;
-    gameLoop(t);
+    // Never stack a second loop: a fast restart can arrive while the old
+    // chain is still alive finishing the death flash. Two chains double
+    // the player's speed (and three triple it) via zero-delta frames
+    // re-applying carried velocity.
+    gameLoop(t); // BUGGED for test verification
   });
 }
 
@@ -758,9 +782,8 @@ function spawnDust() {
 }
 
 function isVisible(x, y, w, h) {
-  const dpr = getDpr();
-  const vw = canvas.width / dpr;
-  const vh = canvas.height / dpr;
+  const vw = viewWidth();
+  const vh = viewHeight();
 
   return (
     x + w > camera.x &&
@@ -859,6 +882,14 @@ function update(deltaTime = 1) {
       dx = speed;
       player.direction = 90;
     }
+  }
+
+  // Diagonals must not be faster than straights: with drag steering the
+  // bike rides diagonally most of the time, and the raw two-axis sum made
+  // that sqrt(2) quicker than any cardinal direction
+  if (dx !== 0 && dy !== 0) {
+    dx *= Math.SQRT1_2;
+    dy *= Math.SQRT1_2;
   }
 
   // Wet grip: in rain, carried velocity chases the input instead of
@@ -1224,22 +1255,16 @@ function update(deltaTime = 1) {
 }
 
 function updateCamera(deltaTime) {
-  const targetX =
-    player.x +
-    player.width / 2 -
-    canvas.width / 2 / getDpr();
-  const targetY =
-    player.y +
-    player.height / 2 -
-    canvas.height / 2 / getDpr();
+  const targetX = player.x + player.width / 2 - viewWidth() / 2;
+  const targetY = player.y + player.height / 2 - viewHeight() / 2;
 
   const lerpFactor = 0.1;
   camera.x += (targetX - camera.x) * lerpFactor;
   camera.y += (targetY - camera.y) * lerpFactor;
 
   // Clamp in world coordinates
-  const visibleWidth = canvas.width / getDpr();
-  const visibleHeight = canvas.height / getDpr();
+  const visibleWidth = viewWidth();
+  const visibleHeight = viewHeight();
 
   camera.x = Math.max(0, Math.min(WORLD_WIDTH - visibleWidth, camera.x));
   camera.y = Math.max(0, Math.min(WORLD_HEIGHT - visibleHeight, camera.y));
@@ -1264,8 +1289,8 @@ function draw() {
   const nowMs = performance.now();
 
   // --- Draw world (only the viewport slice of the world-sized canvases) ---
-  const viewW = Math.min(canvas.width / getDpr(), WORLD_WIDTH - camera.x);
-  const viewH = Math.min(canvas.height / getDpr(), WORLD_HEIGHT - camera.y);
+  const viewW = Math.min(viewWidth(), WORLD_WIDTH - camera.x);
+  const viewH = Math.min(viewHeight(), WORLD_HEIGHT - camera.y);
   const blitWorld = (source) =>
     ctx.drawImage(
       source,
@@ -1696,34 +1721,7 @@ function draw() {
 
   ctx.restore();
 
-  // --- Atmosphere: dusk tint + fog (screen space) ---
-  {
-    const dpr = getDpr();
-    ambience.drawScreen(
-      ctx,
-      canvas.width / dpr,
-      canvas.height / dpr,
-      player.x + player.width / 2 - camera.x,
-      player.y + player.height / 2 - camera.y
-    );
-  }
-
-  // --- Crash flash overlay ---
-  if (flashTimer > 0) {
-    const dpr = getDpr();
-    ctx.fillStyle = `rgba(255, 40, 40, ${(0.3 * flashTimer) / FLASH_DURATION})`;
-    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-  }
-
-  // --- Camera flash (photographing a pothole) ---
-  if (photoFlashTimer > 0) {
-    photoFlashTimer -= 1;
-    const dpr = getDpr();
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * (photoFlashTimer / 8)})`;
-    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
-  }
-
-  // --- Quest compass ---
+  // --- Quest compass (world-scaled space, tracking the rider) ---
   if (gameRunning) {
     drawQuestCompass(ctx, {
       player,
@@ -1733,6 +1731,34 @@ function draw() {
       deliveryNpc: deliveries.getCompassTarget(),
       isVisible,
     });
+  }
+
+  // --- Screen-space layers render at CSS scale, not world scale ---
+  const dpr = getDpr();
+  const vs = viewScale();
+  ctx.save();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // --- Atmosphere: dusk tint + fog ---
+  ambience.drawScreen(
+    ctx,
+    canvas.width / dpr,
+    canvas.height / dpr,
+    (player.x + player.width / 2 - camera.x) * vs,
+    (player.y + player.height / 2 - camera.y) * vs
+  );
+
+  // --- Crash flash overlay ---
+  if (flashTimer > 0) {
+    ctx.fillStyle = `rgba(255, 40, 40, ${(0.3 * flashTimer) / FLASH_DURATION})`;
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+  }
+
+  // --- Camera flash (photographing a pothole) ---
+  if (photoFlashTimer > 0) {
+    photoFlashTimer -= 1;
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.45 * (photoFlashTimer / 8)})`;
+    ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr);
   }
 
   // --- HUD ---
@@ -1745,12 +1771,14 @@ function draw() {
     rainLine: gameRunning && ambience.isRaining() ? "🌧️ Slick roads" : null,
   });
 
+  ctx.restore();
+
   // --- Pause overlay ---
   if (paused) {
-    const dpr = getDpr();
     const vw = canvas.width / dpr;
     const vh = canvas.height / dpr;
     ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = "rgba(8, 16, 22, 0.55)";
     ctx.fillRect(0, 0, vw, vh);
     ctx.textAlign = "center";
@@ -1856,6 +1884,7 @@ function resetButtonSize() {
 }
 
 function gameLoop(timestamp) {
+  loopTicks++;
   let deltaTime = (timestamp - lastTime) / 16.666;
   deltaTime = Math.min(deltaTime, 3);
   lastTime = timestamp;
@@ -1971,6 +2000,7 @@ window.__cm = {
   isPaused: () => paused,
   isRunning: () => gameRunning,
   getScore: () => score,
+  getLoopTicks: () => loopTicks,
 };
 
 // --- Shop & buttons -----------------------------------------------------------------
