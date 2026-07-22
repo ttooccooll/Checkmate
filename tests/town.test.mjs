@@ -212,6 +212,19 @@ const reaction = await page.evaluate(async () => {
   return { opened, notConsumed: !npc.hasReactedToQuest };
 });
 
+// The queue/crossing/gridlock checks below assert deterministic motion,
+// so passenger stops are parked while they run (re-enabled after)
+await page.evaluate(() => {
+  window.__cm.traffic.taxis.forEach((t) => {
+    t.pullCooldown = 1e9;
+    if (t.pullPhase) {
+      t.pullPhase = "merging";
+      t.stopTimer = 0;
+    }
+  });
+});
+await page.waitForTimeout(1200);
+
 // --- Taxi queue: force a faster taxi directly behind another, same lane ---
 await page.evaluate(() => {
   const cm = window.__cm;
@@ -327,6 +340,44 @@ const gridlock = await page.evaluate(async () => {
   return { moved, total: cm.traffic.taxis.length };
 });
 
+// --- Passenger stop: a taxi eases to the verge with hazards, waits clear
+// of any crossing, and pulls off again ---
+const pullover = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const taxi = cm.traffic.taxis.find((t) => t.type === "taxi");
+  taxi.pullCooldown = 0;
+  const t0 = performance.now();
+  let stopped = false;
+  let offset = 0;
+  let nearCrossing = false;
+  let resumed = false;
+  while (performance.now() - t0 < 25000) {
+    await new Promise((r) => setTimeout(r, 150));
+    if (taxi.pullPhase === "stopped" && taxi.currentSpeed < 0.05) {
+      if (!stopped) {
+        // seen it standing; trim the wait so the cycle fits the budget
+        taxi.stopTimer = Math.min(taxi.stopTimer, 40);
+      }
+      stopped = true;
+      offset = Math.max(
+        offset,
+        Math.abs((taxi.horizontal ? taxi.y : taxi.x) - taxi.laneCenter)
+      );
+      const along = taxi.horizontal ? taxi.x : taxi.y;
+      if (taxi.slowZones.some((z) => Math.abs(z - along) < 150)) {
+        nearCrossing = true;
+      }
+    }
+    // back in the lane and rolling again counts as resumed, even if it
+    // merges straight into a polite yield somewhere down the road
+    if (stopped && !taxi.pullPhase && taxi.currentSpeed > 0.4) {
+      resumed = true;
+      break;
+    }
+  }
+  return { stopped, offset: Math.round(offset), nearCrossing, resumed };
+});
+
 await browser.close();
 
 const ok =
@@ -366,6 +417,10 @@ const ok =
   crossing2.everOverlapped === false && // even when caught mid-box
   crossing2.bCleared && // the mid-box crosser commits and clears
   gridlock.moved === gridlock.total && // nobody is permanently stuck
+  pullover.stopped && // taxis actually stop for passengers
+  pullover.offset >= 8 && // pulled aside, not parked in the lane
+  pullover.nearCrossing === false && // never blocking a crossing
+  pullover.resumed && // and they pull off again
   problems.length === 0;
 
 finish("town", ok, {
@@ -382,5 +437,6 @@ finish("town", ok, {
   crossing,
   crossing2,
   gridlock,
+  pullover,
   problems,
 });

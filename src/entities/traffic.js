@@ -45,6 +45,13 @@ class Taxi {
       this.y = Math.random() * WORLD_HEIGHT;
       this.heading = forward > 0 ? 180 : 0;
     }
+
+    // Minibus taxis pull over for passengers: hazards on, ease to the
+    // verge, wait, pull off again. Other vehicles just drive.
+    this.laneCenter = this.horizontal ? this.y : this.x;
+    this.pullPhase = null; // null | "easing" | "stopped" | "merging"
+    this.pullCooldown = 900 + Math.random() * 1500; // frames until next stop
+    this.stopTimer = 0;
   }
 
   hitbox() {
@@ -138,14 +145,68 @@ class Taxi {
       }
     }
 
+    // Passenger stops: taxis only, clear of crossings and the world edge,
+    // never while yielding. The lateral drift runs alongside braking, so
+    // it reads as easing onto the verge.
+    let pullStop = false;
+    if (this.type === "taxi") {
+      const lateralNow = this.horizontal ? this.y : this.x;
+      const outward = this.horizontal ? -this.forward : this.forward;
+      const vergeTarget = this.laneCenter + outward * 12;
+      const alongP = this.horizontal ? this.x : this.y;
+
+      if (!this.pullPhase) {
+        if (!hardYield && this.currentSpeed > 1) this.pullCooldown -= deltaTime;
+        const clearOfCrossings = this.slowZones.every(
+          (z) => Math.abs(z - alongP) > 220
+        );
+        const worldLen = this.horizontal ? WORLD_WIDTH : WORLD_HEIGHT;
+        if (
+          this.pullCooldown <= 0 &&
+          !hardYield &&
+          clearOfCrossings &&
+          alongP > 200 &&
+          alongP < worldLen - 200
+        ) {
+          this.pullPhase = "easing";
+        }
+      } else if (this.pullPhase === "easing") {
+        pullStop = true;
+        targetSpeed = 0;
+        const d = vergeTarget - lateralNow;
+        const step = Math.min(Math.abs(d), 0.5 * deltaTime);
+        if (this.horizontal) this.y += Math.sign(d) * step;
+        else this.x += Math.sign(d) * step;
+        if (Math.abs(d) < 0.6 && this.currentSpeed < 0.12) {
+          this.pullPhase = "stopped";
+          this.stopTimer = 170 + Math.random() * 110;
+        }
+      } else if (this.pullPhase === "stopped") {
+        pullStop = true;
+        targetSpeed = 0;
+        this.stopTimer -= deltaTime;
+        if (this.stopTimer <= 0) this.pullPhase = "merging";
+      } else if (this.pullPhase === "merging") {
+        const d = this.laneCenter - lateralNow;
+        const step = Math.min(Math.abs(d), 0.45 * deltaTime);
+        if (this.horizontal) this.y += Math.sign(d) * step;
+        else this.x += Math.sign(d) * step;
+        if (Math.abs(d) < 0.5) {
+          this.pullPhase = null;
+          this.pullCooldown = 1400 + Math.random() * 2200;
+        }
+      }
+    }
+
     // Failsafe: no vehicle may sit still forever. Five seconds stationary
     // and it ignores all yields for a moment and creeps through — whatever
-    // un-modeled configuration caused the wait, it melts.
+    // un-modeled configuration caused the wait, it melts. A passenger stop
+    // is intentional, not stuck.
     if (this.unstickTimer > 0) {
       this.unstickTimer -= deltaTime;
       hardYield = false;
       targetSpeed = Math.max(targetSpeed, this.speed * 0.4);
-    } else if (this.currentSpeed < 0.15) {
+    } else if (this.currentSpeed < 0.15 && !this.pullPhase) {
       this.stuckTimer += deltaTime;
       if (this.stuckTimer > 300) {
         this.stuckTimer = 0;
@@ -155,9 +216,10 @@ class Taxi {
       this.stuckTimer = 0;
     }
 
-    // Never a full stop — except a hard yield, which clears itself because
-    // the blocker is always a committed, moving crosser
-    if (!hardYield) {
+    // Never a full stop — except a hard yield (which clears itself because
+    // the blocker is always a committed, moving crosser) or a passenger
+    // stop (which ends on its own timer)
+    if (!hardYield && !pullStop) {
       targetSpeed = Math.max(targetSpeed, this.speed * 0.08);
     }
 
@@ -274,12 +336,23 @@ export class TrafficManager {
     const playerBox = player.getHitbox();
 
     for (const taxi of this.taxis) {
+      const wasStopped = taxi.pullPhase === "stopped";
       taxi.update(deltaTime, player, speedFactor, this.taxis);
       taxi.honkCooldown = Math.max(0, taxi.honkCooldown - deltaTime / 60);
 
       const dx = px - taxi.x;
       const dy = py - taxi.y;
       const distSq = dx * dx + dy * dy;
+
+      // A quick hoot as it pulls off, if anyone's around to hear it
+      if (
+        wasStopped &&
+        taxi.pullPhase === "merging" &&
+        distSq < 380 * 380 &&
+        horn
+      ) {
+        horn();
+      }
 
       // A quick hoot when bearing down on the player
       if (distSq < 180 * 180 && taxi.honkCooldown === 0 && horn) {
@@ -310,6 +383,21 @@ export class TrafficManager {
       ctx.translate(taxi.x, taxi.y);
       ctx.rotate((taxi.heading * Math.PI) / 180);
       ctx.drawImage(taxi.sprite, -taxi.w / 2, -taxi.h / 2, taxi.w, taxi.h);
+
+      // Hazards blink while loading passengers
+      if (taxi.pullPhase && Math.floor(performance.now() / 380) % 2 === 0) {
+        ctx.fillStyle = "rgba(255, 176, 40, 0.95)";
+        const hw = taxi.w / 2 - 3;
+        const hh = taxi.h / 2 - 4;
+        for (const [sx, sy] of [
+          [-hw, -hh],
+          [hw, -hh],
+          [-hw, hh],
+          [hw, hh],
+        ]) {
+          ctx.fillRect(sx - 1.4, sy - 1.4, 2.8, 2.8);
+        }
+      }
       ctx.restore();
     }
   }
