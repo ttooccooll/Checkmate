@@ -138,39 +138,45 @@ body.pregame {
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.45));
 }
 
-/* Nandi's note: a page from the kitchen table, not a paragraph of lore */
+/* Nandi's note: a page torn off the pad on the kitchen table — ruled
+   lines, a margin rule, ballpoint ink. Not a paragraph of lore. */
 #intro-lore {
-  max-width: 420px;
+  max-width: 400px;
   margin: 26px 16px 0;
-  padding: 20px 26px 14px;
+  padding: 30px 22px 16px 46px;
   background:
-    linear-gradient(115deg, rgba(120, 96, 60, 0.07) 0%, rgba(120, 96, 60, 0) 30%),
-    linear-gradient(180deg, #f6efdd 0%, #f0e7d1 100%);
-  border-radius: 3px;
-  color: #33291d;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 15.5px;
-  line-height: 1.55;
+    linear-gradient(90deg, transparent 32px, rgba(205, 100, 88, 0.4) 32px, rgba(205, 100, 88, 0.4) 33.5px, transparent 33.5px),
+    repeating-linear-gradient(180deg, transparent 0 23px, rgba(105, 130, 170, 0.22) 23px 24.5px),
+    linear-gradient(115deg, rgba(120, 96, 60, 0.06) 0%, rgba(120, 96, 60, 0) 30%),
+    linear-gradient(180deg, #f8f2e2 0%, #f1e9d4 100%);
+  color: #2c3a58;
+  font-family: "Bradley Hand", "Segoe Print", "Marker Felt", "Comic Sans MS", cursive;
+  font-size: 16px;
+  line-height: 24.5px;
   text-align: left;
   transform: rotate(-0.9deg);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 14px 34px rgba(0, 0, 0, 0.45);
+  clip-path: polygon(
+    0 10px, 4% 3px, 9% 11px, 14% 5px, 19% 12px, 25% 4px,
+    31% 10px, 37% 3px, 43% 11px, 50% 5px, 56% 12px, 62% 4px,
+    68% 11px, 74% 3px, 80% 10px, 86% 5px, 92% 11px, 97% 4px,
+    100% 10px, 100% 100%, 0 100%
+  );
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3))
+    drop-shadow(0 14px 22px rgba(0, 0, 0, 0.4));
 }
 
 #intro-lore .note-line {
-  margin: 0 0 12px;
+  margin: 0 0 24.5px;
 }
 
 #intro-lore .note-bell {
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 #intro-lore .note-sig {
   margin: 0;
   text-align: right;
-  font-style: italic;
-  font-size: 17px;
+  font-size: 19px;
 }
 
 /* One line of town talk, different each visit */
@@ -264,16 +270,15 @@ body.pregame {
 
 @media (max-width: 480px), (max-height: 560px) {
   #intro-content {
-    padding-bottom: 88px;
+    padding-bottom: 170px;
   }
   #intro-sign {
     width: min(88vw, 400px);
   }
   #intro-lore {
-    font-size: 13.5px;
-    line-height: 1.5;
-    padding: 15px 18px 11px;
-    max-width: 330px;
+    font-size: 14px;
+    max-width: 320px;
+    padding-right: 16px;
   }
   #intro-tease {
     font-size: 12.5px;
