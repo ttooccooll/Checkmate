@@ -193,6 +193,25 @@ const ballQuest = await page.evaluate(async () => {
   };
 });
 
+// --- A post-quest thank-you interrupted mid-read replays next visit ---
+const reaction = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const npc = cm.getNpcs().find((n) => n.id === "keabetswe");
+  if (!npc) return { missing: true };
+  npc.visible = true;
+  npc.x = 1800;
+  npc.y = 1000;
+  cm.player.x = npc.x + 40;
+  cm.player.y = npc.y;
+  await new Promise((r) => setTimeout(r, 700));
+  const opened = !!document.getElementById("dialog-next-btn");
+  // ride off mid-sentence — the reaction must NOT be marked as heard
+  cm.player.x = 40;
+  cm.player.y = 1000;
+  await new Promise((r) => setTimeout(r, 500));
+  return { opened, notConsumed: !npc.hasReactedToQuest };
+});
+
 // --- Taxi queue: force a faster taxi directly behind another, same lane ---
 await page.evaluate(() => {
   const cm = window.__cm;
@@ -333,6 +352,8 @@ const ok =
   ballQuest.completedAway === false &&
   ballQuest.completedAtPitch === true &&
   ballQuest.decorOnPitch &&
+  reaction.opened &&
+  reaction.notConsumed &&
   (offer.promptText || "").includes("Search the shoreline") &&
   (offer.promptText || "").includes("+15 points") &&
   offer.buttons.some((b) => b.includes("Accept")) &&
@@ -356,6 +377,7 @@ finish("town", ok, {
   rocks,
   offer,
   ballQuest,
+  reaction,
   queue,
   crossing,
   crossing2,

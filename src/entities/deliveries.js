@@ -58,11 +58,14 @@ export class DeliveryManager {
     this.failed = 0;
   }
 
-  update(dtSec, player, npcs) {
+  update(dtSec, player, npcs, dialogActive = false) {
     const px = player.x + player.width / 2;
     const py = player.y + player.height / 2;
 
+    // Reading is never on the clock: while a conversation is open, no new
+    // offers arrive, packages wait to be collected, and the timer holds.
     if (this.state === "idle") {
+      if (dialogActive) return;
       this.cooldown -= dtSec;
       if (this.cooldown <= 0 && !this.offer(px, py, npcs)) {
         this.cooldown = 6;
@@ -71,6 +74,7 @@ export class DeliveryManager {
     }
 
     if (this.state === "pickup") {
+      if (dialogActive) return;
       const [nx, ny] = npcCenter(this.pickupNpc);
       if (dist(px, py, nx, ny) < PICKUP_RANGE) {
         this.assignDropoff(npcs, this.pickupNpc);
@@ -79,7 +83,7 @@ export class DeliveryManager {
     }
 
     if (this.state === "enroute") {
-      this.timer -= dtSec;
+      if (!dialogActive) this.timer -= dtSec;
       const [nx, ny] = npcCenter(this.dropoffNpc);
 
       if (dist(px, py, nx, ny) < PICKUP_RANGE) {

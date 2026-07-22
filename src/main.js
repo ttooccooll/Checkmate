@@ -262,7 +262,8 @@ document.getElementById("sound-btn")?.addEventListener("click", (e) => {
 // --- Title screen -------------------------------------------------------
 // One line of town talk per visit — the cast, observed, never explained
 const INTRO_TEASES = [
-  "A few streets pinched between the hills and the sea. Too small for most maps.",
+  "Bluebottle Bay. A few streets pinched between the hills and the sea. Too small for most maps.",
+  "Named for what the tide leaves on the sand. Prettier than they sting.",
   "Sipho hasn't missed a night at the lighthouse in thirty years. Nobody's asked him why he started.",
   "Themba keeps a list of every pothole on the main road. The potholes are winning.",
   "Keabetswe's stall opens before the gulls are up.",
@@ -635,6 +636,8 @@ function applyStoryStage(stage) {
       if (lines) {
         npc.dialogQueue = [...lines];
         npc.hasTalked = false;
+        // fresh lines re-arm the speech cue: this person knows something
+        npc.everTalked = false;
         break;
       }
     }
@@ -1006,8 +1009,6 @@ function update(deltaTime = 1) {
     speedFactor: 1 - 0.15 * ambience.rainIntensity,
   });
 
-  deliveries.update(deltaTime / 60, player, npcs);
-
   ambience.update(deltaTime / 60, {
     onFogIn: () =>
       showMessage(
@@ -1039,6 +1040,15 @@ function update(deltaTime = 1) {
       endGame("You hit a pedestrian!");
     }
   });
+
+  // Deliveries run AFTER dialog handling: arriving at a talkative pickup
+  // opens their dialog first, and the package waits until it's read
+  deliveries.update(
+    deltaTime / 60,
+    player,
+    npcs,
+    !!dialogManager.activeDialog
+  );
 
   player.checkBuildingCollisions(buildings, rectCollision);
   player.checkTreeCollisions(trees, circleRectCollision, isVisible);
@@ -1293,7 +1303,7 @@ function draw() {
   }
 
   // --- Draw NPCs ---
-  npcs.forEach((npc) => npc.draw(ctx));
+  npcs.forEach((npc) => npc.draw(ctx, player));
 
   // --- Draw coins (spinning: width oscillates like a flipping coin) ---
   coins.forEach((c) => {

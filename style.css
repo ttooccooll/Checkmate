@@ -143,30 +143,41 @@ body.pregame {
 #intro-lore {
   max-width: 400px;
   margin: 26px 16px 0;
-  padding: 30px 22px 16px 46px;
+  padding: 32px 22px 26px 46px;
   background:
-    linear-gradient(90deg, transparent 32px, rgba(205, 100, 88, 0.4) 32px, rgba(205, 100, 88, 0.4) 33.5px, transparent 33.5px),
-    repeating-linear-gradient(180deg, transparent 0 23px, rgba(105, 130, 170, 0.22) 23px 24.5px),
+    linear-gradient(90deg, transparent 32px, rgba(205, 100, 88, 0.4) 32px, rgba(205, 100, 88, 0.4) 33px, transparent 33px),
+    repeating-linear-gradient(180deg, transparent 0 23px, rgba(105, 130, 170, 0.22) 23px 24px),
     linear-gradient(115deg, rgba(120, 96, 60, 0.06) 0%, rgba(120, 96, 60, 0) 30%),
     linear-gradient(180deg, #f8f2e2 0%, #f1e9d4 100%);
   color: #2c3a58;
   font-family: "Bradley Hand", "Segoe Print", "Marker Felt", "Comic Sans MS", cursive;
   font-size: 16px;
-  line-height: 24.5px;
+  line-height: 24px;
   text-align: left;
   transform: rotate(-0.9deg);
+  /* Torn off the pad top and bottom: uneven spacing, uneven depth —
+     nothing repeats, the way a real tear doesn't */
   clip-path: polygon(
-    0 10px, 4% 3px, 9% 11px, 14% 5px, 19% 12px, 25% 4px,
-    31% 10px, 37% 3px, 43% 11px, 50% 5px, 56% 12px, 62% 4px,
-    68% 11px, 74% 3px, 80% 10px, 86% 5px, 92% 11px, 97% 4px,
-    100% 10px, 100% 100%, 0 100%
+    0 13px, 2% 6px, 5% 14px, 7% 3px, 12% 11px, 15% 5px, 17% 16px,
+    22% 8px, 26% 2px, 29% 12px, 34% 7px, 36% 15px, 41% 4px, 46% 10px,
+    49% 3px, 53% 13px, 57% 6px, 60% 15px, 66% 8px, 69% 2px, 73% 11px,
+    78% 5px, 81% 14px, 85% 3px, 89% 12px, 93% 7px, 96% 15px, 100% 9px,
+    100% calc(100% - 11px), 97% calc(100% - 4px), 93% calc(100% - 14px),
+    89% calc(100% - 6px), 85% calc(100% - 15px), 80% calc(100% - 3px),
+    76% calc(100% - 10px), 71% calc(100% - 16px), 68% calc(100% - 5px),
+    63% calc(100% - 12px), 58% calc(100% - 2px), 55% calc(100% - 13px),
+    50% calc(100% - 7px), 45% calc(100% - 15px), 42% calc(100% - 4px),
+    37% calc(100% - 11px), 32% calc(100% - 16px), 28% calc(100% - 6px),
+    23% calc(100% - 13px), 19% calc(100% - 3px), 15% calc(100% - 10px),
+    10% calc(100% - 15px), 6% calc(100% - 5px), 3% calc(100% - 12px),
+    0 calc(100% - 7px)
   );
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3))
     drop-shadow(0 14px 22px rgba(0, 0, 0, 0.4));
 }
 
 #intro-lore .note-line {
-  margin: 0 0 24.5px;
+  margin: 0 0 24px;
 }
 
 #intro-lore .note-bell {

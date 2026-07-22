@@ -41,9 +41,26 @@ await page.waitForTimeout(200);
 const pausedOff = await page.evaluate(() => window.__cm.isPaused());
 
 // --- Standard delivery, forced deterministic, start to finish ---
+// Arriving at the pickup opens the NPC's dialog, and packages now wait
+// until the player has finished reading — so read like a player would.
 const delivery = await page.evaluate(async () => {
   const cm = window.__cm;
   const frame = () => new Promise((r) => requestAnimationFrame(r));
+  const readDialog = async () => {
+    for (let i = 0; i < 16; i++) {
+      const btn = document.getElementById("dialog-next-btn");
+      if (!btn) break;
+      btn.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    const decline = [...document.querySelectorAll(".dialog-choice")].find(
+      (b) => b.textContent.includes("Decline")
+    );
+    if (decline) {
+      decline.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+  };
   cm.deliveries.cooldown = 0;
   await frame(); await frame(); await frame();
   const offered = cm.deliveries.state;
@@ -58,6 +75,16 @@ const delivery = await page.evaluate(async () => {
     cm.player.y = pk.y + 20;
   }
   await frame(); await frame(); await frame();
+  // While the conversation is open, the package must wait
+  const held = document.getElementById("dialog-next-btn")
+    ? cm.deliveries.state
+    : null;
+  // Parked NPCs stand close together — drain every conversation that
+  // opens until the package is actually collected
+  for (let i = 0; i < 6 && cm.deliveries.state === "pickup"; i++) {
+    await readDialog();
+    await frame(); await frame(); await frame();
+  }
   const afterPickup = cm.deliveries.state;
   const timer = Math.round(cm.deliveries.timer);
 
@@ -69,6 +96,7 @@ const delivery = await page.evaluate(async () => {
   await frame(); await frame(); await frame();
   return {
     offered,
+    held,
     afterPickup,
     timer,
     completed: cm.deliveries.completed,
@@ -80,9 +108,28 @@ const delivery = await page.evaluate(async () => {
 const fragile = await page.evaluate(async () => {
   const cm = window.__cm;
   const frame = () => new Promise((r) => requestAnimationFrame(r));
+  const readDialog = async () => {
+    for (let i = 0; i < 16; i++) {
+      const btn = document.getElementById("dialog-next-btn");
+      if (!btn) break;
+      btn.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    const decline = [...document.querySelectorAll(".dialog-choice")].find(
+      (b) => b.textContent.includes("Decline")
+    );
+    if (decline) {
+      decline.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+  };
+  // Close the dropoff NPC's conversation first — offers wait for dialog
+  await readDialog();
   cm.deliveries.clearRun(0);
   cm.deliveries.cooldown = 0;
-  await frame(); await frame(); await frame();
+  for (let i = 0; i < 40 && cm.deliveries.state !== "pickup"; i++) {
+    await frame();
+  }
   cm.deliveries.jobType = "fragile";
   cm.deliveries.legsRemaining = 1;
   const pk = cm.deliveries.pickupNpc;
@@ -91,6 +138,10 @@ const fragile = await page.evaluate(async () => {
     cm.player.y = pk.y + 20;
   }
   await frame(); await frame(); await frame();
+  for (let i = 0; i < 6 && cm.deliveries.state === "pickup"; i++) {
+    await readDialog();
+    await frame(); await frame(); await frame();
+  }
   const carrying = cm.deliveries.state;
 
   // crash into a taxi — helmet saves the rider, not the package.
@@ -125,6 +176,7 @@ const ok =
   pausedOn === true &&
   pausedOff === false &&
   delivery.offered === "pickup" &&
+  delivery.held !== "enroute" && // reading never starts the run
   delivery.afterPickup === "enroute" &&
   delivery.timer > 0 &&
   delivery.completed === 1 &&

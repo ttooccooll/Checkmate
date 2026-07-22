@@ -147,13 +147,16 @@ export class DialogManager {
       this.typeInterval = null;
     }
 
+    // Did the player actually read to the end, or drive off mid-sentence?
+    const finished = !this.activeDialog || this.activeDialog.length === 0;
+
     this.isTyping = false;
     this.activeDialog = null;
     this.currentChoices = [];
     this.choicePrompt = "";
     this.dialogBox.style.display = "none";
 
-    if (this.callback) this.callback();
+    if (this.callback) this.callback(finished);
 
     this.callback = null;
     this.onClose = null;

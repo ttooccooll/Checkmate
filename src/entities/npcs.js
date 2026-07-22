@@ -39,6 +39,7 @@ export class NPC {
     this.epilogueDialog = data.epilogueDialog || null;
     this.stageDialog = data.stageDialog || null; // town gossip per story stage
     this.hasReactedToQuest = false;
+    this.everTalked = false; // heard at least one full conversation this run
 
     this.visible = !data.hidden;
     this.wasHidden = !!data.hidden;
@@ -60,15 +61,16 @@ export class NPC {
 
     let lines = [...this.dialogQueue];
 
-    // 🎉 Post-quest reaction takes priority
-    if (
+    // 🎉 Post-quest reaction takes priority. It's only marked as heard if
+    // the player reads it to the end — riding off mid-sentence (a delivery,
+    // a taxi bearing down) means it plays again next visit.
+    const isPostQuestReaction =
       this.currentQuest &&
       this.completedQuests.includes(this.currentQuest.id) &&
       this.postQuestDialog.length &&
-      !this.hasReactedToQuest
-    ) {
+      !this.hasReactedToQuest;
+    if (isPostQuestReaction) {
       lines = [...this.postQuestDialog];
-      this.hasReactedToQuest = true;
     }
 
     const choices = [];
@@ -112,9 +114,13 @@ export class NPC {
       this.name,
       lines,
       choices,
-      () => {
+      (finished) => {
         this.talking = false;
         this.lastTalkTime = performance.now();
+        if (finished) {
+          this.everTalked = true;
+          if (isPostQuestReaction) this.hasReactedToQuest = true;
+        }
       },
       questPrompt
     );
@@ -169,7 +175,7 @@ export class NPC {
     return null;
   }
 
-  draw(ctx) {
+  draw(ctx, player) {
     if (!this.sprite.complete) return;
     if (!this.visible) return;
 
@@ -189,6 +195,63 @@ export class NPC {
 
     // --- NPC sprite ---
     ctx.drawImage(this.sprite, this.x, this.y, this.width, this.height);
+
+    if (!player) return;
+    const cx = this.x + this.width / 2;
+    const d = Math.hypot(
+      player.x + player.width / 2 - cx,
+      player.y + player.height / 2 - (this.y + this.height / 2)
+    );
+
+    // Someone with something you haven't heard: a first conversation,
+    // fresh story lines, an unclaimed quest, or a thank-you still waiting
+    const hasNews =
+      !this.everTalked ||
+      (this.currentQuest &&
+        !this.currentQuest.active &&
+        !this.completedQuests.includes(this.currentQuest.id)) ||
+      (this.currentQuest &&
+        this.completedQuests.includes(this.currentQuest.id) &&
+        this.postQuestDialog.length &&
+        !this.hasReactedToQuest);
+
+    const nameShown = d < 170;
+    if (hasNews && d < 460 && !this.talking) {
+      // A quiet speech bubble, breathing slowly
+      const by = nameShown ? this.y - 24 : this.y - 12;
+      const a = 0.55 + 0.2 * Math.sin(performance.now() / 480 + this.x);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = "#f6f0e0";
+      ctx.strokeStyle = "rgba(40, 36, 28, 0.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cx - 9, by - 6, 18, 12, 5);
+      else ctx.rect(cx - 9, by - 6, 18, 12);
+      ctx.moveTo(cx - 2, by + 6);
+      ctx.lineTo(cx + 1, by + 10);
+      ctx.lineTo(cx + 4, by + 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#55503f";
+      for (const dx of [-4.5, 0, 4.5]) {
+        ctx.beginPath();
+        ctx.arc(cx + dx, by, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Name fades in as you ride up
+    if (nameShown) {
+      const alpha = Math.min(1, (170 - d) / 60);
+      ctx.font = "600 11px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = `rgba(12, 20, 26, ${(alpha * 0.8).toFixed(2)})`;
+      ctx.fillText(this.name, cx, this.y - 5);
+      ctx.fillStyle = `rgba(245, 239, 225, ${(alpha * 0.95).toFixed(2)})`;
+      ctx.fillText(this.name, cx, this.y - 6);
+      ctx.textAlign = "left";
+    }
   }
 }
 
