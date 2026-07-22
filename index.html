@@ -16,13 +16,20 @@
 <body class="pregame">
 
     <div id="intro-screen">
-        <h1>Checkmate Delivery</h1>
-        <div id="intro-lore">
-            <p>There's a town down the South Coast too small for most maps. A few streets pinched between the hills and the sea. Taxis hoot their way along the main road and kids kick their balls into the tide. When the fog comes in off the water, the whole place goes quiet.</p>
-            <p>Your sister Nandi never left. You did, for a while. Now you're back with a bike, a delivery box and rent to make. People need things moved. You move them.</p>
-            <p>Lately Nandi keeps going on about a bell.</p>
+        <div class="intro-wisp wisp-1"></div>
+        <div class="intro-wisp wisp-2"></div>
+        <div id="intro-content">
+            <img id="intro-sign" src="/assets/title-sign.webp" alt="Checkmate Delivery — South Coast">
+            <div id="intro-lore">
+                <p class="note-line line-1">Spare room's made up. The bike's in the yard &mdash; Themba sorted the brake, don't ask what it cost him.</p>
+                <p class="note-line line-2">People here still need things moved, and you're the one with wheels now. Start with the shops on the main road. The rest will find you.</p>
+                <p class="note-line note-bell">Ignore what I said on the phone about the bell.</p>
+                <p class="note-sig">&mdash; N.</p>
+            </div>
+            <p id="intro-tease"></p>
+            <p id="intro-lastrun"></p>
+            <p id="intro-hint">Arrows or WASD to ride &middot; drag to steer on mobile &middot; M for sound &middot; P to pause</p>
         </div>
-        <p id="intro-hint">Arrows or WASD to ride &middot; drag to steer on mobile &middot; M for sound &middot; P to pause</p>
     </div>
 
     <div id="game-container">
@@ -43,7 +50,7 @@
 
 
     <div id="action-buttons">
-        <button id="new-game-btn">New Game</button>
+        <button id="new-game-btn">Start your shift</button>
         <button id="helmet-btn">Helmet ⚡50</button>
         <button id="speed-boost-btn">Speed Boost ⚡50</button>
         <button id="off-road-treads-btn">Off-Road Treads ⚡75</button>

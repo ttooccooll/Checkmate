@@ -259,13 +259,64 @@ document.getElementById("sound-btn")?.addEventListener("click", (e) => {
   showMessage(cycleVolume(), 1200);
 });
 
-// A small permanent mark on the title screen for finishing the story
+// --- Title screen -------------------------------------------------------
+// One line of town talk per visit — the cast, observed, never explained
+const INTRO_TEASES = [
+  "A few streets pinched between the hills and the sea. Too small for most maps.",
+  "Sipho hasn't missed a night at the lighthouse in thirty years. Nobody's asked him why he started.",
+  "Themba keeps a list of every pothole on the main road. The potholes are winning.",
+  "Keabetswe's stall opens before the gulls are up.",
+  "Samkelo repaints his sign every spring. The sea helps itself to a little every winter.",
+  "The taxis hoot twice for hello, once for get-out-of-the-road.",
+  "Musa reckons the fog eats sound. Stand in it a while and you'll agree.",
+  "The kids play on the pitch till the light goes. Then a bit longer.",
+];
+
 try {
-  if (localStorage.getItem("checkmateStoryComplete") === "true") {
+  const storyDone = localStorage.getItem("checkmateStoryComplete") === "true";
+
+  // After the story, Nandi's note changes — quietly
+  if (storyDone) {
+    const lore = document.getElementById("intro-lore");
+    if (lore) {
+      lore.textContent = "";
+      const mk = (cls, text) => {
+        const p = document.createElement("p");
+        p.className = cls;
+        p.textContent = text;
+        lore.appendChild(p);
+      };
+      mk("note-line line-1", "The kettle's on when you get here.");
+      mk(
+        "note-line note-bell",
+        "Nobody talks about the bell anymore — they talk about the one who rang it."
+      );
+      mk("note-sig", "— N.");
+    }
+
     const badge = document.createElement("p");
     badge.id = "intro-badge";
     badge.textContent = "🔔 You've heard the bell.";
     document.getElementById("intro-hint")?.after(badge);
+  }
+
+  const tease = document.getElementById("intro-tease");
+  if (tease) {
+    tease.textContent =
+      INTRO_TEASES[Math.floor(Math.random() * INTRO_TEASES.length)];
+  }
+
+  const lastRun = JSON.parse(localStorage.getItem("checkmateLastRun") || "null");
+  const lastRunEl = document.getElementById("intro-lastrun");
+  if (lastRun && lastRunEl) {
+    lastRunEl.textContent = `Last shift: ${lastRun.km} km · ${lastRun.deliveries} deliveries · ${lastRun.score} points`;
+  }
+
+  // The staged reveal plays exactly once. Anyone who's been here before
+  // gets the whole screen at once — no waiting through a known intro.
+  if (localStorage.getItem("checkmateSeenIntro") !== "true") {
+    document.getElementById("intro-screen")?.classList.add("staged");
+    localStorage.setItem("checkmateSeenIntro", "true");
   }
 } catch {
   /* ignore */
@@ -1740,6 +1791,16 @@ function endGame(reason = "Game Over") {
   const km = (sessionStats.distancePx / 1000).toFixed(1);
   const t = Math.max(0, Math.round(sessionStats.timeSec));
   const clock = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+
+  // The title screen greets returning riders with their last shift
+  try {
+    localStorage.setItem(
+      "checkmateLastRun",
+      JSON.stringify({ score, km, deliveries: deliveries.completed })
+    );
+  } catch {
+    /* ignore */
+  }
 
   const shareText = [
     "🏍️ Checkmate Delivery",
