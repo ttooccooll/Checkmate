@@ -477,8 +477,54 @@ function paintGravel(g, road, rnd, plain = false) {
     g.restore();
   }
 
+  // The gravel body has no straight edges: both long sides wobble like a
+  // graded road that the veld keeps arguing with. One path, filled once,
+  // then a single blurred stroke to soften the boundary — cheap at bake.
+  const wobblyBody = () => {
+    const lenW = horiz ? road.width : road.height;
+    const step = 26;
+    g.beginPath();
+    if (horiz) {
+      g.moveTo(road.x, road.y + (rnd() - 0.5) * 5);
+      for (let a = step; a <= lenW; a += step) {
+        g.lineTo(road.x + Math.min(a, lenW), road.y + (rnd() - 0.5) * 6);
+      }
+      for (let a = 0; a <= lenW; a += step) {
+        g.lineTo(
+          road.x + lenW - Math.min(a, lenW),
+          road.y + road.height + (rnd() - 0.5) * 6
+        );
+      }
+    } else {
+      g.moveTo(road.x + (rnd() - 0.5) * 5, road.y);
+      for (let a = step; a <= lenW; a += step) {
+        g.lineTo(road.x + (rnd() - 0.5) * 6, road.y + Math.min(a, lenW));
+      }
+      for (let a = 0; a <= lenW; a += step) {
+        g.lineTo(
+          road.x + road.width + (rnd() - 0.5) * 6,
+          road.y + lenW - Math.min(a, lenW)
+        );
+      }
+    }
+    g.closePath();
+  };
+
   g.fillStyle = "#8f8773";
-  g.fillRect(road.x, road.y, road.width, road.height);
+  if (plain) {
+    g.fillRect(road.x, road.y, road.width, road.height);
+  } else {
+    wobblyBody();
+    g.fill();
+    g.save();
+    g.filter = "blur(3px)";
+    g.strokeStyle = "#8f8773";
+    g.lineWidth = 5;
+    wobblyBody();
+    g.stroke();
+    g.filter = "none";
+    g.restore();
+  }
 
   // tonal mottling
   const len = horiz ? road.width : road.height;
@@ -514,29 +560,6 @@ function paintGravel(g, road, rnd, plain = false) {
     g.stroke();
   }
 
-  // ragged edges: the veld nibbles at the gravel. One path, one filtered
-  // fill — per-rect filters are a per-draw gaussian and grind the bake.
-  if (!plain) {
-    g.save();
-    g.beginPath();
-    for (let i = 0; i < len / 14; i++) {
-      const along = rnd() * len;
-      const edge = rnd() < 0.5;
-      const bite = 2 + rnd() * 4;
-      if (horiz) {
-        const ey = edge ? road.y : road.y + road.height - bite;
-        g.rect(road.x + along, ey, 8 + rnd() * 16, bite);
-      } else {
-        const ex = edge ? road.x : road.x + road.width - bite;
-        g.rect(ex, road.y + along, bite, 8 + rnd() * 16);
-      }
-    }
-    g.filter = "blur(2px)";
-    g.fillStyle = "rgba(158, 143, 110, 0.55)";
-    g.fill();
-    g.filter = "none";
-    g.restore();
-  }
 
   // wheel tracks along each lane
   if (!plain) {
@@ -732,24 +755,43 @@ export function renderRoadsOffscreen(roads) {
   roadCtx.setLineDash([]);
 
   // --- The main road earns painted edge lines: yellow shoulder lines,
-  // the South African way, a little sun-faded ---
+  // the South African way, a little sun-faded. They break at every
+  // crossing — paint doesn't run through an intersection.
   roadCtx.strokeStyle = "rgba(222, 178, 62, 0.75)";
   roadCtx.lineWidth = 3;
   roads
     .filter((r) => r.kind === "main")
     .forEach((r) => {
       const horiz = r.width > r.height;
+      const start = horiz ? r.x : r.y;
+      const end = horiz ? r.x + r.width : r.y + r.height;
+
+      // spans of open road between crossings
+      const gaps = roads
+        .filter((o) => o !== r && (horiz ? o.height > o.width : o.width > o.height))
+        .map((o) => (horiz ? [o.x - 4, o.x + o.width + 4] : [o.y - 4, o.y + o.height + 4]))
+        .sort((a, b) => a[0] - b[0]);
+      const spans = [];
+      let cursor = start;
+      for (const [gs, ge] of gaps) {
+        if (gs > cursor) spans.push([cursor, Math.min(gs, end)]);
+        cursor = Math.max(cursor, ge);
+      }
+      if (cursor < end) spans.push([cursor, end]);
+
       roadCtx.beginPath();
-      if (horiz) {
-        roadCtx.moveTo(r.x, r.y + 6);
-        roadCtx.lineTo(r.x + r.width, r.y + 6);
-        roadCtx.moveTo(r.x, r.y + r.height - 6);
-        roadCtx.lineTo(r.x + r.width, r.y + r.height - 6);
-      } else {
-        roadCtx.moveTo(r.x + 6, r.y);
-        roadCtx.lineTo(r.x + 6, r.y + r.height);
-        roadCtx.moveTo(r.x + r.width - 6, r.y);
-        roadCtx.lineTo(r.x + r.width - 6, r.y + r.height);
+      for (const [s0, s1] of spans) {
+        if (horiz) {
+          roadCtx.moveTo(s0, r.y + 6);
+          roadCtx.lineTo(s1, r.y + 6);
+          roadCtx.moveTo(s0, r.y + r.height - 6);
+          roadCtx.lineTo(s1, r.y + r.height - 6);
+        } else {
+          roadCtx.moveTo(r.x + 6, s0);
+          roadCtx.lineTo(r.x + 6, s1);
+          roadCtx.moveTo(r.x + r.width - 6, s0);
+          roadCtx.lineTo(r.x + r.width - 6, s1);
+        }
       }
       roadCtx.stroke();
     });
