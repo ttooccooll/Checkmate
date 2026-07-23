@@ -52,6 +52,55 @@ const townScape = await page.evaluate(() => {
     keeperAtLighthouse: keeper
       ? Math.hypot(keeper.x - lh.x, keeper.y - lh.y) < 150
       : false,
+    // Quest items live where their stories say: keeper's things at the
+    // lighthouse, fragments on the shoreline or forest edge, markers
+    // toward the point, signs and lights at roadsides, litter and
+    // notices around buildings
+    themed: (() => {
+      const its = cm.getItems();
+      const lh = cm.getLighthouse();
+      const bay = cm.getBay();
+      const bldgs = cm.getBuildings();
+      const treeList = cm.getTrees();
+      const byId = (id) => its.filter((i) => i.id === id);
+      const nearPt = (i, x, y, d) => Math.hypot(i.x - x, i.y - y) < d;
+      const nearRoad = (i, pad) =>
+        roads.some(
+          (r) =>
+            i.x + i.size > r.x - pad &&
+            i.x < r.x + r.width + pad &&
+            i.y + i.size > r.y - pad &&
+            i.y < r.y + r.height + pad
+        );
+      return {
+        clues: byId("clue").every((i) => nearPt(i, lh.x, lh.y, 470)),
+        bell: byId("bell").every((i) => nearPt(i, lh.x, lh.y, 470)),
+        roadside: ["sign", "light"].every((id) =>
+          byId(id).every((i) => nearRoad(i, 60))
+        ),
+        markersSw: byId("marker").every(
+          (i) => nearRoad(i, 60) && i.x < 2180 && i.y > 1420
+        ),
+        fragments: byId("fragment").every(
+          (i) =>
+            (bay.enabled &&
+              Math.hypot(i.x, i.y - 3600) <
+                Math.max(bay.rx, bay.ry) * 1.75 + 80) ||
+            treeList.some((t) => nearPt(i, t.x + t.size, t.y + t.size, 130))
+        ),
+        yard: ["litter", "notice"].every((id) =>
+          byId(id).every((i) =>
+            bldgs.some(
+              (b) =>
+                i.x + i.size > b.x - 130 &&
+                i.x < b.x + (b.width || 40) + 130 &&
+                i.y + i.size > b.y - 130 &&
+                i.y < b.y + (b.height || 40) + 130
+            )
+          )
+        ),
+      };
+    })(),
     // Nothing may stand, lie, or spawn in the bay: not people, not props,
     // not pickups, not the player
     bayClear: (() => {
@@ -426,6 +475,7 @@ const ok =
   !townScape.pitchOnRoad &&
   townScape.keeperAtLighthouse &&
   townScape.bayClear &&
+  Object.values(townScape.themed).every(Boolean) &&
   townScape.ballsOffPitch &&
   world.potholeCount > 0 &&
   world.allOnRoad &&

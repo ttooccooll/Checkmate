@@ -520,12 +520,21 @@ async function startNewGame() {
     keeper.y = LIGHTHOUSE.y - 42;
   }
 
-  // spawn quest items
+  // spawn quest items where their stories say they belong: fragments on
+  // the shoreline and forest edge, the keeper's things around the
+  // lighthouse, markers toward the point, signs and lights at roadsides,
+  // litter and notices around buildings. solidRects keeps everything
+  // reachable; the bay keeps everything dry.
   items = []; // reset
   npcs.forEach((npc) => {
-    // solidRects includes props and the lighthouse, so nothing spawns
-    // wedged where the bike can't reach it
-    spawnQuestItems(npc, items, { buildings: solidRects, trees });
+    spawnQuestItems(npc, items, {
+      solid: solidRects,
+      buildings,
+      trees,
+      roads,
+      lighthouse: LIGHTHOUSE,
+      bay: BAY,
+    });
   });
 
   // Themba's report-the-potholes quest: photo markers sit on real potholes
@@ -2064,6 +2073,8 @@ window.__cm = {
   getRockSlow: () => rockSlowTimer,
   getItems: () => items,
   getCoins: () => coins,
+  getBuildings: () => buildings,
+  getTrees: () => trees,
   getProps: () => props,
   getPitch: () => pitch,
   getLighthouse: () => LIGHTHOUSE,
