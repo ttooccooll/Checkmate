@@ -95,7 +95,13 @@ export async function dieByTaxi(page) {
     cm.player.x = 2400;
     cm.player.y = 3480;
     await waitCrashable();
-    if (cm.isRunning()) await jump(); // the fatal hit
+    // the fatal hit: retry until the run actually ends — a taxi can
+    // slip out from under a single teleport on a slow frame
+    const tKill = performance.now();
+    while (cm.isRunning() && performance.now() - tKill < 6000) {
+      await jump();
+      await new Promise((r) => setTimeout(r, 120));
+    }
   });
   await page.waitForSelector("#share-nostr-btn", { timeout: 5000 });
 }

@@ -83,9 +83,11 @@ await browser.close();
 const ok =
   started &&
   raining &&
-  dryCoast < 2 && // dry: instant stop, exactly the old handling
-  wetCoast > 5 && // wet: real momentum
-  wetCoast > dryCoast + 4 &&
+  // dry: an effectively instant stop (a slow frame can let one extra
+  // frame of travel through before keyup lands, so allow a few px)
+  dryCoast < 8 &&
+  wetCoast > 12 && // wet: real momentum, an order beyond any keyup slop
+  wetCoast > dryCoast + 8 &&
   skids > 0 &&
   fogRamp > 0.1 && // fog is building...
   fogRamp < 0.45 && // ...but a 3s ramp would already be at ~0.66
