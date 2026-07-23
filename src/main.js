@@ -1331,7 +1331,9 @@ function draw() {
   }
 
   // --- Draw NPCs ---
-  npcs.forEach((npc) => npc.draw(ctx, player));
+  // Labels counter the mobile zoom-out so they read at screen size
+  const labelScale = Math.min(1 / viewScale(), 1.8);
+  npcs.forEach((npc) => npc.draw(ctx, player, labelScale));
 
   // --- Draw coins (spinning: width oscillates like a flipping coin) ---
   coins.forEach((c) => {

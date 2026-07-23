@@ -187,9 +187,12 @@ export class NPC {
     return null;
   }
 
-  draw(ctx, player) {
+  // uiScale counters the mobile camera zoom-out so name plates and spoken
+  // lines stay readable at screen size; 1 on desktop
+  draw(ctx, player, uiScale = 1) {
     if (!this.sprite.complete) return;
     if (!this.visible) return;
+    const u = uiScale;
 
     const cx = this.x + this.width / 2;
     const d = player
@@ -248,17 +251,17 @@ export class NPC {
     const nameShown = d < 170;
     if (nameShown) {
       const alpha = Math.min(1, (170 - d) / 60);
-      ctx.font = "600 10.5px 'Segoe UI', Arial, sans-serif";
+      ctx.font = `600 ${10.5 * u}px 'Segoe UI', Arial, sans-serif`;
       const tw = ctx.measureText(this.name).width;
-      const padX = 6;
+      const padX = 6 * u;
       const chipW = tw + padX * 2;
-      const chipH = 16;
-      const chipY = this.y - 10 - chipH;
+      const chipH = 16 * u;
+      const chipY = this.y - 10 * u - chipH;
       ctx.globalAlpha = alpha;
       ctx.fillStyle = "rgba(12, 18, 24, 0.72)";
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8);
+        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8 * u);
       } else {
         ctx.rect(cx - chipW / 2, chipY, chipW, chipH);
       }
@@ -279,33 +282,34 @@ export class NPC {
       const elapsed = this.sayDur - remain;
       const alpha = Math.min(1, elapsed / 250, remain / 600);
 
-      ctx.font = "600 10.5px 'Segoe UI', Arial, sans-serif";
-      // wrap into at most two lines around ~120px
+      ctx.font = `600 ${10.5 * u}px 'Segoe UI', Arial, sans-serif`;
+      // wrap into at most two lines
+      const maxLine = 120 * u;
       const words = this.sayText.split(" ");
       const lines = [""];
       for (const w of words) {
         const probe = lines[lines.length - 1]
           ? `${lines[lines.length - 1]} ${w}`
           : w;
-        if (ctx.measureText(probe).width > 120 && lines[lines.length - 1]) {
+        if (ctx.measureText(probe).width > maxLine && lines[lines.length - 1]) {
           lines.push(w);
         } else {
           lines[lines.length - 1] = probe;
         }
       }
-      const lineH = 13;
-      const padX = 7;
+      const lineH = 13 * u;
+      const padX = 7 * u;
       const chipW =
         Math.max(...lines.map((l) => ctx.measureText(l).width)) + padX * 2;
-      const chipH = lines.length * lineH + 9;
-      const bottom = nameShown ? this.y - 30 : this.y - 12;
+      const chipH = lines.length * lineH + 9 * u;
+      const bottom = nameShown ? this.y - 30 * u : this.y - 12 * u;
       const chipY = bottom - chipH;
 
       ctx.globalAlpha = alpha;
       ctx.fillStyle = "rgba(12, 18, 24, 0.78)";
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8);
+        ctx.roundRect(cx - chipW / 2, chipY, chipW, chipH, 8 * u);
       } else {
         ctx.rect(cx - chipW / 2, chipY, chipW, chipH);
       }
@@ -314,7 +318,7 @@ export class NPC {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       lines.forEach((l, i) => {
-        ctx.fillText(l, cx, chipY + 5 + lineH * i + lineH / 2);
+        ctx.fillText(l, cx, chipY + 5 * u + lineH * i + lineH / 2);
       });
       ctx.textAlign = "left";
       ctx.textBaseline = "alphabetic";
