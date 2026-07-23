@@ -458,33 +458,159 @@ export function whenReady() {
   });
 }
 
+// A gravel surface: warm gray base, tonal mottling, fine stone speckle,
+// darker wheel tracks where the traffic runs, soft dirt shoulders
+function paintGravel(g, road, rnd, plain = false) {
+  const horiz = road.width > road.height;
+
+  // dirt shoulders bleeding into the veld
+  if (!plain) {
+    g.save();
+    g.filter = "blur(6px)";
+    g.fillStyle = "rgba(158, 143, 110, 0.5)";
+    if (horiz) {
+      g.fillRect(road.x, road.y - 8, road.width, road.height + 16);
+    } else {
+      g.fillRect(road.x - 8, road.y, road.width + 16, road.height);
+    }
+    g.filter = "none";
+    g.restore();
+  }
+
+  g.fillStyle = "#8f8773";
+  g.fillRect(road.x, road.y, road.width, road.height);
+
+  // tonal mottling
+  const len = horiz ? road.width : road.height;
+  for (let i = 0; i < len / 5; i++) {
+    const along = rnd() * len;
+    const across = rnd() * (horiz ? road.height : road.width);
+    const px = horiz ? road.x + along : road.x + across;
+    const py = horiz ? road.y + across : road.y + along;
+    g.fillStyle =
+      rnd() < 0.5
+        ? `rgba(101, 95, 80, ${0.07 + rnd() * 0.1})`
+        : `rgba(184, 176, 154, ${0.07 + rnd() * 0.1})`;
+    g.beginPath();
+    g.ellipse(px, py, 2 + rnd() * 6, 1.5 + rnd() * 3.5, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // grading streaks along the direction of travel
+  for (let i = 0; i < len / 26; i++) {
+    const along = rnd() * len;
+    const across = 4 + rnd() * ((horiz ? road.height : road.width) - 8);
+    const streak = 26 + rnd() * 60;
+    g.strokeStyle = `rgba(104, 98, 82, ${0.1 + rnd() * 0.12})`;
+    g.lineWidth = 1 + rnd() * 1.6;
+    g.beginPath();
+    if (horiz) {
+      g.moveTo(road.x + along, road.y + across);
+      g.lineTo(road.x + along + streak, road.y + across + (rnd() - 0.5) * 3);
+    } else {
+      g.moveTo(road.x + across, road.y + along);
+      g.lineTo(road.x + across + (rnd() - 0.5) * 3, road.y + along + streak);
+    }
+    g.stroke();
+  }
+
+  // ragged edges: the veld nibbles at the gravel. One path, one filtered
+  // fill — per-rect filters are a per-draw gaussian and grind the bake.
+  if (!plain) {
+    g.save();
+    g.beginPath();
+    for (let i = 0; i < len / 14; i++) {
+      const along = rnd() * len;
+      const edge = rnd() < 0.5;
+      const bite = 2 + rnd() * 4;
+      if (horiz) {
+        const ey = edge ? road.y : road.y + road.height - bite;
+        g.rect(road.x + along, ey, 8 + rnd() * 16, bite);
+      } else {
+        const ex = edge ? road.x : road.x + road.width - bite;
+        g.rect(ex, road.y + along, bite, 8 + rnd() * 16);
+      }
+    }
+    g.filter = "blur(2px)";
+    g.fillStyle = "rgba(158, 143, 110, 0.55)";
+    g.fill();
+    g.filter = "none";
+    g.restore();
+  }
+
+  // wheel tracks along each lane
+  if (!plain) {
+    const laneOff = (horiz ? road.height : road.width) * 0.26;
+    const center = horiz ? road.y + road.height / 2 : road.x + road.width / 2;
+    g.save();
+    g.filter = "blur(2px)";
+    g.fillStyle = "rgba(80, 74, 62, 0.24)";
+    for (const off of [-laneOff, laneOff]) {
+      if (horiz) {
+        g.fillRect(road.x, center + off - 6, road.width, 12);
+      } else {
+        g.fillRect(center + off - 6, road.y, 12, road.height);
+      }
+    }
+    g.filter = "none";
+    g.restore();
+  }
+
+  // fine stones
+  for (let i = 0; i < len / 1.4; i++) {
+    const along = rnd() * len;
+    const across = 2 + rnd() * ((horiz ? road.height : road.width) - 4);
+    const px = horiz ? road.x + along : road.x + across;
+    const py = horiz ? road.y + across : road.y + along;
+    g.fillStyle =
+      rnd() < 0.55
+        ? `rgba(64, 60, 50, ${0.25 + rnd() * 0.3})`
+        : `rgba(214, 207, 188, ${0.25 + rnd() * 0.3})`;
+    g.fillRect(px, py, 0.7 + rnd() * 1.2, 0.7 + rnd() * 1.2);
+  }
+}
+
 export function renderRoadsOffscreen(roads) {
   roadCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-  roads.forEach((road) => {
-    for (let x = road.x; x < road.x + road.width; x += roadTexture.width) {
-      for (let y = road.y; y < road.y + road.height; y += roadTexture.height) {
-        const tileWidth = Math.min(roadTexture.width, road.x + road.width - x);
-        const tileHeight = Math.min(
-          roadTexture.height,
-          road.y + road.height - y
-        );
-        roadCtx.drawImage(
-          roadTexture,
-          0,
-          0,
-          tileWidth,
-          tileHeight,
-          x,
-          y,
-          tileWidth,
-          tileHeight
-        );
-      }
-    }
-  });
+  // Deterministic gravel detail per bake
+  let seed = 17;
+  const rnd = () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
 
-  // --- Draw intersections ---
+  roads
+    .filter((r) => r.kind !== "gravel")
+    .forEach((road) => {
+      for (let x = road.x; x < road.x + road.width; x += roadTexture.width) {
+        for (let y = road.y; y < road.y + road.height; y += roadTexture.height) {
+          const tileWidth = Math.min(roadTexture.width, road.x + road.width - x);
+          const tileHeight = Math.min(
+            roadTexture.height,
+            road.y + road.height - y
+          );
+          roadCtx.drawImage(
+            roadTexture,
+            0,
+            0,
+            tileWidth,
+            tileHeight,
+            x,
+            y,
+            tileWidth,
+            tileHeight
+          );
+        }
+      }
+    });
+
+  roads
+    .filter((r) => r.kind === "gravel")
+    .forEach((road) => paintGravel(roadCtx, road, rnd));
+
+  // --- Draw intersections (tar rules the crossing unless both roads are
+  // gravel, in which case the gravel just continues) ---
   roads.forEach((r1, i) => {
     for (let j = i + 1; j < roads.length; j++) {
       const r2 = roads[j];
@@ -494,6 +620,25 @@ export function renderRoadsOffscreen(roads) {
         Math.min(r1.x + r1.width, r2.x + r2.width) - intersectX;
       const intersectHeight =
         Math.min(r1.y + r1.height, r2.y + r2.height) - intersectY;
+      if (
+        intersectWidth > 0 &&
+        intersectHeight > 0 &&
+        r1.kind === "gravel" &&
+        r2.kind === "gravel"
+      ) {
+        paintGravel(
+          roadCtx,
+          {
+            x: intersectX,
+            y: intersectY,
+            width: intersectWidth,
+            height: intersectHeight,
+          },
+          rnd,
+          true
+        );
+        continue;
+      }
       if (intersectWidth > 0 && intersectHeight > 0) {
         for (
           let x = intersectX;
@@ -530,11 +675,13 @@ export function renderRoadsOffscreen(roads) {
     }
   });
 
-  // --- Draw borders without intersections ---
+  // --- Draw borders without intersections (gravel has soft shoulders
+  // instead of kerbs) ---
   roadCtx.strokeStyle = "#5c5c5c";
   roadCtx.lineWidth = 4;
 
   roads.forEach((road) => {
+    if (road.kind === "gravel") return;
     roadCtx.save();
     roadCtx.beginPath();
     roadCtx.rect(road.x, road.y, road.width, road.height);
@@ -557,13 +704,13 @@ export function renderRoadsOffscreen(roads) {
     roadCtx.restore();
   });
 
-  // --- Draw dashed center lines ---
+  // --- Draw dashed center lines (gravel roads have no paint at all) ---
   roadCtx.strokeStyle = "#fff";
   roadCtx.lineWidth = 2;
   roadCtx.setLineDash([20, 20]);
 
   roads
-    .filter((r) => r.width > r.height)
+    .filter((r) => r.width > r.height && r.kind !== "gravel")
     .forEach((r) => {
       const y = r.y + r.height / 2;
       roadCtx.beginPath();
@@ -573,7 +720,7 @@ export function renderRoadsOffscreen(roads) {
     });
 
   roads
-    .filter((r) => r.height > r.width)
+    .filter((r) => r.height > r.width && r.kind !== "gravel")
     .forEach((r) => {
       const x = r.x + r.width / 2;
       roadCtx.beginPath();
@@ -583,6 +730,29 @@ export function renderRoadsOffscreen(roads) {
     });
 
   roadCtx.setLineDash([]);
+
+  // --- The main road earns painted edge lines: yellow shoulder lines,
+  // the South African way, a little sun-faded ---
+  roadCtx.strokeStyle = "rgba(222, 178, 62, 0.75)";
+  roadCtx.lineWidth = 3;
+  roads
+    .filter((r) => r.kind === "main")
+    .forEach((r) => {
+      const horiz = r.width > r.height;
+      roadCtx.beginPath();
+      if (horiz) {
+        roadCtx.moveTo(r.x, r.y + 6);
+        roadCtx.lineTo(r.x + r.width, r.y + 6);
+        roadCtx.moveTo(r.x, r.y + r.height - 6);
+        roadCtx.lineTo(r.x + r.width, r.y + r.height - 6);
+      } else {
+        roadCtx.moveTo(r.x + 6, r.y);
+        roadCtx.lineTo(r.x + 6, r.y + r.height);
+        roadCtx.moveTo(r.x + r.width - 6, r.y);
+        roadCtx.lineTo(r.x + r.width - 6, r.y + r.height);
+      }
+      roadCtx.stroke();
+    });
 }
 
 // Bake potholes into the road canvas (call after renderRoadsOffscreen so

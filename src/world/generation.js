@@ -14,13 +14,18 @@ import {
 import { Tree } from "../entities/trees.js";
 
 export class RoadSegment {
-  constructor(x, y, width, height) {
+  constructor(x, y, width, height, kind = "tar") {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
+    this.kind = kind; // "main" | "tar" | "gravel" — surface only, same traffic
   }
 }
+
+// Road width by surface: the main road is properly wide, gravel roads
+// narrow. Traffic lanes scale off road size, so no traffic code changes.
+const ROAD_WIDTHS = { main: 130, tar: ROAD_HEIGHT, gravel: 84 };
 
 export function generateRoads() {
   const roads = [];
@@ -31,13 +36,20 @@ export function generateRoads() {
   const vSpacing = WORLD_WIDTH / (V_ROADS + 1);
 
   for (let i = 1; i <= H_ROADS; i++) {
-    const y = i * hSpacing - ROAD_HEIGHT / 2 + (Math.random() * 100 - 10);
-    roads.push(new RoadSegment(0, y, WORLD_WIDTH, ROAD_HEIGHT));
+    // The middle road through town is THE main road; the southernmost,
+    // running out toward the bay, is gravel
+    const kind = i === 3 ? "main" : i === H_ROADS ? "gravel" : "tar";
+    const w = ROAD_WIDTHS[kind];
+    const y = i * hSpacing - w / 2 + (Math.random() * 100 - 10);
+    roads.push(new RoadSegment(0, y, WORLD_WIDTH, w, kind));
   }
 
   for (let i = 1; i <= V_ROADS; i++) {
-    const x = i * vSpacing - ROAD_HEIGHT / 2 + (Math.random() * 100 - 10);
-    roads.push(new RoadSegment(x, 0, ROAD_HEIGHT, WORLD_HEIGHT));
+    // The easternmost road out of town is gravel too
+    const kind = i === V_ROADS ? "gravel" : "tar";
+    const w = ROAD_WIDTHS[kind];
+    const x = i * vSpacing - w / 2 + (Math.random() * 100 - 10);
+    roads.push(new RoadSegment(x, 0, w, WORLD_HEIGHT, kind));
   }
 
   return roads;
