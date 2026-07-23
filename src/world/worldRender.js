@@ -10,6 +10,11 @@ roadTexture.src = "/assets/road.webp";
 const grassTexture = new Image();
 grassTexture.src = "/assets/fyn2.webp";
 
+// Photoreal gravel tile (tools/make-gravel.cjs): tiled into the district
+// roads, so surface realism costs nothing at bake or play time
+const gravelTexture = new Image();
+gravelTexture.src = "/assets/gravel.webp";
+
 export const buildingImages = [
   "/assets/house.webp",
   "/assets/house2.webp",
@@ -67,7 +72,9 @@ grassTexture.onload = tryRenderGrass;
 roadTexture.onload = tryRenderGrass;
 
 export function texturesReady() {
-  return grassRendered && roadTexture.complete;
+  // gravelTexture.complete is true even on a failed load, so this can
+  // never wedge the start; paintGravel falls back to flat dirt then
+  return grassRendered && roadTexture.complete && gravelTexture.complete;
 }
 
 // Refill the grass base — startNewGame calls this before painting the
@@ -548,10 +555,25 @@ function paintGravel(g, road, rnd, plain = false) {
     g.closePath();
   };
 
-  g.fillStyle = "#8f8773";
+  // The surface itself is the photoreal tile; fall back to flat dirt if
+  // it hasn't loaded (never blocks the bake)
+  const usePattern = gravelTexture.complete && gravelTexture.naturalWidth > 0;
+  const surface = () => {
+    if (usePattern) {
+      const pat = g.createPattern(gravelTexture, "repeat");
+      // at half scale the stones sit at true grit size from the air
+      pat.setTransform(new DOMMatrix().scale(0.5));
+      g.fillStyle = pat;
+    } else {
+      g.fillStyle = "#8f8773";
+    }
+  };
+
   if (plain) {
+    surface();
     g.fillRect(road.x, road.y, road.width, road.height);
   } else {
+    surface();
     wobblyBody();
     g.fill();
     // soften the wobbled edge with layered strokes instead of a filter
@@ -567,50 +589,43 @@ function paintGravel(g, road, rnd, plain = false) {
     }
   }
 
-  // tonal mottling
   const len = horiz ? road.width : road.height;
-  for (let i = 0; i < len / 5; i++) {
-    const along = rnd() * len;
-    const across = rnd() * (horiz ? road.height : road.width);
-    const px = horiz ? road.x + along : road.x + across;
-    const py = horiz ? road.y + across : road.y + along;
-    g.fillStyle =
-      rnd() < 0.5
-        ? `rgba(101, 95, 80, ${0.07 + rnd() * 0.1})`
-        : `rgba(184, 176, 154, ${0.07 + rnd() * 0.1})`;
-    g.beginPath();
-    g.ellipse(px, py, 2 + rnd() * 6, 1.5 + rnd() * 3.5, rnd() * 3, 0, Math.PI * 2);
-    g.fill();
-  }
 
-  // grading streaks along the direction of travel
-  for (let i = 0; i < len / 26; i++) {
-    const along = rnd() * len;
-    const across = 4 + rnd() * ((horiz ? road.height : road.width) - 8);
-    const streak = 26 + rnd() * 60;
-    g.strokeStyle = `rgba(104, 98, 82, ${0.1 + rnd() * 0.12})`;
-    g.lineWidth = 1 + rnd() * 1.6;
-    g.beginPath();
-    if (horiz) {
-      g.moveTo(road.x + along, road.y + across);
-      g.lineTo(road.x + along + streak, road.y + across + (rnd() - 0.5) * 3);
-    } else {
-      g.moveTo(road.x + across, road.y + along);
-      g.lineTo(road.x + across + (rnd() - 0.5) * 3, road.y + along + streak);
+  // Washboard corrugation: the aerial signature of a gravel road — faint
+  // transverse ripples, spacing wandering around half a metre
+  if (!plain) {
+    const across = horiz ? road.height : road.width;
+    let along = rnd() * 8;
+    while (along < len) {
+      const alpha = 0.035 + rnd() * 0.045;
+      const bow = (rnd() - 0.5) * 3;
+      g.strokeStyle = `rgba(70, 64, 54, ${alpha})`;
+      g.lineWidth = 1.6 + rnd() * 1.4;
+      g.beginPath();
+      if (horiz) {
+        const px = road.x + along;
+        g.moveTo(px, road.y + 4);
+        g.quadraticCurveTo(px + bow, road.y + across / 2, px, road.y + across - 4);
+      } else {
+        const py = road.y + along;
+        g.moveTo(road.x + 4, py);
+        g.quadraticCurveTo(road.x + across / 2, py + bow, road.x + across - 4, py);
+      }
+      g.stroke();
+      along += 8 + rnd() * 7;
     }
-    g.stroke();
   }
 
-
-  // wheel tracks along each lane: stacked soft-edged bands, no filter
+  // wheel tracks along each lane: stacked soft-edged bands that also
+  // smooth the washboard where the tyres run
   if (!plain) {
     const laneOff = (horiz ? road.height : road.width) * 0.26;
     const center = horiz ? road.y + road.height / 2 : road.x + road.width / 2;
     for (const off of [-laneOff, laneOff]) {
       for (const [half, alpha] of [
-        [7, 0.07],
-        [5, 0.09],
-        [3, 0.12],
+        [7, 0.06],
+        [5, 0.08],
+        [3, 0.11],
       ]) {
         g.fillStyle = `rgba(80, 74, 62, ${alpha})`;
         if (horiz) {
@@ -620,39 +635,6 @@ function paintGravel(g, road, rnd, plain = false) {
         }
       }
     }
-  }
-
-  // fine stones
-  for (let i = 0; i < len / 1.4; i++) {
-    const along = rnd() * len;
-    const across = 2 + rnd() * ((horiz ? road.height : road.width) - 4);
-    const px = horiz ? road.x + along : road.x + across;
-    const py = horiz ? road.y + across : road.y + along;
-    g.fillStyle =
-      rnd() < 0.55
-        ? `rgba(60, 56, 47, ${0.3 + rnd() * 0.32})`
-        : `rgba(219, 212, 192, ${0.3 + rnd() * 0.32})`;
-    g.fillRect(px, py, 1 + rnd() * 1.7, 1 + rnd() * 1.7);
-  }
-
-  // scattered larger pebbles with a hint of shadow
-  for (let i = 0; i < len / 16; i++) {
-    const along = rnd() * len;
-    const across = 4 + rnd() * ((horiz ? road.height : road.width) - 8);
-    const px = horiz ? road.x + along : road.x + across;
-    const py = horiz ? road.y + across : road.y + along;
-    const r = 1.2 + rnd() * 1.4;
-    g.fillStyle = `rgba(52, 48, 40, ${0.22 + rnd() * 0.2})`;
-    g.beginPath();
-    g.ellipse(px + 0.7, py + 0.7, r, r * 0.8, 0, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle =
-      rnd() < 0.5
-        ? `rgba(168, 160, 140, ${0.5 + rnd() * 0.3})`
-        : `rgba(120, 112, 95, ${0.5 + rnd() * 0.3})`;
-    g.beginPath();
-    g.ellipse(px, py, r, r * 0.8, rnd() * 3, 0, Math.PI * 2);
-    g.fill();
   }
 }
 
