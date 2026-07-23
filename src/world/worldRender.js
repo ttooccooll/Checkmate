@@ -126,17 +126,20 @@ export function renderBayOffscreen(bay) {
     g.closePath();
   };
 
-  // Dry beach first (widest), blurred into the veld like the pitch apron
+  // Dry beach first (widest), fading into the veld with stacked arcs —
+  // no canvas blurs, they cost raster seconds on the world canvas
   g.save();
-  g.filter = "blur(14px)";
-  g.fillStyle = "rgba(196, 176, 138, 0.55)";
-  arcPath(1.34, 4);
-  g.fill();
-  g.filter = "blur(6px)";
-  g.fillStyle = "rgba(203, 184, 146, 0.85)";
-  arcPath(1.26, 4);
-  g.fill();
-  g.filter = "none";
+  for (const [scale, alpha] of [
+    [1.4, 0.14],
+    [1.36, 0.18],
+    [1.32, 0.24],
+    [1.28, 0.36],
+    [1.24, 0.5],
+  ]) {
+    g.fillStyle = `rgba(199, 179, 141, ${alpha})`;
+    arcPath(scale, 4);
+    g.fill();
+  }
   g.fillStyle = "#cdb992";
   arcPath(1.18, 5);
   g.fill();
@@ -178,11 +181,12 @@ export function renderBayOffscreen(bay) {
   }
 
   // Wet sand: a darker glistening band right at the waterline
-  g.filter = "blur(3px)";
-  g.fillStyle = "rgba(148, 128, 96, 0.9)";
-  arcPath(1.07, 3);
+  g.fillStyle = "rgba(148, 128, 96, 0.45)";
+  arcPath(1.085, 3);
   g.fill();
-  g.filter = "none";
+  g.fillStyle = "rgba(148, 128, 96, 0.75)";
+  arcPath(1.06, 3);
+  g.fill();
 
   // Water: bright shallows at the sand, deepening out toward the corner
   g.fillStyle = "#3a848e";
@@ -198,14 +202,15 @@ export function renderBayOffscreen(bay) {
   arcPath(0.42, 5);
   g.fill();
 
-  // Soften the band seams
-  g.filter = "blur(9px)";
-  g.globalAlpha = 0.5;
+  // Soften the band seams with in-between tones
+  g.globalAlpha = 0.4;
   g.fillStyle = "#266976";
-  arcPath(0.74, 4);
+  arcPath(0.75, 4);
+  g.fill();
+  g.fillStyle = "#2f7a86";
+  arcPath(0.93, 4);
   g.fill();
   g.globalAlpha = 1;
-  g.filter = "none";
 
   // Surface texture: the flat teal needs grain to sit beside photographic
   // grass — small tonal flecks all over the water, denser near shore
@@ -330,43 +335,60 @@ export function renderPitchOffscreen(pitch) {
 
   // The playing surface itself: hard-packed dusty ground. The apron fades
   // very gradually into the veld; the field proper is solidly worn.
+  // Layered unfiltered fills, NOT canvas blurs — the old blur(46) apron
+  // alone cost ~8 seconds of raster time on the world canvas.
   g.save();
-  g.filter = "blur(46px)";
-  g.fillStyle = "rgba(172, 152, 114, 0.3)";
-  g.fillRect(x - 34, y - 34, w + 68, h + 68);
-  g.filter = "blur(26px)";
-  g.fillStyle = "rgba(176, 156, 118, 0.32)";
-  g.fillRect(x - 10, y - 10, w + 20, h + 20);
-  g.filter = "blur(12px)";
-  g.fillStyle = "rgba(181, 161, 122, 0.34)";
-  g.fillRect(x + 10, y + 10, w - 20, h - 20);
-  g.filter = "none";
-  g.fillStyle = "rgba(184, 165, 126, 0.2)";
-  g.fillRect(x + 22, y + 22, w - 44, h - 44);
-  g.filter = "blur(6px)";
-  // patchy surface: surviving grass tufts and extra-worn dust
+  for (let i = 0; i < 10; i++) {
+    const inset = 46 - i * 8; // +46 apron … -26 interior
+    g.fillStyle = "rgba(176, 156, 118, 0.075)";
+    g.beginPath();
+    if (g.roundRect) {
+      g.roundRect(
+        x - inset,
+        y - inset,
+        w + inset * 2,
+        h + inset * 2,
+        Math.max(6, 30 - i * 3)
+      );
+    } else {
+      g.rect(x - inset, y - inset, w + inset * 2, h + inset * 2);
+    }
+    g.fill();
+  }
+  // patchy surface: surviving grass tufts and extra-worn dust, soft-edged
+  // via radial gradients
   for (let i = 0; i < 30; i++) {
     const px = x + 12 + Math.random() * (w - 24);
     const py = y + 12 + Math.random() * (h - 24);
     const pr = 9 + Math.random() * 22;
-    g.fillStyle =
+    const tone =
       Math.random() < 0.42
-        ? "rgba(118, 126, 80, 0.22)" // grass that survived
-        : "rgba(166, 144, 102, 0.26)"; // dust worn harder
+        ? [118, 126, 80, 0.22] // grass that survived
+        : [166, 144, 102, 0.26]; // dust worn harder
+    const grad = g.createRadialGradient(px, py, 0, px, py, pr);
+    grad.addColorStop(0, `rgba(${tone[0]}, ${tone[1]}, ${tone[2]}, ${tone[3]})`);
+    grad.addColorStop(0.65, `rgba(${tone[0]}, ${tone[1]}, ${tone[2]}, ${tone[3] * 0.6})`);
+    grad.addColorStop(1, `rgba(${tone[0]}, ${tone[1]}, ${tone[2]}, 0)`);
+    g.fillStyle = grad;
     g.beginPath();
     g.ellipse(px, py, pr, pr * 0.7, Math.random() * 3, 0, Math.PI * 2);
     g.fill();
   }
-  g.filter = "none";
   g.restore();
 
-  // Bare, kicked-to-death earth at the goalmouths and centre
+  // Bare, kicked-to-death earth at the goalmouths and centre: radial
+  // gradients, filter-free
   const wear = (wx, wy, rx, ry, alpha) => {
     g.save();
-    g.fillStyle = `rgba(148, 130, 100, ${alpha})`;
-    g.filter = "blur(6px)";
+    g.translate(wx, wy);
+    g.scale(1, ry / rx);
+    const grad = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+    grad.addColorStop(0, `rgba(148, 130, 100, ${alpha})`);
+    grad.addColorStop(0.7, `rgba(148, 130, 100, ${alpha * 0.55})`);
+    grad.addColorStop(1, "rgba(148, 130, 100, 0)");
+    g.fillStyle = grad;
     g.beginPath();
-    g.ellipse(wx, wy, rx, ry, 0, 0, Math.PI * 2);
+    g.arc(0, 0, rx, 0, Math.PI * 2);
     g.fill();
     g.restore();
   };
@@ -463,18 +485,34 @@ export function whenReady() {
 function paintGravel(g, road, rnd, plain = false) {
   const horiz = road.width > road.height;
 
-  // dirt shoulders bleeding into the veld
+  // dirt shoulders bleeding into the veld: linear gradients, not filters —
+  // a full-length blurred fill on the world canvas costs seconds of
+  // raster time in software rendering
   if (!plain) {
-    g.save();
-    g.filter = "blur(6px)";
-    g.fillStyle = "rgba(158, 143, 110, 0.5)";
+    const SH = 10;
     if (horiz) {
-      g.fillRect(road.x, road.y - 8, road.width, road.height + 16);
+      let grad = g.createLinearGradient(0, road.y - SH, 0, road.y + 4);
+      grad.addColorStop(0, "rgba(158, 143, 110, 0)");
+      grad.addColorStop(1, "rgba(158, 143, 110, 0.5)");
+      g.fillStyle = grad;
+      g.fillRect(road.x, road.y - SH, road.width, SH + 4);
+      grad = g.createLinearGradient(0, road.y + road.height - 4, 0, road.y + road.height + SH);
+      grad.addColorStop(0, "rgba(158, 143, 110, 0.5)");
+      grad.addColorStop(1, "rgba(158, 143, 110, 0)");
+      g.fillStyle = grad;
+      g.fillRect(road.x, road.y + road.height - 4, road.width, SH + 4);
     } else {
-      g.fillRect(road.x - 8, road.y, road.width + 16, road.height);
+      let grad = g.createLinearGradient(road.x - SH, 0, road.x + 4, 0);
+      grad.addColorStop(0, "rgba(158, 143, 110, 0)");
+      grad.addColorStop(1, "rgba(158, 143, 110, 0.5)");
+      g.fillStyle = grad;
+      g.fillRect(road.x - SH, road.y, SH + 4, road.height);
+      grad = g.createLinearGradient(road.x + road.width - 4, 0, road.x + road.width + SH, 0);
+      grad.addColorStop(0, "rgba(158, 143, 110, 0.5)");
+      grad.addColorStop(1, "rgba(158, 143, 110, 0)");
+      g.fillStyle = grad;
+      g.fillRect(road.x + road.width - 4, road.y, SH + 4, road.height);
     }
-    g.filter = "none";
-    g.restore();
   }
 
   // The gravel body has no straight edges: both long sides wobble like a
@@ -516,14 +554,17 @@ function paintGravel(g, road, rnd, plain = false) {
   } else {
     wobblyBody();
     g.fill();
-    g.save();
-    g.filter = "blur(3px)";
-    g.strokeStyle = "#8f8773";
-    g.lineWidth = 5;
-    wobblyBody();
-    g.stroke();
-    g.filter = "none";
-    g.restore();
+    // soften the wobbled edge with layered strokes instead of a filter
+    for (const [lw, alpha] of [
+      [7, 0.18],
+      [5, 0.3],
+      [3, 0.55],
+    ]) {
+      g.strokeStyle = `rgba(143, 135, 115, ${alpha})`;
+      g.lineWidth = lw;
+      wobblyBody();
+      g.stroke();
+    }
   }
 
   // tonal mottling
@@ -561,22 +602,24 @@ function paintGravel(g, road, rnd, plain = false) {
   }
 
 
-  // wheel tracks along each lane
+  // wheel tracks along each lane: stacked soft-edged bands, no filter
   if (!plain) {
     const laneOff = (horiz ? road.height : road.width) * 0.26;
     const center = horiz ? road.y + road.height / 2 : road.x + road.width / 2;
-    g.save();
-    g.filter = "blur(2px)";
-    g.fillStyle = "rgba(80, 74, 62, 0.24)";
     for (const off of [-laneOff, laneOff]) {
-      if (horiz) {
-        g.fillRect(road.x, center + off - 6, road.width, 12);
-      } else {
-        g.fillRect(center + off - 6, road.y, 12, road.height);
+      for (const [half, alpha] of [
+        [7, 0.07],
+        [5, 0.09],
+        [3, 0.12],
+      ]) {
+        g.fillStyle = `rgba(80, 74, 62, ${alpha})`;
+        if (horiz) {
+          g.fillRect(road.x, center + off - half, road.width, half * 2);
+        } else {
+          g.fillRect(center + off - half, road.y, half * 2, road.height);
+        }
       }
     }
-    g.filter = "none";
-    g.restore();
   }
 
   // fine stones
@@ -587,9 +630,29 @@ function paintGravel(g, road, rnd, plain = false) {
     const py = horiz ? road.y + across : road.y + along;
     g.fillStyle =
       rnd() < 0.55
-        ? `rgba(64, 60, 50, ${0.25 + rnd() * 0.3})`
-        : `rgba(214, 207, 188, ${0.25 + rnd() * 0.3})`;
-    g.fillRect(px, py, 0.7 + rnd() * 1.2, 0.7 + rnd() * 1.2);
+        ? `rgba(60, 56, 47, ${0.3 + rnd() * 0.32})`
+        : `rgba(219, 212, 192, ${0.3 + rnd() * 0.32})`;
+    g.fillRect(px, py, 1 + rnd() * 1.7, 1 + rnd() * 1.7);
+  }
+
+  // scattered larger pebbles with a hint of shadow
+  for (let i = 0; i < len / 16; i++) {
+    const along = rnd() * len;
+    const across = 4 + rnd() * ((horiz ? road.height : road.width) - 8);
+    const px = horiz ? road.x + along : road.x + across;
+    const py = horiz ? road.y + across : road.y + along;
+    const r = 1.2 + rnd() * 1.4;
+    g.fillStyle = `rgba(52, 48, 40, ${0.22 + rnd() * 0.2})`;
+    g.beginPath();
+    g.ellipse(px + 0.7, py + 0.7, r, r * 0.8, 0, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle =
+      rnd() < 0.5
+        ? `rgba(168, 160, 140, ${0.5 + rnd() * 0.3})`
+        : `rgba(120, 112, 95, ${0.5 + rnd() * 0.3})`;
+    g.beginPath();
+    g.ellipse(px, py, r, r * 0.8, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
   }
 }
 
@@ -602,6 +665,13 @@ export function renderRoadsOffscreen(roads) {
     seed = (seed * 1103515245 + 12345) % 2147483648;
     return seed / 2147483648;
   };
+
+  // Gravel goes down FIRST; tar is laid over it, so wherever a paved road
+  // crosses a gravel one, the tar surface simply wins — no gravel
+  // shoulders or wobble ever sit on top of pavement.
+  roads
+    .filter((r) => r.kind === "gravel")
+    .forEach((road) => paintGravel(roadCtx, road, rnd));
 
   roads
     .filter((r) => r.kind !== "gravel")
@@ -628,40 +698,18 @@ export function renderRoadsOffscreen(roads) {
       }
     });
 
-  roads
-    .filter((r) => r.kind === "gravel")
-    .forEach((road) => paintGravel(roadCtx, road, rnd));
-
-  // --- Draw intersections (tar rules the crossing unless both roads are
-  // gravel, in which case the gravel just continues) ---
+  // --- Re-tile tar-on-tar crossings for clean seams (gravel crossings
+  // need nothing: tar was laid over gravel, gravel-on-gravel overlays) ---
   roads.forEach((r1, i) => {
     for (let j = i + 1; j < roads.length; j++) {
       const r2 = roads[j];
+      if (r1.kind === "gravel" || r2.kind === "gravel") continue;
       const intersectX = Math.max(r1.x, r2.x);
       const intersectY = Math.max(r1.y, r2.y);
       const intersectWidth =
         Math.min(r1.x + r1.width, r2.x + r2.width) - intersectX;
       const intersectHeight =
         Math.min(r1.y + r1.height, r2.y + r2.height) - intersectY;
-      if (
-        intersectWidth > 0 &&
-        intersectHeight > 0 &&
-        r1.kind === "gravel" &&
-        r2.kind === "gravel"
-      ) {
-        paintGravel(
-          roadCtx,
-          {
-            x: intersectX,
-            y: intersectY,
-            width: intersectWidth,
-            height: intersectHeight,
-          },
-          rnd,
-          true
-        );
-        continue;
-      }
       if (intersectWidth > 0 && intersectHeight > 0) {
         for (
           let x = intersectX;
@@ -711,6 +759,9 @@ export function renderRoadsOffscreen(roads) {
 
     roads.forEach((other) => {
       if (road === other) return;
+      // A paved road keeps its kerbs where a gravel road joins it —
+      // only paved crossings open a gap
+      if (other.kind === "gravel") return;
       const intersectX = Math.max(road.x, other.x);
       const intersectY = Math.max(road.y, other.y);
       const intersectWidth =
@@ -766,9 +817,15 @@ export function renderRoadsOffscreen(roads) {
       const start = horiz ? r.x : r.y;
       const end = horiz ? r.x + r.width : r.y + r.height;
 
-      // spans of open road between crossings
+      // spans of open road between paved crossings (the paint runs
+      // straight through a gravel junction)
       const gaps = roads
-        .filter((o) => o !== r && (horiz ? o.height > o.width : o.width > o.height))
+        .filter(
+          (o) =>
+            o !== r &&
+            o.kind !== "gravel" &&
+            (horiz ? o.height > o.width : o.width > o.height)
+        )
         .map((o) => (horiz ? [o.x - 4, o.x + o.width + 4] : [o.y - 4, o.y + o.height + 4]))
         .sort((a, b) => a[0] - b[0]);
       const spans = [];

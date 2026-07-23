@@ -25,7 +25,7 @@ export class RoadSegment {
 
 // Road width by surface: the main road is properly wide, gravel roads
 // narrow. Traffic lanes scale off road size, so no traffic code changes.
-const ROAD_WIDTHS = { main: 130, tar: ROAD_HEIGHT, gravel: 84 };
+const ROAD_WIDTHS = { main: 150, tar: ROAD_HEIGHT, gravel: 84 };
 
 export function generateRoads() {
   const roads = [];

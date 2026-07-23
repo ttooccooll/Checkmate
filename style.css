@@ -543,6 +543,22 @@ body.pregame #new-game-btn {
   }
 }
 
+/* While the world builds, the loading toast breathes so a long bake
+   never reads as a hang */
+#message-modal.loading-pulse {
+  animation: loadPulse 1.3s ease-in-out infinite;
+}
+
+@keyframes loadPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
 /* Transient messages let clicks fall through to the game; modals with
    controls (game over / share) must actually be clickable. */
 #message-modal.interactive {

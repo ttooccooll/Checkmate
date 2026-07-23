@@ -9,7 +9,7 @@ export function showMessage(text, duration = 5000, closable = false) {
   modal.textContent = text;
   modal.style.display = "block";
   modal.classList.toggle("interactive", closable);
-  modal.classList.remove("card-dark");
+  modal.classList.remove("card-dark", "loading-pulse");
 
   clearTimeout(modal._timer);
 

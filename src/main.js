@@ -155,8 +155,8 @@ let gameRunning = false;
 let startingGame = false;
 let paused = false;
 let continuesUsed = false;
-let rafScheduled = false;
 let loopTicks = 0; // one per gameLoop call: stacked loops show up as >1 per frame
+let bakeTimes = {}; // coarse world-build timings from the last startNewGame
 
 // Wet-weather momentum: the velocity the bike actually carries. When dry
 // this equals the input velocity exactly (see the grip math in update).
@@ -353,9 +353,18 @@ try {
 
 // --- World setup ---------------------------------------------------------------
 
+let npcDataCache = null;
+
 async function loadNPCs() {
-  const response = await fetch("./npcDialog.json");
-  const npcData = await response.json();
+  // The dialog file never changes within a session — fetch it once, not
+  // on every restart
+  if (!npcDataCache) {
+    const t = performance.now();
+    const response = await fetch("./npcDialog.json");
+    npcDataCache = await response.json();
+    bakeTimes.npcFetch = Math.round(performance.now() - t);
+  }
+  const npcData = npcDataCache;
 
   npcs = npcData.map((n) => {
     const quest = n.quest
@@ -378,6 +387,7 @@ async function loadNPCs() {
     return new NPC(n, 0, 0, quest);
   });
 
+  const tPlace = performance.now();
   npcs.forEach((npc) => {
     const spawn = findSafeSpawn({
       avoid: [...npcs, player],
@@ -389,6 +399,7 @@ async function loadNPCs() {
     npc.x = spawn.x;
     npc.y = spawn.y;
   });
+  bakeTimes.npcPlace = Math.round(performance.now() - tPlace);
 
   return npcs;
 }
@@ -403,7 +414,10 @@ async function startNewGame() {
   const loadingBtn = document.getElementById("new-game-btn");
   loadingBtn.textContent = "Loading…";
   loadingBtn.style.visibility = "hidden";
-  showMessage("Rolling into town…", 4000);
+  // Long duration + a slow pulse: the town takes a moment to build, and
+  // a breathing message reads as "working", not "frozen"
+  showMessage("Rolling into town…", 30000);
+  document.getElementById("message-modal").classList.add("loading-pulse");
   // let the message actually paint before the heavy work starts
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
@@ -421,18 +435,30 @@ async function startNewGame() {
   treadsWarned = false;
   storyStage = 0;
 
+  // Coarse world-bake timings, kept for perf work: __cm.getBakeTimes()
+  bakeTimes = {};
+  let bakeT = performance.now();
+  const lap = (name) => {
+    bakeTimes[name] = Math.round(performance.now() - bakeT);
+    bakeT = performance.now();
+  };
+
   roads = generateRoads();
   renderRoadsOffscreen(roads);
   potholes = generatePotholes(roads, 23);
   renderPotholesOffscreen(potholes);
+  lap("roads");
 
   pitch = placePitch(
     roads,
     BAY.enabled ? [LIGHTHOUSE_RESERVE, BAY_RESERVE] : [LIGHTHOUSE_RESERVE]
   );
   renderGrassBase();
+  lap("grass");
   renderBayOffscreen(BAY);
+  lap("bay");
   renderPitchOffscreen(pitch);
+  lap("pitch");
 
   const reserved = [LIGHTHOUSE_RESERVE];
   if (BAY.enabled) reserved.push(BAY_RESERVE);
@@ -464,11 +490,13 @@ async function startNewGame() {
 
   trees = generateTrees(100, roads, treeImages, reserved);
   renderTreesOffscreen(trees);
+  lap("trees");
   buildings = generateBuildings(72, roads, buildingImages, reserved);
   buildings.push(...clusters.shacks);
   buildings.forEach((b) => {
     if (b.img.complete) bakeBuilding(b);
   });
+  lap("buildings");
   props = placeProps(roads, buildings, trees, reserved);
   props.push(...clusters.containers);
 
@@ -480,8 +508,10 @@ async function startNewGame() {
   if (BAY.enabled) solidRects.push(BAY_RESERVE);
   coins = generateCoins(22, solidRects, trees);
 
+  lap("propsCoins");
   // Load NPCs
   await loadNPCs();
+  lap("npcs");
 
   // The keeper lives where the story says he does
   const keeper = npcs.find((n) => n.id === "lighthouse_keeper");
@@ -637,15 +667,8 @@ async function startNewGame() {
     );
   }, 5000);
 
-  requestAnimationFrame((t) => {
-    lastTime = t;
-    startingGame = false;
-    // Never stack a second loop: a fast restart can arrive while the old
-    // chain is still alive finishing the death flash. Two chains double
-    // the player's speed (and three triple it) via zero-delta frames
-    // re-applying carried velocity.
-    gameLoop(t); // BUGGED for test verification
-  });
+  startingGame = false;
+  startLoop();
 }
 
 // --- Story stages ------------------------------------------------------------
@@ -1909,10 +1932,40 @@ function resetButtonSize() {
   });
 }
 
-function gameLoop(timestamp) {
+// Exactly one loop chain may ever run. startLoop() supersedes any older
+// chain via the token: a stale chain returns without ticking on its next
+// frame, so stacking is structurally impossible no matter how restart,
+// continue, and the death flash interleave.
+let loopToken = 0;
+
+function startLoop() {
+  loopToken++;
+  const mine = loopToken;
+  // The first rAF timestamp can PREDATE a performance.now() taken here
+  // (it marks the frame's start, not the schedule time), and a negative
+  // delta turns the wet-grip pow() into Infinity. Prime lastTime from
+  // the first frame's own clock instead.
+  let first = true;
+  const step = (timestamp) => {
+    if (mine !== loopToken) return; // superseded by a newer chain
+    if (first) {
+      lastTime = timestamp;
+      first = false;
+    }
+    gameLoopFrame(timestamp);
+    if (gameRunning || flashTimer > 0) {
+      requestAnimationFrame(step);
+    }
+  };
+  requestAnimationFrame(step);
+}
+
+function gameLoopFrame(timestamp) {
   loopTicks++;
   let deltaTime = (timestamp - lastTime) / 16.666;
-  deltaTime = Math.min(deltaTime, 3);
+  // Clamp BOTH ends: a negative delta (clock skew) reaches pow() as a
+  // negative exponent and mints Infinity
+  deltaTime = Math.max(0, Math.min(deltaTime, 3));
   lastTime = timestamp;
 
   // Runs outside update() so the game-over flash still fades out
@@ -1926,13 +1979,6 @@ function gameLoop(timestamp) {
   questLog.update(npcs, player);
   if (!paused) update(deltaTime);
   draw();
-
-  if (gameRunning || flashTimer > 0) {
-    requestAnimationFrame(gameLoop);
-    rafScheduled = true;
-  } else {
-    rafScheduled = false;
-  }
 }
 
 // Zap-to-continue: pay (dearly) to pick the run back up where it ended.
@@ -1960,11 +2006,7 @@ async function continueRun() {
   const actionButtons = document.querySelectorAll("#action-buttons");
   actionButtons.forEach((button) => button.classList.add("smaller-buttons"));
 
-  if (!rafScheduled) {
-    lastTime = performance.now();
-    rafScheduled = true;
-    requestAnimationFrame(gameLoop);
-  }
+  startLoop();
 
   showMessage("⚡ Back on the bike. The run continues!", 3000);
   return true;
@@ -2030,6 +2072,7 @@ window.__cm = {
   isRunning: () => gameRunning,
   getScore: () => score,
   getLoopTicks: () => loopTicks,
+  getBakeTimes: () => bakeTimes,
 };
 
 // --- Shop & buttons -----------------------------------------------------------------
