@@ -56,6 +56,7 @@ import {
   renderTreesOffscreen,
   renderGrassBase,
   renderPitchOffscreen,
+  renderBayOffscreen,
   propSprites,
   lighthouseSprite,
   bakeBuilding,
@@ -135,6 +136,13 @@ let dustParticles = [];
 
 // The lighthouse stands on the point — the south-west corner of the map
 const LIGHTHOUSE = { x: 175, y: 3420, hitR: 78, drawSize: 270 };
+
+// A small corner of Bluebottle Bay laps at the south-west pocket, which
+// no road can ever reach (roads live at x>464, y<3140 at their extremes).
+// Flip enabled to false to remove the bay entirely — art, reserve, and
+// water collision are all keyed off this one object.
+const BAY = { enabled: true, rx: 230, ry: 235 };
+const BAY_RESERVE = { x: 0, y: 3255, width: 345, height: 345 };
 const LIGHTHOUSE_RESERVE = {
   x: LIGHTHOUSE.x - 160,
   y: LIGHTHOUSE.y - 160,
@@ -418,11 +426,16 @@ async function startNewGame() {
   potholes = generatePotholes(roads, 23);
   renderPotholesOffscreen(potholes);
 
-  pitch = placePitch(roads, [LIGHTHOUSE_RESERVE]);
+  pitch = placePitch(
+    roads,
+    BAY.enabled ? [LIGHTHOUSE_RESERVE, BAY_RESERVE] : [LIGHTHOUSE_RESERVE]
+  );
   renderGrassBase();
+  renderBayOffscreen(BAY);
   renderPitchOffscreen(pitch);
 
   const reserved = [LIGHTHOUSE_RESERVE];
+  if (BAY.enabled) reserved.push(BAY_RESERVE);
   if (pitch) {
     reserved.push({
       x: pitch.x - 20,
@@ -464,6 +477,7 @@ async function startNewGame() {
     ...props.map((p) => ({ x: p.x, y: p.y, width: p.w, height: p.h })),
     LIGHTHOUSE_RESERVE,
   ];
+  if (BAY.enabled) solidRects.push(BAY_RESERVE);
   coins = generateCoins(22, solidRects, trees);
 
   // Load NPCs
@@ -1100,6 +1114,16 @@ function update(deltaTime = 1) {
     const dyL = player.y + player.height / 2 - LIGHTHOUSE.y;
     if (dxL * dxL + dyL * dyL < LIGHTHOUSE.hitR * LIGHTHOUSE.hitR) {
       player.crash("lighthouse");
+    }
+
+    // The bay is water, not scenery. Slightly inset so wheels at the
+    // foam line survive.
+    if (BAY.enabled) {
+      const bx = (player.x + player.width / 2) / BAY.rx;
+      const by = (WORLD_HEIGHT - (player.y + player.height / 2)) / BAY.ry;
+      if (bx * bx + by * by < 0.94) {
+        player.crash("bay");
+      }
     }
   }
 
@@ -1968,6 +1992,7 @@ function handleCrash(reason) {
     bakkie: "A bakkie flattened you!",
     hatch: "You were run down in traffic!",
     lighthouse: "You rode into the lighthouse. The keeper definitely saw.",
+    bay: "You rode into the bay. It's colder than it looks.",
   };
   endGame(reasons[reason] || "You crashed!");
 }
@@ -1996,9 +2021,11 @@ window.__cm = {
   getPotholeSlow: () => potholeSlowTimer,
   getRockSlow: () => rockSlowTimer,
   getItems: () => items,
+  getCoins: () => coins,
   getProps: () => props,
   getPitch: () => pitch,
   getLighthouse: () => LIGHTHOUSE,
+  getBay: () => BAY,
   isPaused: () => paused,
   isRunning: () => gameRunning,
   getScore: () => score,

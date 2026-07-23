@@ -91,6 +91,233 @@ export const propSprites = {
 
 export const lighthouseSprite = propImg("lighthouse");
 
+// A small corner of the bay in the south-west: banded water easing from
+// deep teal to turquoise shallows, a wet sand line, dry speckled beach
+// fading into the veld, and a scatter of the bluebottles the town is
+// named for. Painted once onto the grass canvas; the shoreline is a
+// jittered quarter-ellipse anchored at the world corner.
+export function renderBayOffscreen(bay) {
+  if (!bay || !bay.enabled) return;
+  const g = grassCtx;
+  const { rx, ry } = bay;
+  const cornerY = WORLD_HEIGHT;
+
+  // Deterministic jitter so every run's shoreline is the same shape
+  let s = 29;
+  const rnd = () => {
+    s = (s * 1103515245 + 12345) % 2147483648;
+    return s / 2147483648;
+  };
+
+  // Trace one quarter-ellipse arc at a given scale with a wobbled edge
+  const arcPath = (scale, wobble) => {
+    g.beginPath();
+    g.moveTo(0, cornerY - ry * scale);
+    const steps = 34;
+    for (let i = 1; i <= steps; i++) {
+      const a = (i / steps) * (Math.PI / 2);
+      const w = 1 + ((rnd() - 0.5) * wobble) / 100;
+      g.lineTo(
+        Math.sin(a) * rx * scale * w,
+        cornerY - Math.cos(a) * ry * scale * w
+      );
+    }
+    g.lineTo(0, cornerY);
+    g.closePath();
+  };
+
+  // Dry beach first (widest), blurred into the veld like the pitch apron
+  g.save();
+  g.filter = "blur(14px)";
+  g.fillStyle = "rgba(196, 176, 138, 0.55)";
+  arcPath(1.34, 4);
+  g.fill();
+  g.filter = "blur(6px)";
+  g.fillStyle = "rgba(203, 184, 146, 0.85)";
+  arcPath(1.26, 4);
+  g.fill();
+  g.filter = "none";
+  g.fillStyle = "#cdb992";
+  arcPath(1.18, 5);
+  g.fill();
+
+  // Beach speckle: shells, kelp bits, darker sand
+  for (let i = 0; i < 260; i++) {
+    const a = rnd() * (Math.PI / 2);
+    const t = 1.0 + rnd() * 0.3;
+    const px = Math.sin(a) * rx * t;
+    const py = cornerY - Math.cos(a) * ry * t;
+    const tone = rnd();
+    g.fillStyle =
+      tone < 0.55
+        ? `rgba(160, 138, 100, ${0.2 + rnd() * 0.25})`
+        : tone < 0.85
+          ? `rgba(224, 208, 172, ${0.25 + rnd() * 0.3})`
+          : `rgba(120, 108, 84, ${0.15 + rnd() * 0.2})`;
+    g.beginPath();
+    g.ellipse(px, py, 0.7 + rnd() * 1.8, 0.5 + rnd() * 1.4, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+
+  // Wind ripples on the dry sand: faint elongated streaks along the shore
+  for (let i = 0; i < 60; i++) {
+    const a = rnd() * (Math.PI / 2);
+    const t = 1.1 + rnd() * 0.22;
+    const px = Math.sin(a) * rx * t;
+    const py = cornerY - Math.cos(a) * ry * t;
+    g.strokeStyle = `rgba(150, 130, 96, ${0.08 + rnd() * 0.1})`;
+    g.lineWidth = 0.8 + rnd();
+    g.beginPath();
+    g.moveTo(px, py);
+    // streaks run roughly parallel to the waterline
+    g.lineTo(
+      px + Math.cos(a) * (8 + rnd() * 18),
+      py + Math.sin(a) * (8 + rnd() * 18)
+    );
+    g.stroke();
+  }
+
+  // Wet sand: a darker glistening band right at the waterline
+  g.filter = "blur(3px)";
+  g.fillStyle = "rgba(148, 128, 96, 0.9)";
+  arcPath(1.07, 3);
+  g.fill();
+  g.filter = "none";
+
+  // Water: bright shallows at the sand, deepening out toward the corner
+  g.fillStyle = "#3a848e";
+  arcPath(1.0, 3);
+  g.fill();
+  g.fillStyle = "#2c7480";
+  arcPath(0.86, 4);
+  g.fill();
+  g.fillStyle = "#225d6b";
+  arcPath(0.64, 4);
+  g.fill();
+  g.fillStyle = "#194a58";
+  arcPath(0.42, 5);
+  g.fill();
+
+  // Soften the band seams
+  g.filter = "blur(9px)";
+  g.globalAlpha = 0.5;
+  g.fillStyle = "#266976";
+  arcPath(0.74, 4);
+  g.fill();
+  g.globalAlpha = 1;
+  g.filter = "none";
+
+  // Surface texture: the flat teal needs grain to sit beside photographic
+  // grass — small tonal flecks all over the water, denser near shore
+  for (let i = 0; i < 900; i++) {
+    const a = rnd() * (Math.PI / 2);
+    const t = Math.sqrt(rnd()) * 0.99;
+    const px = Math.sin(a) * rx * t;
+    const py = cornerY - Math.cos(a) * ry * t;
+    const dark = rnd() < 0.5;
+    g.fillStyle = dark
+      ? `rgba(12, 40, 50, ${0.05 + rnd() * 0.08})`
+      : `rgba(180, 220, 224, ${0.04 + rnd() * 0.07})`;
+    g.beginPath();
+    g.ellipse(
+      px,
+      py,
+      1.2 + rnd() * 3.4,
+      0.6 + rnd() * 1.6,
+      rnd() * 3,
+      0,
+      Math.PI * 2
+    );
+    g.fill();
+  }
+
+  // Sun glints in the shallows
+  for (let i = 0; i < 46; i++) {
+    const a = rnd() * (Math.PI / 2);
+    const t = 0.72 + rnd() * 0.24;
+    g.fillStyle = `rgba(240, 250, 250, ${0.1 + rnd() * 0.14})`;
+    g.beginPath();
+    g.ellipse(
+      Math.sin(a) * rx * t,
+      cornerY - Math.cos(a) * ry * t,
+      0.8 + rnd() * 1.6,
+      0.5 + rnd() * 0.8,
+      rnd() * 3,
+      0,
+      Math.PI * 2
+    );
+    g.fill();
+  }
+
+  // Faint swell lines following the shore
+  g.strokeStyle = "rgba(220, 238, 240, 0.1)";
+  g.lineWidth = 2;
+  for (const t of [0.62, 0.84]) {
+    g.beginPath();
+    const steps = 30;
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * (Math.PI / 2);
+      const w = 1 + (rnd() - 0.5) * 0.05;
+      const px = Math.sin(a) * rx * t * w;
+      const py = cornerY - Math.cos(a) * ry * t * w;
+      if (i) g.lineTo(px, py);
+      else g.moveTo(px, py);
+    }
+    g.stroke();
+  }
+
+  // Foam at the waterline: two broken white passes
+  for (const [t, alpha, lw] of [
+    [1.0, 0.55, 2.5],
+    [0.965, 0.3, 1.6],
+  ]) {
+    g.strokeStyle = `rgba(244, 250, 250, ${alpha})`;
+    g.lineWidth = lw;
+    const steps = 40;
+    let drawing = false;
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * (Math.PI / 2);
+      const w = 1 + (rnd() - 0.5) * 0.035;
+      const px = Math.sin(a) * rx * t * w;
+      const py = cornerY - Math.cos(a) * ry * t * w;
+      if (rnd() < 0.82) {
+        if (!drawing) {
+          g.beginPath();
+          g.moveTo(px, py);
+          drawing = true;
+        } else {
+          g.lineTo(px, py);
+        }
+      } else if (drawing) {
+        g.stroke();
+        drawing = false;
+      }
+    }
+    if (drawing) g.stroke();
+  }
+
+  // Bluebottles on the wet sand, the town's namesake: tiny cobalt floats
+  // with a trailing tentacle line
+  for (let i = 0; i < 8; i++) {
+    const a = 0.12 + rnd() * 1.3;
+    const t = 1.08 + rnd() * 0.06;
+    const px = Math.sin(a) * rx * t;
+    const py = cornerY - Math.cos(a) * ry * t;
+    g.fillStyle = "rgba(58, 92, 200, 0.85)";
+    g.beginPath();
+    g.ellipse(px, py, 1.6, 1.0, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "rgba(80, 110, 210, 0.5)";
+    g.lineWidth = 0.6;
+    g.beginPath();
+    g.moveTo(px, py);
+    g.lineTo(px + (rnd() - 0.5) * 8, py + 2 + rnd() * 5);
+    g.stroke();
+  }
+
+  g.restore();
+}
+
 // A worn five-a-side pitch painted straight onto the grass: faded lines,
 // goal frames with a hint of net, and bare goalmouth earth.
 export function renderPitchOffscreen(pitch) {

@@ -52,6 +52,24 @@ const townScape = await page.evaluate(() => {
     keeperAtLighthouse: keeper
       ? Math.hypot(keeper.x - lh.x, keeper.y - lh.y) < 150
       : false,
+    // Nothing may stand, lie, or spawn in the bay: not people, not props,
+    // not pickups, not the player
+    bayClear: (() => {
+      const bay = cm.getBay();
+      if (!bay.enabled) return true;
+      const inWater = (x, y) => {
+        const nx = x / bay.rx;
+        const ny = (3600 - y) / bay.ry;
+        return nx * nx + ny * ny < 1;
+      };
+      return (
+        !inWater(cm.player.x, cm.player.y) &&
+        cm.getNpcs().every((n) => !inWater(n.x + 15, n.y + 15)) &&
+        props.every((p) => !inWater(p.x + p.w / 2, p.y + p.h / 2)) &&
+        cm.getItems().every((i) => !inWater(i.x + i.size / 2, i.y + i.size / 2)) &&
+        cm.getCoins().every((c) => !inWater(c.x, c.y))
+      );
+    })(),
     // The balls rolled off down the streets — they start away from the
     // pitch, waiting to be brought back
     ballsOffPitch:
@@ -378,6 +396,25 @@ const pullover = await page.evaluate(async () => {
   return { stopped, offset: Math.round(offset), nearCrossing, resumed };
 });
 
+// --- The bay is water: riding in ends the run (last — it's fatal) ---
+const bayCrash = await page.evaluate(async () => {
+  const cm = window.__cm;
+  if (!cm.getBay().enabled) return { skipped: true, over: true, msg: "bay" };
+  cm.player.setInvulnerable(0);
+  const t0 = performance.now();
+  while (cm.isRunning() && performance.now() - t0 < 12000) {
+    cm.player.x = 60;
+    cm.player.y = 3560;
+    // a helmet absorbs the first dunking; hurry its grace period along
+    cm.player.invulnerableTimer = Math.min(cm.player.invulnerableTimer, 20);
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return {
+    over: !cm.isRunning(),
+    msg: document.getElementById("message-modal").textContent,
+  };
+});
+
 await browser.close();
 
 const ok =
@@ -388,6 +425,7 @@ const ok =
   townScape.pitchPlaced &&
   !townScape.pitchOnRoad &&
   townScape.keeperAtLighthouse &&
+  townScape.bayClear &&
   townScape.ballsOffPitch &&
   world.potholeCount > 0 &&
   world.allOnRoad &&
@@ -421,6 +459,8 @@ const ok =
   pullover.offset >= 8 && // pulled aside, not parked in the lane
   pullover.nearCrossing === false && // never blocking a crossing
   pullover.resumed && // and they pull off again
+  bayCrash.over && // the bay is not ridable
+  bayCrash.msg.includes("bay") &&
   problems.length === 0;
 
 finish("town", ok, {
@@ -438,5 +478,6 @@ finish("town", ok, {
   crossing2,
   gridlock,
   pullover,
+  bayCrash,
   problems,
 });
