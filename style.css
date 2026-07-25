@@ -543,6 +543,117 @@ body.pregame #new-game-btn {
   }
 }
 
+/* --- Conversations: same dark-card language as the rest of the UI --- */
+#dialog-box {
+  position: absolute;
+  bottom: 70%;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  max-width: min(420px, 88vw);
+  min-width: 300px;
+  padding: 14px 18px 14px;
+  background: rgba(12, 18, 24, 0.92);
+  border: 1px solid rgba(236, 229, 212, 0.14);
+  border-radius: 14px;
+  color: #ece5d4;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 1000;
+}
+
+#dialog-box .dialog-speaker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 205, 110, 0.9);
+  margin-bottom: 7px;
+}
+
+#dialog-box #dialog-text {
+  margin-bottom: 12px;
+  min-height: 24px;
+}
+
+#dialog-box #dialog-next-btn {
+  display: block;
+  margin: 0 0 0 auto;
+  padding: 7px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(145deg, #48a385, #3d9070);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #317264, 0 5px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+
+#dialog-box #dialog-next-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #317264, 0 3px 5px rgba(0, 0, 0, 0.25);
+}
+
+#dialog-box #dialog-quest-prompt {
+  margin-bottom: 12px;
+  padding: 9px 12px;
+  background: rgba(255, 205, 110, 0.1);
+  border: 1px solid rgba(255, 205, 110, 0.28);
+  border-radius: 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: #f2e6c8;
+}
+
+#dialog-box .dialog-choices {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+#dialog-box .dialog-choice {
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #d9d2c0;
+  background: rgba(236, 229, 212, 0.1);
+  border: 1px solid rgba(236, 229, 212, 0.22);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.08s, background 0.15s;
+}
+
+#dialog-box .dialog-choice:active {
+  transform: translateY(2px);
+}
+
+#dialog-box .dialog-choice-accept {
+  color: #fff;
+  background: linear-gradient(145deg, #48a385, #3d9070);
+  border: none;
+  box-shadow: 0 3px 0 #317264, 0 5px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Toast stack: newest message leads, the previous one lingers smaller
+   beneath it so simultaneous events don't erase each other */
+#message-modal .toast-line + .toast-line {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(5, 68, 94, 0.14);
+}
+
+#message-modal .toast-old {
+  font-size: 0.82em;
+  opacity: 0.7;
+}
+
 /* While the world builds, the loading toast breathes so a long bake
    never reads as a hang */
 #message-modal.loading-pulse {

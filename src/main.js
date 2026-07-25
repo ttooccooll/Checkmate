@@ -839,6 +839,24 @@ function isVisible(x, y, w, h) {
   );
 }
 
+// What's under the player's wheels: rubber marks stick to tar; gravel
+// and bare veld take pale dust scuffs instead
+function surfaceKindAt(p) {
+  const cx = p.x + p.width / 2;
+  const cy = p.y + p.height / 2;
+  for (const r of roads) {
+    if (
+      cx > r.x &&
+      cx < r.x + r.width &&
+      cy > r.y &&
+      cy < r.y + r.height
+    ) {
+      return r.kind === "gravel" ? "dust" : "rubber";
+    }
+  }
+  return "dust";
+}
+
 function updateTouchControlsVisibility() {
   if (pointerState.usingDragControls) {
     // Player is using drag → hide touch buttons
@@ -1039,7 +1057,8 @@ function update(deltaTime = 1) {
       skidMarks.add(
         player.x + player.width / 2,
         player.y + player.height / 2,
-        player.direction
+        player.direction,
+        surfaceKindAt(player)
       );
       slideSkidTimer = 5;
     }
@@ -1052,7 +1071,8 @@ function update(deltaTime = 1) {
       skidMarks.add(
         player.x + player.width / 2,
         player.y + player.height / 2,
-        prevDirection
+        prevDirection,
+        surfaceKindAt(player)
       );
       spawnDust();
     }
@@ -1082,6 +1102,19 @@ function update(deltaTime = 1) {
   traffic.update(deltaTime, player, {
     onCrash: (vehicleType) => player.crash(vehicleType),
     horn: () => sfx.horn(),
+    // Gravel roads smoke a little under every wheel
+    onDust: (x, y) => {
+      if (dustParticles.length < 260) {
+        dustParticles.push({
+          x: x + (Math.random() * 8 - 4),
+          y: y + (Math.random() * 8 - 4),
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          size: 4 + Math.random() * 6,
+          life: 34 + Math.random() * 30,
+        });
+      }
+    },
     // Drivers ease off in the wet
     speedFactor: 1 - 0.15 * ambience.rainIntensity,
   });
@@ -1104,6 +1137,14 @@ function update(deltaTime = 1) {
   });
   ambient.setFog(ambience.fogIntensity);
   ambient.setRain(ambience.rainIntensity);
+
+  // The surf swells as you near the bay, and the gulls get chattier
+  if (BAY.enabled) {
+    const nx = (player.x + player.width / 2) / BAY.rx;
+    const ny = (WORLD_HEIGHT - (player.y + player.height / 2)) / BAY.ry;
+    const norm = Math.hypot(nx, ny);
+    ambient.setShore(Math.max(0, Math.min(1, (2.1 - norm) / 0.9)));
+  }
 
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
@@ -1365,6 +1406,35 @@ function draw() {
 
   // --- Skid marks (under everything that moves) ---
   skidMarks.draw(ctx, isVisible);
+
+  // --- The foam line breathes, but only while the bay is on camera ---
+  if (
+    BAY.enabled &&
+    isVisible(0, WORLD_HEIGHT - BAY.ry * 1.25, BAY.rx * 1.25, BAY.ry * 1.25)
+  ) {
+    const tNow = nowMs;
+    for (const [base, speed, alphaBase, lw] of [
+      [1.0, 1900, 0.3, 2],
+      [0.955, 1450, 0.2, 1.4],
+    ]) {
+      const swell = Math.sin(tNow / speed);
+      const t = base + swell * 0.014;
+      const alpha = alphaBase + 0.12 * Math.sin(tNow / (speed * 0.7) + 1.3);
+      ctx.strokeStyle = `rgba(244, 250, 250, ${Math.max(0.05, alpha).toFixed(2)})`;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      const steps = 26;
+      for (let i = 0; i <= steps; i++) {
+        const a = (i / steps) * (Math.PI / 2);
+        const w = 1 + Math.sin(i * 7.3) * 0.02;
+        const px = Math.sin(a) * BAY.rx * t * w;
+        const py = WORLD_HEIGHT - Math.cos(a) * BAY.ry * t * w;
+        if (i) ctx.lineTo(px, py);
+        else ctx.moveTo(px, py);
+      }
+      ctx.stroke();
+    }
+  }
 
   // --- The lighthouse on the point (under the rider: the rocky apron is
   // ground you bump across, only the tower itself is solid) ---
@@ -2084,6 +2154,7 @@ window.__cm = {
   getScore: () => score,
   getLoopTicks: () => loopTicks,
   getBakeTimes: () => bakeTimes,
+  getDust: () => dustParticles,
 };
 
 // --- Shop & buttons -----------------------------------------------------------------

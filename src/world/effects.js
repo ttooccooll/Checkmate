@@ -11,8 +11,9 @@ export class SkidMarks {
   }
 
   // cx/cy: player center; angleDeg: travel direction before the turn
-  // (0 = up, 90 = right, matching the player sprite convention)
-  add(cx, cy, angleDeg) {
+  // (0 = up, 90 = right, matching the player sprite convention).
+  // kind: "rubber" on tar, "dust" on gravel and bare veld
+  add(cx, cy, angleDeg, kind = "rubber") {
     const a = (angleDeg * Math.PI) / 180;
     // travel vector for angle 0 = up
     const dirX = Math.sin(a);
@@ -28,6 +29,7 @@ export class SkidMarks {
         y: cy + perpY * offset * side,
         dirX,
         dirY,
+        kind,
         life: 210,
         maxLife: 210,
       });
@@ -49,8 +51,12 @@ export class SkidMarks {
     ctx.lineCap = "round";
     for (const m of this.marks) {
       if (!isVisible(m.x - 6, m.y - 6, 12, 12)) continue;
-      const alpha = 0.42 * (m.life / m.maxLife);
-      ctx.strokeStyle = `rgba(38, 32, 26, ${alpha})`;
+      const t = m.life / m.maxLife;
+      // rubber burns dark into tar; on dirt the tyre scuffs pale dust up
+      ctx.strokeStyle =
+        m.kind === "dust"
+          ? `rgba(206, 194, 166, ${0.38 * t})`
+          : `rgba(38, 32, 26, ${0.42 * t})`;
       ctx.beginPath();
       ctx.moveTo(m.x - m.dirX * 5, m.y - m.dirY * 5);
       ctx.lineTo(m.x + m.dirX * 5, m.y + m.dirY * 5);

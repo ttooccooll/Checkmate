@@ -87,6 +87,7 @@ function tone({
   delay = 0,
   attack = 0.008,
   lowpass = 0,
+  pan = 0,
 }) {
   try {
     const ctx = getCtx();
@@ -116,7 +117,17 @@ function tone({
       head = filter;
     }
 
-    head.connect(gain).connect(masterGain);
+    // A little stereo placement makes the world feel wider
+    let tail = gain;
+    if (pan && ctx.createStereoPanner) {
+      const panner = ctx.createStereoPanner();
+      panner.pan.value = Math.max(-1, Math.min(1, pan));
+      gain.connect(panner);
+      tail = panner;
+    }
+
+    head.connect(gain);
+    tail.connect(masterGain);
     osc.start(t0);
     osc.stop(t0 + duration + 0.05);
   } catch {
@@ -273,6 +284,7 @@ export const engine = {
 // ---------------------------------------------------------------------------
 let ambientNodes = null;
 let gullTimer = null;
+let shoreLevel = 0; // 0..1 — how close the rider is to the bay
 
 function makeNoiseLoop(ctx, seconds = 4) {
   const buffer = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate);
@@ -287,6 +299,8 @@ function makeNoiseLoop(ctx, seconds = 4) {
 function gullCry() {
   const vol = 0.014 + Math.random() * 0.01;
   const base = 950 + Math.random() * 350;
+  // each gull calls from somewhere: random stereo placement
+  const pan = (Math.random() - 0.5) * 1.1;
   tone({
     freq: base * 1.25,
     endFreq: base * 0.72,
@@ -295,6 +309,7 @@ function gullCry() {
     volume: vol,
     lowpass: 2600,
     attack: 0.03,
+    pan,
   });
   if (Math.random() < 0.7) {
     tone({
@@ -306,19 +321,33 @@ function gullCry() {
       delay: 0.3,
       lowpass: 2600,
       attack: 0.03,
+      pan: pan * 0.8,
     });
   }
 }
 
 function scheduleGull() {
+  // Gulls hang around the point: much chattier when the rider is near
+  // the bay, an occasional far cry elsewhere
+  const base = 14000 - 9000 * shoreLevel;
+  const spread = 26000 - 18000 * shoreLevel;
   gullTimer = setTimeout(() => {
     try {
       gullCry();
+      if (shoreLevel > 0.5 && Math.random() < 0.4) {
+        setTimeout(() => {
+          try {
+            gullCry();
+          } catch {
+            /* ignore */
+          }
+        }, 600 + Math.random() * 900);
+      }
     } catch {
       /* ignore */
     }
     scheduleGull();
-  }, 14000 + Math.random() * 26000);
+  }, base + Math.random() * spread);
 }
 
 export const ambient = {
@@ -369,7 +398,48 @@ export const ambient = {
       rainFilter.connect(rainGain).connect(masterGain);
       rain.start();
 
-      ambientNodes = { waves, swell, wind, windGain, rain, rainGain };
+      // Surf: proper wave-break, silent until the rider nears the bay.
+      // A low rolling body plus a brighter wash for the foam, both
+      // breathing on a slow swell.
+      const surf = makeNoiseLoop(ctx, 5);
+      const surfFilter = ctx.createBiquadFilter();
+      surfFilter.type = "lowpass";
+      surfFilter.frequency.value = 620;
+      const surfGain = ctx.createGain();
+      surfGain.gain.value = 0.0001;
+      const surfSwell = ctx.createOscillator();
+      surfSwell.frequency.value = 0.09;
+      const surfSwellGain = ctx.createGain();
+      surfSwellGain.gain.value = 0; // scaled with the shore level
+      surfSwell.connect(surfSwellGain);
+      surfSwellGain.connect(surfGain.gain);
+      surf.connect(surfFilter);
+      surfFilter.connect(surfGain).connect(masterGain);
+      surf.start();
+      surfSwell.start();
+
+      const wash = makeNoiseLoop(ctx, 4);
+      const washFilter = ctx.createBiquadFilter();
+      washFilter.type = "bandpass";
+      washFilter.frequency.value = 1500;
+      washFilter.Q.value = 0.5;
+      const washGain = ctx.createGain();
+      washGain.gain.value = 0.0001;
+      wash.connect(washFilter);
+      washFilter.connect(washGain).connect(masterGain);
+      wash.start();
+
+      ambientNodes = {
+        waves,
+        swell,
+        wind,
+        windGain,
+        rain,
+        rainGain,
+        surfGain,
+        surfSwellGain,
+        washGain,
+      };
       scheduleGull();
     } catch {
       /* ignore */
@@ -385,6 +455,24 @@ export const ambient = {
         audioCtx.currentTime,
         0.5
       );
+    } catch {
+      /* ignore */
+    }
+  },
+
+  // level: 0..1 — proximity to the bay; the surf swells as you ride in
+  setShore(level) {
+    try {
+      shoreLevel = level;
+      if (!ambientNodes || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      ambientNodes.surfGain.gain.setTargetAtTime(
+        0.0001 + 0.026 * level,
+        t,
+        0.4
+      );
+      ambientNodes.surfSwellGain.gain.setTargetAtTime(0.012 * level, t, 0.4);
+      ambientNodes.washGain.gain.setTargetAtTime(0.0001 + 0.009 * level, t, 0.4);
     } catch {
       /* ignore */
     }
@@ -413,6 +501,8 @@ export const ambient = {
       ambientNodes.swell.stop(t + 0.1);
       ambientNodes.wind.stop(t + 0.1);
       ambientNodes.rain.stop(t + 0.1);
+      ambientNodes.surfGain.gain.setTargetAtTime(0.0001, t, 0.05);
+      ambientNodes.washGain.gain.setTargetAtTime(0.0001, t, 0.05);
       ambientNodes = null;
     } catch {
       ambientNodes = null;
@@ -420,8 +510,18 @@ export const ambient = {
   },
 };
 
+let lastCoinAt = 0;
+
 export const sfx = {
   coin() {
+    // Coin bursts (celebrations) throttle to a soft blip instead of
+    // stacking fourteen full chimes into one blare
+    const now = performance.now();
+    if (now - lastCoinAt < 90) {
+      tone({ freq: 1760, type: "triangle", duration: 0.05, volume: 0.02 });
+      return;
+    }
+    lastCoinAt = now;
     tone({ freq: 1175, type: "triangle", duration: 0.06, volume: 0.055 });
     tone({ freq: 1760, type: "triangle", duration: 0.1, volume: 0.05, delay: 0.05 });
     tone({ freq: 3520, type: "sine", duration: 0.05, volume: 0.012, delay: 0.05 });
@@ -481,8 +581,10 @@ export const sfx = {
     tone({ freq: 233, type: "triangle", duration: 0.55, volume: 0.07, delay: 0.48 });
   },
 
-  // Minibus hooter: a short dual-tone hoot, rounded off with a lowpass
+  // Minibus hooter: a short dual-tone hoot, rounded off with a lowpass,
+  // hooting from somewhere off to one side
   horn() {
+    const pan = (Math.random() - 0.5) * 0.8;
     tone({
       freq: 420,
       type: "square",
@@ -490,6 +592,7 @@ export const sfx = {
       volume: 0.028,
       attack: 0.006,
       lowpass: 950,
+      pan,
     });
     tone({
       freq: 505,
@@ -498,6 +601,7 @@ export const sfx = {
       volume: 0.026,
       attack: 0.006,
       lowpass: 950,
+      pan,
     });
   },
 

@@ -4,27 +4,69 @@
 import { sfx } from "../services/audio.js";
 import { shareToNostr } from "../services/nostr.js";
 
+// Two visible toast slots: the newest message takes the headline and the
+// previous one demotes to a smaller line beneath it for a moment —
+// a delivery, a coin, and a squall arriving together no longer erase
+// each other. Interactive cards still own the whole modal.
+let toastSlots = []; // [{ text, until }]
+
+function renderToasts(modal) {
+  modal.textContent = "";
+  toastSlots.forEach((s, i) => {
+    const line = document.createElement("div");
+    line.className = i === 0 ? "toast-line" : "toast-line toast-old";
+    line.textContent = s.text;
+    modal.appendChild(line);
+  });
+  modal.style.display = toastSlots.length ? "block" : "none";
+}
+
+export function clearToasts() {
+  toastSlots = [];
+}
+
 export function showMessage(text, duration = 5000, closable = false) {
   const modal = document.getElementById("message-modal");
-  modal.textContent = text;
-  modal.style.display = "block";
   modal.classList.toggle("interactive", closable);
   modal.classList.remove("card-dark", "loading-pulse");
-
   clearTimeout(modal._timer);
 
   if (closable) {
+    toastSlots = [];
+    modal.textContent = text;
+    modal.style.display = "block";
     modal.onclick = () => {
       modal.style.display = "none";
       modal.classList.remove("interactive");
       modal.onclick = null;
     };
-  } else {
-    modal.onclick = null;
-    modal._timer = setTimeout(() => {
-      modal.style.display = "none";
-    }, duration);
+    return;
   }
+
+  modal.onclick = null;
+  const now = performance.now();
+  toastSlots = toastSlots.filter((s) => s.until > now);
+  const prev = toastSlots[0];
+  toastSlots = [{ text, until: now + duration }];
+  if (prev) {
+    // the demoted line gets a short grace period, not its full run
+    toastSlots.push({
+      text: prev.text,
+      until: Math.min(prev.until, now + 2600),
+    });
+  }
+  renderToasts(modal);
+
+  const tick = () => {
+    const n = performance.now();
+    const before = toastSlots.length;
+    toastSlots = toastSlots.filter((s) => s.until > n);
+    if (toastSlots.length !== before || !toastSlots.length) {
+      renderToasts(modal);
+    }
+    if (toastSlots.length) modal._timer = setTimeout(tick, 250);
+  };
+  modal._timer = setTimeout(tick, 250);
 }
 
 // End-of-run card: a dark, quiet layout — title, cause, the score large,
@@ -33,6 +75,7 @@ export function showMessage(text, duration = 5000, closable = false) {
 export function showGameOverMessage(content, shareText, options = {}) {
   const modal = document.getElementById("message-modal");
   clearTimeout(modal._timer);
+  toastSlots = [];
   modal.textContent = "";
   modal.classList.add("card-dark");
 

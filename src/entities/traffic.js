@@ -330,7 +330,7 @@ export class TrafficManager {
     });
   }
 
-  update(deltaTime, player, { onCrash, horn, speedFactor = 1 } = {}) {
+  update(deltaTime, player, { onCrash, horn, onDust, speedFactor = 1 } = {}) {
     const px = player.x + player.width / 2;
     const py = player.y + player.height / 2;
     const playerBox = player.getHitbox();
@@ -339,6 +339,20 @@ export class TrafficManager {
       const wasStopped = taxi.pullPhase === "stopped";
       taxi.update(deltaTime, player, speedFactor, this.taxis);
       taxi.honkCooldown = Math.max(0, taxi.honkCooldown - deltaTime / 60);
+
+      // A dust plume trails anything rolling on gravel
+      if (
+        onDust &&
+        taxi.road.kind === "gravel" &&
+        taxi.currentSpeed > 1.1 &&
+        Math.random() < 0.22 * deltaTime
+      ) {
+        const back = (taxi.h / 2) * taxi.forward;
+        onDust(
+          taxi.horizontal ? taxi.x - back : taxi.x + (Math.random() - 0.5) * 14,
+          taxi.horizontal ? taxi.y + (Math.random() - 0.5) * 14 : taxi.y - back
+        );
+      }
 
       const dx = px - taxi.x;
       const dy = py - taxi.y;

@@ -14,22 +14,9 @@ export class DialogManager {
     this.fullLineText = "";
     this.typeInterval = null;
 
-    Object.assign(this.dialogBox.style, {
-      position: "absolute",
-      bottom: "70%",
-      left: "50%",
-      transform: "translateX(-50%)",
-      padding: "10px",
-      background: "rgba(0,0,0,0.85)",
-      color: "white",
-      fontFamily: "Arial",
-      fontSize: "18px",
-      borderRadius: "8px",
-      maxWidth: "min(400px, 88vw)",
-      boxSizing: "border-box",
-      display: "none",
-      zIndex: 1000,
-    });
+    // All chrome lives in style.css (#dialog-box) — same dark-card
+    // language as the game-over card and name plates
+    this.dialogBox.style.display = "none";
     document.body.appendChild(this.dialogBox);
 
     this.handleDialogClick = this.handleDialogClick.bind(this);
@@ -63,13 +50,9 @@ export class DialogManager {
       this.fullLineText = line;
 
       this.dialogBox.innerHTML = `
-      <div style="margin-bottom:8px;">
-        <strong>${this.speakerName}:</strong>
-      </div>
-      <div id="dialog-text" style="margin-bottom:10px; min-width:300px;"></div>
-      <button id="dialog-next-btn" style="padding:6px 12px; display:block; margin:0 auto; cursor:pointer;">
-        Next
-      </button>
+      <div class="dialog-speaker">${this.speakerName}</div>
+      <div id="dialog-text"></div>
+      <button id="dialog-next-btn">Next</button>
     `;
 
       this.dialogBox.style.display = "block";
@@ -102,20 +85,20 @@ export class DialogManager {
     const choicesHtml = this.currentChoices
       .map(
         (choice, idx) =>
-          `<button class="dialog-choice" data-idx="${idx}" style="margin:5px;padding:5px 10px; cursor:pointer;">${choice.text}</button>`
+          `<button class="dialog-choice${
+            /accept/i.test(choice.text) ? " dialog-choice-accept" : ""
+          }" data-idx="${idx}">${choice.text}</button>`
       )
       .join("");
 
     const promptHtml = this.choicePrompt
-      ? `<div id="dialog-quest-prompt" style="margin-bottom:10px; max-width:320px; line-height:1.4;">${this.choicePrompt}</div>`
+      ? `<div id="dialog-quest-prompt">${this.choicePrompt}</div>`
       : "";
 
     this.dialogBox.innerHTML = `
-  <div style="margin-bottom:8px;">
-    <strong>${this.speakerName}:</strong>
-  </div>
+  <div class="dialog-speaker">${this.speakerName}</div>
   ${promptHtml}
-  <div>${choicesHtml}</div>
+  <div class="dialog-choices">${choicesHtml}</div>
 `;
 
     this.dialogBox.querySelectorAll(".dialog-choice").forEach((btn) => {
