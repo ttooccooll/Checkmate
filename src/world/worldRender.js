@@ -103,7 +103,7 @@ export const lighthouseSprite = propImg("lighthouse");
 // fading into the veld, and a scatter of the bluebottles the town is
 // named for. Painted once onto the grass canvas; the shoreline is a
 // jittered quarter-ellipse anchored at the world corner.
-export function renderBayOffscreen(bay) {
+export function renderBayOffscreen(bay, lighthouse = null) {
   if (!bay || !bay.enabled) return;
   const g = grassCtx;
   const { rx, ry } = bay;
@@ -187,6 +187,28 @@ export function renderBayOffscreen(bay) {
     g.stroke();
   }
 
+  // The wrack line: the high-tide mark where the sea leaves its kelp and
+  // weed — a broken scatter of dark olive bits along one contour
+  for (let i = 0; i < 46; i++) {
+    const a = rnd() * (Math.PI / 2);
+    const t = 1.1 + rnd() * 0.035;
+    const px = Math.sin(a) * rx * t;
+    const py = cornerY - Math.cos(a) * ry * t;
+    const along = Math.atan2(Math.sin(a) * rx, Math.cos(a) * ry) + Math.PI / 2;
+    g.strokeStyle =
+      rnd() < 0.6
+        ? `rgba(74, 68, 44, ${0.3 + rnd() * 0.3})`
+        : `rgba(96, 84, 52, ${0.25 + rnd() * 0.25})`;
+    g.lineWidth = 1 + rnd() * 1.6;
+    g.beginPath();
+    g.moveTo(px, py);
+    g.lineTo(
+      px + Math.cos(along + (rnd() - 0.5) * 0.7) * (3 + rnd() * 7),
+      py + Math.sin(along + (rnd() - 0.5) * 0.7) * (3 + rnd() * 7)
+    );
+    g.stroke();
+  }
+
   // Wet sand: a darker glistening band right at the waterline
   g.fillStyle = "rgba(148, 128, 96, 0.45)";
   arcPath(1.085, 3);
@@ -194,6 +216,23 @@ export function renderBayOffscreen(bay) {
   g.fillStyle = "rgba(148, 128, 96, 0.75)";
   arcPath(1.06, 3);
   g.fill();
+
+  // Fine ripple contours in the wet sand, parallel to the waterline
+  g.lineWidth = 1;
+  for (const t of [1.045, 1.062, 1.078]) {
+    g.strokeStyle = `rgba(120, 102, 76, ${0.14 + rnd() * 0.08})`;
+    g.beginPath();
+    const steps = 30;
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * (Math.PI / 2);
+      const w = 1 + (rnd() - 0.5) * 0.012;
+      const px = Math.sin(a) * rx * t * w;
+      const py = cornerY - Math.cos(a) * ry * t * w;
+      if (i) g.lineTo(px, py);
+      else g.moveTo(px, py);
+    }
+    g.stroke();
+  }
 
   // Water: bright shallows at the sand, deepening out toward the corner
   g.fillStyle = "#3a848e";
@@ -261,6 +300,27 @@ export function renderBayOffscreen(bay) {
     g.fill();
   }
 
+  // Broad swell sets: wide, soft brighter bands rolling toward the shore
+  for (const [t, lw, alpha] of [
+    [0.5, 9, 0.045],
+    [0.68, 8, 0.05],
+    [0.88, 7, 0.055],
+  ]) {
+    g.strokeStyle = `rgba(210, 232, 234, ${alpha})`;
+    g.lineWidth = lw;
+    g.beginPath();
+    const steps = 30;
+    for (let i = 0; i <= steps; i++) {
+      const a = (i / steps) * (Math.PI / 2);
+      const w = 1 + (rnd() - 0.5) * 0.03;
+      const px = Math.sin(a) * rx * t * w;
+      const py = cornerY - Math.cos(a) * ry * t * w;
+      if (i) g.lineTo(px, py);
+      else g.moveTo(px, py);
+    }
+    g.stroke();
+  }
+
   // Faint swell lines following the shore
   g.strokeStyle = "rgba(220, 238, 240, 0.1)";
   g.lineWidth = 2;
@@ -306,6 +366,27 @@ export function renderBayOffscreen(bay) {
       }
     }
     if (drawing) g.stroke();
+  }
+
+  // Where the outcrop stands in the water, the sea worries at the rocks:
+  // broken foam flecks around the seaward boulders
+  if (lighthouse) {
+    for (let i = 0; i < 26; i++) {
+      const a = rnd() * Math.PI * 2;
+      const d = 108 + rnd() * 38;
+      const px = lighthouse.x + Math.cos(a) * d;
+      const py = lighthouse.y + Math.sin(a) * d;
+      const nx = px / rx;
+      const ny = (cornerY - py) / ry;
+      if (nx * nx + ny * ny >= 1) continue; // only in the water
+      g.strokeStyle = `rgba(240, 248, 248, ${0.25 + rnd() * 0.3})`;
+      g.lineWidth = 1 + rnd() * 1.4;
+      g.beginPath();
+      const arcLen = 0.5 + rnd() * 0.9;
+      const start = rnd() * Math.PI * 2;
+      g.arc(px, py, 2.5 + rnd() * 4, start, start + arcLen);
+      g.stroke();
+    }
   }
 
   // Bluebottles on the wet sand, the town's namesake: tiny cobalt floats

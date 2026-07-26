@@ -179,7 +179,9 @@ class Taxi {
         else this.x += Math.sign(d) * step;
         if (Math.abs(d) < 0.6 && this.currentSpeed < 0.12) {
           this.pullPhase = "stopped";
-          this.stopTimer = 170 + Math.random() * 110;
+          // a taxiRun delivery can ask for a longer wait (holdFrames)
+          this.stopTimer = this.holdFrames || 170 + Math.random() * 110;
+          this.holdFrames = 0;
         }
       } else if (this.pullPhase === "stopped") {
         pullStop = true;

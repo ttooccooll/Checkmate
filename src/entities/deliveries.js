@@ -8,6 +8,8 @@
 //   fragile  — pays extra, but any crash while carrying destroys it
 //   twostop  — two legs back to back, paid per leg plus a finish bonus
 
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../core/constants.js";
+
 const ROAD_SPEED_PX_PER_SEC = 300; // player base speed at 60fps
 const PICKUP_RANGE = 78;
 const TWOSTOP_BONUS = 8;
@@ -17,6 +19,7 @@ const JOB_ICONS = {
   express: "⚡",
   fragile: "🥚",
   twostop: "📦",
+  taxiRun: "🚌",
 };
 
 // What the recipient says when the package lands in their hands
@@ -63,10 +66,11 @@ function pickLine(npc, pool) {
 
 function rollJobType() {
   const r = Math.random();
-  if (r < 0.5) return "standard";
-  if (r < 0.7) return "express";
-  if (r < 0.85) return "fragile";
-  return "twostop";
+  if (r < 0.44) return "standard";
+  if (r < 0.62) return "express";
+  if (r < 0.75) return "fragile";
+  if (r < 0.88) return "twostop";
+  return "taxiRun";
 }
 
 function dist(ax, ay, bx, by) {
@@ -78,11 +82,12 @@ function npcCenter(npc) {
 }
 
 export class DeliveryManager {
-  constructor({ showMessage, addScore, sfx, isFoggy }) {
+  constructor({ showMessage, addScore, sfx, isFoggy, getTaxis }) {
     this.showMessage = showMessage;
     this.addScore = addScore;
     this.sfx = sfx;
     this.isFoggy = isFoggy;
+    this.getTaxis = getTaxis; // live taxi list, for taxiRun deliveries
     this.reset();
   }
 
@@ -93,6 +98,9 @@ export class DeliveryManager {
     this.legsRemaining = 1;
     this.pickupNpc = null;
     this.dropoffNpc = null;
+    this.targetTaxi = null; // taxiRun: the taxi waiting at the verge
+    this.taxiWaitStarted = false;
+    this.chaseTimer = 0;
     this.timer = 0;
     this.timerMax = 0;
     this.reward = 0;
@@ -125,6 +133,10 @@ export class DeliveryManager {
     }
 
     if (this.state === "enroute") {
+      if (this.jobType === "taxiRun") {
+        this.updateTaxiRun(dtSec, px, py, dialogActive);
+        return;
+      }
       if (!dialogActive) this.timer -= dtSec;
       const [nx, ny] = npcCenter(this.dropoffNpc);
 
@@ -134,6 +146,59 @@ export class DeliveryManager {
         this.fail();
       }
     }
+  }
+
+  // The deadline is a vehicle: the taxi pulls over, waits with hazards
+  // on, and leaves. Hand the parcel over while it's at the verge.
+  updateTaxiRun(dtSec, px, py, dialogActive) {
+    const t = this.targetTaxi;
+    if (!t) {
+      this.fail();
+      return;
+    }
+    if (!dialogActive) this.chaseTimer += dtSec;
+
+    if (t.pullPhase === "stopped") this.taxiWaitStarted = true;
+
+    if (t.pullPhase && dist(px, py, t.x, t.y) < PICKUP_RANGE + 12) {
+      this.completeTaxiRun();
+      return;
+    }
+
+    // it waited, and then it left
+    if (this.taxiWaitStarted && !t.pullPhase) {
+      this.failed++;
+      if (this.sfx) this.sfx.deliveryFailed();
+      this.showMessage("🚌 The taxi pulled off without it. Eish.", 4000);
+      this.clearRun(9 + Math.random() * 8);
+      return;
+    }
+
+    // safety valve: if the taxi never manages to stop, let the job go
+    if (this.chaseTimer > 80) {
+      this.showMessage("🚌 The taxi never stopped. Another job will come.", 4000);
+      this.clearRun(8);
+    }
+  }
+
+  completeTaxiRun() {
+    const t = this.targetTaxi;
+    const foggy = this.isFoggy ? this.isFoggy() : false;
+    const points = foggy ? this.reward * 2 : this.reward;
+    this.addScore(points);
+    this.completed++;
+    if (this.sfx) this.sfx.delivered();
+    this.showMessage(
+      `🚌 Made it! The gaartjie grabs the parcel as they pull off. +${points} points${
+        foggy ? " 🌫️ (fog bonus ×2!)" : ""
+      }`,
+      4500
+    );
+    // handoff done: the taxi finishes loading and goes
+    if (t && t.pullPhase === "stopped") {
+      t.stopTimer = Math.min(t.stopTimer, 45);
+    }
+    this.clearRun(12 + Math.random() * 12);
   }
 
   offer(px, py, npcs) {
@@ -155,6 +220,7 @@ export class DeliveryManager {
       express: `⚡ Express job! ${name} needs a package moved fast. Double pay.`,
       fragile: `🥚 ${name} has a fragile package. One crash and it's history.`,
       twostop: `📦 ${name} has a two-stop run. Keep it moving.`,
+      taxiRun: `🚌 ${name} has a parcel that must make the taxi. It won't wait long!`,
     };
     this.showMessage(offers[this.jobType], 5000);
     return true;
@@ -162,6 +228,41 @@ export class DeliveryManager {
 
   assignDropoff(npcs, originNpc) {
     const [sx, sy] = npcCenter(originNpc);
+
+    // taxiRun: the destination is a taxi, not a person. Pick a cruising
+    // one far enough away for a chase and tell it to pull over and hold.
+    if (this.jobType === "taxiRun") {
+      const taxis = (this.getTaxis ? this.getTaxis() : []).filter(
+        (t) =>
+          t.type === "taxi" &&
+          !t.pullPhase &&
+          dist(sx, sy, t.x, t.y) > 600 &&
+          t.x > 150 &&
+          t.x < WORLD_WIDTH - 150 &&
+          t.y > 150 &&
+          t.y < WORLD_HEIGHT - 150
+      );
+      if (!taxis.length) {
+        // no taxi to catch: the parcel travels the ordinary way
+        this.jobType = "standard";
+      } else {
+        const t = taxis[Math.floor(Math.random() * taxis.length)];
+        this.targetTaxi = t;
+        this.taxiWaitStarted = false;
+        this.chaseTimer = 0;
+        t.pullCooldown = 0; // stop at the next clear stretch
+        t.holdFrames = 1500 + Math.random() * 240; // and wait ~25-29s
+        this.reward = 16 + Math.round(dist(sx, sy, t.x, t.y) / 150);
+        this.state = "enroute";
+        if (this.sfx) this.sfx.pickup();
+        this.showMessage(
+          "🚌 Picked up! Catch the taxi before it pulls off. Watch for the hazards.",
+          5000
+        );
+        return;
+      }
+    }
+
     const candidates = npcs.filter((n) => {
       if (!n.visible || n === originNpc || n === this.pickupNpc) return false;
       const [nx, ny] = npcCenter(n);
@@ -275,17 +376,41 @@ export class DeliveryManager {
   }
 
   clearRun(cooldown) {
+    // release a held taxi so it doesn't wait out a cancelled job
+    if (this.targetTaxi && this.targetTaxi.pullPhase === "stopped") {
+      this.targetTaxi.stopTimer = Math.min(this.targetTaxi.stopTimer, 170);
+    }
+    if (this.targetTaxi) this.targetTaxi.holdFrames = 0;
     this.state = "idle";
     this.cooldown = cooldown;
     this.pickupNpc = null;
     this.dropoffNpc = null;
+    this.targetTaxi = null;
+    this.taxiWaitStarted = false;
+    this.chaseTimer = 0;
     this.legsRemaining = 1;
   }
 
-  // The NPC the compass should point at right now, if any
+  // The NPC (or taxi) the compass should point at right now, if any
   getCompassTarget() {
     if (this.state === "pickup") return this.pickupNpc;
-    if (this.state === "enroute") return this.dropoffNpc;
+    if (this.state === "enroute") {
+      if (this.jobType === "taxiRun" && this.targetTaxi) {
+        const t = this.targetTaxi;
+        // live-tracking proxy in NPC shape
+        return {
+          get x() {
+            return t.x - 15;
+          },
+          get y() {
+            return t.y - 15;
+          },
+          width: 30,
+          height: 30,
+        };
+      }
+      return this.dropoffNpc;
+    }
     return null;
   }
 
@@ -293,6 +418,15 @@ export class DeliveryManager {
     const icon = JOB_ICONS[this.jobType] || "📦";
     if (this.state === "pickup") return `${icon} pickup!`;
     if (this.state !== "enroute") return null;
+    if (this.jobType === "taxiRun") {
+      const t = this.targetTaxi;
+      if (!t) return null;
+      if (t.pullPhase === "stopped") {
+        const secs = Math.max(0, Math.ceil(t.stopTimer / 60));
+        return `${icon} waiting ${secs}s${secs < 6 ? "❗" : ""}`;
+      }
+      return `${icon} catch it!`;
+    }
     const s = Math.max(0, Math.ceil(this.timer));
     const urgent = this.timer < 10 ? "❗" : "";
     return `${icon} ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}${urgent}`;
@@ -305,6 +439,27 @@ export class DeliveryManager {
       const [nx] = npcCenter(this.pickupNpc);
       const bob = Math.sin(now / 260) * 3;
       this.drawParcel(ctx, nx, this.pickupNpc.y - 16 + bob);
+    }
+
+    // taxiRun: the ring rides on the taxi itself, amber while you chase,
+    // green once it's waiting at the verge
+    if (this.state === "enroute" && this.jobType === "taxiRun" && this.targetTaxi) {
+      const t = this.targetTaxi;
+      const pulse = 1 + 0.18 * Math.sin(now / 220);
+      const waiting = t.pullPhase === "stopped";
+      const col = waiting ? "38, 200, 110" : "255, 176, 40";
+      ctx.save();
+      ctx.strokeStyle = `rgba(${col}, 0.85)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 34 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(${col}, 0.35)`;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 46 * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      return;
     }
 
     if (this.state === "enroute" && this.dropoffNpc?.visible) {

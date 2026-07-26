@@ -282,8 +282,11 @@ const reaction = await page.evaluate(async () => {
 // The queue/crossing/gridlock checks below assert deterministic motion,
 // so passenger stops are parked while they run (re-enabled after)
 await page.evaluate(() => {
+  // no passenger stops, and no taxiRun delivery may hold a taxi either
+  window.__cm.deliveries.clearRun(1e9);
   window.__cm.traffic.taxis.forEach((t) => {
     t.pullCooldown = 1e9;
+    t.holdFrames = 0;
     if (t.pullPhase) {
       t.pullPhase = "merging";
       t.stopTimer = 0;

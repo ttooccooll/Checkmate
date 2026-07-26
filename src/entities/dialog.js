@@ -105,6 +105,8 @@ export class DialogManager {
       btn.addEventListener("click", () => {
         const idx = parseInt(btn.dataset.idx);
         const choice = this.currentChoices[idx];
+        // a stale button in an already-closed dialog must be a no-op
+        if (!choice) return;
         if (choice.callback) choice.callback();
         this.closeDialog();
       });
@@ -138,6 +140,7 @@ export class DialogManager {
     this.currentChoices = [];
     this.choicePrompt = "";
     this.dialogBox.style.display = "none";
+    this.dialogBox.innerHTML = ""; // no stale buttons left behind
 
     if (this.callback) this.callback(finished);
 

@@ -304,9 +304,8 @@ function lighthouseSvg() {
     </filter>
     ${stoneDefs}
   </defs>
-  <!-- sandy ground disc under the outcrop -->
-  <circle cx="172" cy="173" r="140" fill="rgba(146, 132, 106, 0.4)" filter="url(#drop)"/>
-  <circle cx="170" cy="170" r="132" fill="rgba(158, 145, 118, 0.35)"/>
+  <!-- no ground disc: the outcrop sits on whatever the world puts under
+       it (beach, water, veld); each boulder carries its own shadow -->
   ${boulderSvg}
   ${stones.join("\n  ")}
   <!-- tower -->

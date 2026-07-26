@@ -350,6 +350,98 @@ function scheduleGull() {
   }, base + Math.random() * spread);
 }
 
+// ---------------------------------------------------------------------------
+// The taxi radio: a jive loop leaking through a closed window — rendered
+// once offline, looped through a heavy lowpass, silent until the rider
+// is right beside a stopped taxi.
+// ---------------------------------------------------------------------------
+let radioNodes = null;
+
+function renderRadioLoop(ctx) {
+  // 4 bars at 116 bpm, I–IV–I–V: bass on the beat, comping off it, a
+  // thin whistle line every other bar
+  const beat = 60 / 116;
+  const dur = 16 * beat;
+  const off = new OfflineAudioContext(
+    1,
+    Math.ceil(ctx.sampleRate * dur),
+    ctx.sampleRate
+  );
+  const master = off.createGain();
+  master.gain.value = 0.5;
+  master.connect(off.destination);
+
+  const note = (freq, t, len, vol, type = "triangle") => {
+    const o = off.createOscillator();
+    const g = off.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + len + 0.03);
+  };
+
+  const roots = [130.81, 174.61, 130.81, 196.0];
+  for (let bar = 0; bar < 4; bar++) {
+    const t0 = bar * 4 * beat;
+    const root = roots[bar];
+    note(root / 2, t0, beat * 0.9, 0.5);
+    note(root / 2, t0 + 2 * beat, beat * 0.9, 0.45);
+    note((root * 1.5) / 2, t0 + 3.5 * beat, beat * 0.45, 0.3);
+    for (let b = 0; b < 4; b++) {
+      const t = t0 + (b + 0.5) * beat;
+      note(root, t, beat * 0.32, 0.16);
+      note(root * 1.25, t, beat * 0.32, 0.13);
+      note(root * 1.5, t, beat * 0.32, 0.13);
+    }
+    if (bar % 2 === 1) {
+      const penta = [root * 2, root * 2.25, root * 2.5, root * 3];
+      for (let i = 0; i < 4; i++) {
+        note(
+          penta[(i + bar) % 4],
+          t0 + i * beat * 0.5 + beat * 1.5,
+          beat * 0.4,
+          0.08,
+          "sine"
+        );
+      }
+    }
+  }
+  return off.startRendering();
+}
+
+function startRadio(ctx) {
+  if (radioNodes || typeof OfflineAudioContext === "undefined") return;
+  radioNodes = { pending: true };
+  renderRadioLoop(ctx)
+    .then((buffer) => {
+      if (!radioNodes || !ambientNodes) {
+        radioNodes = null;
+        return;
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 700;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.0001;
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      src.start();
+      radioNodes = { src, filter, gain };
+    })
+    .catch(() => {
+      radioNodes = null;
+    });
+}
+
 export const ambient = {
   start() {
     try {
@@ -441,6 +533,7 @@ export const ambient = {
         washGain,
       };
       scheduleGull();
+      startRadio(ctx);
     } catch {
       /* ignore */
     }
@@ -455,6 +548,19 @@ export const ambient = {
         audioCtx.currentTime,
         0.5
       );
+    } catch {
+      /* ignore */
+    }
+  },
+
+  // level: 0..1 — how close the rider is to a stopped taxi's window
+  setRadio(level) {
+    try {
+      if (!radioNodes || !radioNodes.gain || !audioCtx) return;
+      const t = audioCtx.currentTime;
+      radioNodes.gain.gain.setTargetAtTime(0.0001 + 0.02 * level, t, 0.25);
+      // the closer you are, the less the bodywork muffles it
+      radioNodes.filter.frequency.setTargetAtTime(600 + 700 * level, t, 0.3);
     } catch {
       /* ignore */
     }
@@ -503,6 +609,11 @@ export const ambient = {
       ambientNodes.rain.stop(t + 0.1);
       ambientNodes.surfGain.gain.setTargetAtTime(0.0001, t, 0.05);
       ambientNodes.washGain.gain.setTargetAtTime(0.0001, t, 0.05);
+      if (radioNodes && radioNodes.src) {
+        radioNodes.gain.gain.setTargetAtTime(0.0001, t, 0.05);
+        radioNodes.src.stop(t + 0.2);
+      }
+      radioNodes = null;
       ambientNodes = null;
     } catch {
       ambientNodes = null;

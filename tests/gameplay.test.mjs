@@ -164,6 +164,82 @@ const fragile = await page.evaluate(async () => {
   };
 });
 
+// --- Catch-the-taxi: the dropoff is a real taxi waiting at the verge ---
+const taxiRun = await page.evaluate(async () => {
+  const cm = window.__cm;
+  const frame = () => new Promise((r) => requestAnimationFrame(r));
+  const readDialog = async () => {
+    for (let i = 0; i < 16; i++) {
+      const btn = document.getElementById("dialog-next-btn");
+      if (!btn) break;
+      btn.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+    const decline = [...document.querySelectorAll(".dialog-choice")].find(
+      (b) => b.textContent.includes("Decline")
+    );
+    if (decline) {
+      decline.click();
+      await new Promise((r) => setTimeout(r, 120));
+    }
+  };
+  await readDialog();
+  // teleports land on parked NPCs and buildings; stay invulnerable for
+  // the whole chase and hand a clean state to the death section after
+  cm.player.setInvulnerable(1e9);
+  cm.deliveries.clearRun(0);
+  cm.deliveries.cooldown = 0;
+  for (let i = 0; i < 40 && cm.deliveries.state !== "pickup"; i++) {
+    await frame();
+  }
+  cm.deliveries.jobType = "taxiRun";
+  cm.deliveries.legsRemaining = 1;
+  const pk = cm.deliveries.pickupNpc;
+  if (pk) {
+    cm.player.x = pk.x;
+    cm.player.y = pk.y + 20;
+  }
+  await frame(); await frame(); await frame();
+  for (let i = 0; i < 6 && cm.deliveries.state === "pickup"; i++) {
+    await readDialog();
+    await frame(); await frame(); await frame();
+  }
+  const enroute =
+    cm.deliveries.state === "enroute" && cm.deliveries.jobType === "taxiRun";
+  const t = cm.deliveries.targetTaxi;
+  if (!enroute || !t) {
+    cm.player.x = 2400;
+    cm.player.y = 3480;
+    cm.player.invulnerableTimer = 0;
+    return {
+      enroute,
+      caught: false,
+      jobType: cm.deliveries.jobType,
+      state: cm.deliveries.state,
+      hasTaxi: !!t,
+      dialogOpen: !!document.getElementById("dialog-next-btn"),
+    };
+  }
+  // wait for the taxi to reach the verge, then hand the parcel over
+  const t0 = performance.now();
+  while (!t.pullPhase && performance.now() - t0 < 30000) {
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  cm.player.x = t.x;
+  cm.player.y = t.y - 40;
+  await new Promise((r) => setTimeout(r, 700));
+  const result = {
+    enroute,
+    phase: t.pullPhase || "gone",
+    caught: cm.deliveries.completed >= 2,
+  };
+  // clear the stage for the death test: off the road, crashable again
+  cm.player.x = 2400;
+  cm.player.y = 3480;
+  cm.player.invulnerableTimer = 0;
+  return result;
+});
+
 // --- Death by taxi shows reason + stats ---
 await page.waitForTimeout(1700); // invulnerability from the helmet crash
 await dieByTaxi(page);
@@ -212,6 +288,8 @@ const ok =
   fragile.carrying === "enroute" &&
   fragile.afterCrash === "idle" &&
   fragile.failed >= 1 &&
+  taxiRun.enroute === true &&
+  taxiRun.caught === true &&
   gameOverMsg.includes("taxi") &&
   gameOverMsg.includes("km") &&
   gameOverMsg.includes("deliveries") &&
@@ -226,6 +304,7 @@ finish("gameplay", ok, {
   pausedOff,
   loopRatio,
   delivery,
+  taxiRun,
   fragile,
   gameOverMsg,
   problems,

@@ -118,6 +118,7 @@ const deliveries = new DeliveryManager({
   addScore: (n) => addScore(n),
   sfx,
   isFoggy: () => ambience.isFoggy(),
+  getTaxis: () => traffic.taxis,
 });
 
 // --- Game state --------------------------------------------------------------
@@ -166,6 +167,7 @@ let slideSkidTimer = 0;
 let potholeSlowTimer = 0;
 let rockSlowTimer = 0;
 let rockBumpCooldown = 0;
+let bikeGrime = 0; // road dust on the bike, 0..1
 let photoFlashTimer = 0;
 
 // A pothole hit shoves the bike off-line briefly (decays each frame)
@@ -455,7 +457,7 @@ async function startNewGame() {
   );
   renderGrassBase();
   lap("grass");
-  renderBayOffscreen(BAY);
+  renderBayOffscreen(BAY, LIGHTHOUSE);
   lap("bay");
   renderPitchOffscreen(pitch);
   lap("pitch");
@@ -627,6 +629,8 @@ async function startNewGame() {
   potholeSlowTimer = 0;
   rockSlowTimer = 0;
   rockBumpCooldown = 0;
+  bikeGrime = 0;
+  player.setGrime(0);
   joltVx = 0;
   joltVy = 0;
   shakeTimer = 0;
@@ -1138,6 +1142,18 @@ function update(deltaTime = 1) {
   ambient.setFog(ambience.fogIntensity);
   ambient.setRain(ambience.rainIntensity);
 
+  // Dust settles on the bike on dirt; a squall rinses it off
+  if (moving && surfaceKindAt(player) === "dust") {
+    bikeGrime = Math.min(1, bikeGrime + 0.0011 * deltaTime);
+  }
+  if (ambience.rainIntensity > 0.3) {
+    bikeGrime = Math.max(
+      0,
+      bikeGrime - 0.004 * deltaTime * ambience.rainIntensity
+    );
+  }
+  player.setGrime(bikeGrime);
+
   // The surf swells as you near the bay, and the gulls get chattier
   if (BAY.enabled) {
     const nx = (player.x + player.width / 2) / BAY.rx;
@@ -1145,6 +1161,15 @@ function update(deltaTime = 1) {
     const norm = Math.hypot(nx, ny);
     ambient.setShore(Math.max(0, Math.min(1, (2.1 - norm) / 0.9)));
   }
+
+  // Pass a stopped taxi and its radio leaks through the window
+  let radioLevel = 0;
+  for (const t of traffic.taxis) {
+    if (t.type !== "taxi" || t.pullPhase !== "stopped") continue;
+    const d = Math.hypot(player.x - t.x, player.y - t.y);
+    if (d < 320) radioLevel = Math.max(radioLevel, 1 - d / 320);
+  }
+  ambient.setRadio(radioLevel);
 
   npcs.forEach((npc) => {
     if (npc.isPlayerNearby(player)) {
