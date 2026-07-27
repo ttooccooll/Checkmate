@@ -53,6 +53,7 @@ export async function dieByTaxi(page) {
       cm.traffic.taxis.find(
         (t) =>
           t.type === "taxi" &&
+          !t.pullPhase && // a verge-parked taxi can put the jump off-road
           t.x > 150 &&
           t.x < 3450 &&
           t.y > 150 &&
