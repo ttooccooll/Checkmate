@@ -189,6 +189,19 @@ function lighthouseSvg() {
     return pts.join(" ");
   };
 
+  // Sprite→world mapping: the sprite (340px) draws at 270px centered on
+  // the lighthouse at world (175, 3420); the bay is the quarter-ellipse
+  // anchored at (0, 3600) with rx 230 / ry 235 (see BAY in main.js).
+  // Coupled constants, but they let the bake know which rocks stand in
+  // the sea.
+  const inWater = (sx, sy) => {
+    const worldX = 175 + (sx - 170) * (270 / 340);
+    const worldY = 3420 + (sy - 170) * (270 / 340);
+    const nx = worldX / 230;
+    const ny = (3600 - worldY) / 235;
+    return nx * nx + ny * ny < 1;
+  };
+
   const stoneGradients = [];
   const boulderSvg = boulders
     .map((b, i) => {
@@ -209,7 +222,15 @@ function lighthouseSvg() {
       );
       const rot = rnd() * Math.PI;
       const body = stonePts(b.bx, b.by, b.br, b.ry, rot);
-      const shadow = stonePts(b.bx + 3, b.by + 4.5, b.br, b.ry, rot);
+      // A rock standing in the sea casts no shadow on the ground: it gets
+      // a bluish submerged base around its footing instead of an offset
+      // dark shadow. Sprite coords map to a fixed world position, so
+      // in-water is decidable at bake time (see inWater below).
+      const wet = inWater(b.bx, b.by);
+      const shadow = wet
+        ? stonePts(b.bx, b.by + 1.5, b.br * 1.22, b.ry * 1.18, rot)
+        : stonePts(b.bx + 3, b.by + 4.5, b.br, b.ry, rot);
+      const shadowFill = wet ? "rgba(26, 74, 88, 0.5)" : "rgba(0,0,0,0.32)";
       // mottling: darker mineral patches
       const mottles = [];
       const nm = 2 + Math.floor(rnd() * 2);
@@ -231,7 +252,7 @@ function lighthouseSvg() {
       const hi = 0.2 + rnd() * 0.16;
       return `
   <g>
-    <polygon points="${shadow}" fill="rgba(0,0,0,0.32)"/>
+    <polygon points="${shadow}" fill="${shadowFill}"/>
     <polygon points="${body}" fill="url(#st${i})" stroke="rgba(36,32,28,0.55)" stroke-width="1.2"/>
     ${mottles.join("\n    ")}
     ${lichen}
@@ -250,8 +271,11 @@ function lighthouseSvg() {
     const bx = 170 + Math.cos(a) * d;
     const by = 170 + Math.sin(a) * d;
     const tone = 104 + Math.floor(rnd() * 40);
+    const wetStone = inWater(bx, by);
     stones.push(
-      `<ellipse cx="${(bx + 1.2).toFixed(1)}" cy="${(by + 1.8).toFixed(1)}" rx="${br.toFixed(1)}" ry="${(br * 0.8).toFixed(1)}" fill="rgba(0,0,0,0.22)"/>`,
+      wetStone
+        ? `<ellipse cx="${bx.toFixed(1)}" cy="${(by + 0.6).toFixed(1)}" rx="${(br * 1.25).toFixed(1)}" ry="${(br * 1.05).toFixed(1)}" fill="rgba(26, 74, 88, 0.45)"/>`
+        : `<ellipse cx="${(bx + 1.2).toFixed(1)}" cy="${(by + 1.8).toFixed(1)}" rx="${br.toFixed(1)}" ry="${(br * 0.8).toFixed(1)}" fill="rgba(0,0,0,0.22)"/>`,
       `<ellipse cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" rx="${br.toFixed(1)}" ry="${(br * 0.8).toFixed(1)}" fill="rgb(${tone + 6},${tone + 2},${tone - 4})" stroke="rgba(42,38,34,0.4)" stroke-width="0.8"/>`
     );
   }
